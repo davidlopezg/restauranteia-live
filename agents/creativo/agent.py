@@ -1553,24 +1553,13 @@ def modo_interactivo():
     if rest.get("nombre"):
         print(f"Restaurante: {rest.get('nombre')}")
 
-    # Selector de skill al inicio
+    # Default: chat libre con el chef (no forzamos elección de skill)
     skills = list_skills()
-    print("\nElegí la skill con la que querés trabajar:")
-    for i, s in enumerate(skills, 1):
-        print(f"  {i}. {s['nombre']}  —  {s['descripcion']}")
-
-    skill_key = "ficha"
-    while True:
-        r = input(f"   Elige 1-{len(skills)} [{skill_key}] > ").strip()
-        if not r:
-            break
-        if r.isdigit() and 1 <= int(r) <= len(skills):
-            skill_key = skills[int(r) - 1]["key"]
-            break
-        print(f"   (elegí un número entre 1 y {len(skills)})")
-
+    skill_key = "chat"
     skill_actual = next(s for s in skills if s["key"] == skill_key)
-    print(f"\n✓ Skill activa: {skill_actual['nombre']}\n")
+    print(f"\n✓ Skill activa: {skill_actual['nombre']}")
+    print("  Escribí lo que quieras — el chef responde usando el contexto del restaurante.")
+    print("  Cuando quieras una skill específica, tipeá /skill (o /skills para listar).\n")
 
     # Dispatch al loop apropiado
     while True:
