@@ -882,6 +882,90 @@ def procesar_mensaje_ideas_creativas(mensaje: str) -> str:
         return f"❌ Error generando ideas: {e}"
 
 
+def procesar_mensaje_chat(peticion: str) -> str:
+    """
+    Handler de la skill 'chat'.
+
+    Conversación libre con el chef. Carga el system prompt, lo enriquece con
+    el contexto del restaurante (ticket, línea, productos, carta) y las ideas
+    guardadas (si hay), y devuelve la respuesta del modelo.
+
+    No devuelve estructura fija — es texto conversacional.
+
+    Args:
+        peticion: pregunta o consulta libre del usuario.
+
+    Returns:
+        String con la respuesta del chef.
+    """
+    mensaje = (peticion or "").strip()
+    if not mensaje:
+        return ""
+
+    # 1. Cargar prompt de la skill 'chat'
+    system_prompt = load_skill_prompt("chat")
+
+    # 2. Inyectar contexto del restaurante
+    restaurante = load_restaurante()
+    restaurante_str = formatear_restaurante_para_chef(restaurante)
+    if restaurante_str:
+        system_prompt = system_prompt + restaurante_str
+
+    # 3. Inyectar catálogo de platos
+    catalogo = load_catalogo()
+    catalogo_str = formatear_catalogo_para_chef(catalogo)
+    if catalogo_str:
+        system_prompt = system_prompt + catalogo_str
+
+    # 4. Inyectar ideas guardadas (memoria del proyecto)
+    try:
+        from agents.memoria.storage import init_db, load_ideas
+        conn = init_db()
+        try:
+            ideas = load_ideas(conn, filtro={"limit": 10})
+            if ideas:
+                ideas_lines = ["\n\n[IDEAS GUARDADAS — memoria del proyecto]"]
+                ideas_lines.append(
+                    "El hostelero ha guardado las siguientes ideas en conversaciones "
+                    "previas. Si alguna es relevante para su consulta actual, "
+                    "mencionala (ej: 'De hecho, tenés guardada la idea #N sobre...').\n"
+                )
+                for i in ideas:
+                    ideas_lines.append(f"- #{i['id']}: {i['idea'][:200]}")
+                ideas_lines.append(
+                    "\nEsto es contexto privado. NO lo listes entero en tu respuesta, "
+                    "usá solo lo relevante a lo que el usuario pregunta."
+                )
+                system_prompt = system_prompt + "\n".join(ideas_lines)
+        finally:
+            conn.close()
+    except Exception:
+        # Si el módulo de memoria no está disponible o falla, seguimos sin él
+        pass
+
+    # 5. Recordatorio de idioma y llamada al modelo
+    try:
+        aviso = check_estacionalidad(mensaje, load_estacionalidad())
+        contexto_adicional = ""
+        if aviso:
+            contexto_adicional = (
+                f"\n\n[CONTEXTO PRIVADO — NO INCLUIR EN LA SALIDA]: {aviso}"
+            )
+        user_message = mensaje + contexto_adicional
+        instruccion_idioma = (
+            "\n\n---\n\n"
+            "⚠️ RECORDATORIO FINAL ⚠️\n"
+            "Responde SOLO en espa\u00f1ol (castellano). "
+            "Prohibido: ingl\u00e9s, franc\u00e9s, cir\u00edlico, hanzi, kanji. "
+            "Solo alfabeto latino."
+        )
+        user_message = user_message + instruccion_idioma
+        respuesta = call_minimax(system_prompt, user_message)
+        return respuesta
+    except Exception as e:
+        return f"❌ Error ({type(e).__name__}): {str(e)[:200]}"
+
+
 def iniciar_proceso_creativo(peticion: str, sesion_id: str | None = None):
     """
     Inicia (o reanuda) una sesión del proceso creativo.
@@ -1347,6 +1431,74 @@ def _loop_ideas_creativas(skills: list[dict]) -> str | None:
             print(f"\n❌ Error: {e}\n", file=sys.stderr)
 
 
+def _loop_chat(skills: list[dict]) -> str | None:
+    """
+    Loop de la skill 'chat': conversación libre con el chef.
+    Cada mensaje se responde usando el contexto del restaurante.
+    Devuelve la skill_key si cambia, None si sale.
+    """
+    print("💬  CHAT CON EL CHEF — conversación libre")
+    print()
+    print("Hacé preguntas o pedí consejo sobre tu restaurante.")
+    print("El chef usa todo el contexto (restaurante, carta, ideas guardadas).")
+    print()
+    print("Comandos especiales:")
+    print("  /skill        — cambiar skill")
+    print("  /skills       — listar skills disponibles")
+    print("  salir         — terminar")
+    print()
+
+    ultimo_assistant = None
+    while True:
+        try:
+            mensaje = input("➤ ").strip()
+        except (EOFError, KeyboardInterrupt):
+            print("\n¡Hasta luego!")
+            return None
+
+        if not mensaje:
+            continue
+        if mensaje.lower() in ("salir", "exit", "quit"):
+            return None
+
+        # Comandos de cambio de skill
+        nueva = _manejar_comandos_skill(mensaje, "chat", skills)
+        if nueva is not None and nueva != "chat":
+            return nueva
+        if nueva == "chat":
+            continue
+
+        # ── ARCHIVO DE IDEAS: transversal command dispatch ──
+        try:
+            from agents.memoria.commands import handle_command
+            from agents.memoria.storage import init_db
+            conn = init_db()
+            try:
+                cmd_result = handle_command(
+                    mensaje, ultimo_assistant, "chat", conn
+                )
+            finally:
+                conn.close()
+            if cmd_result is not None:
+                print("\n" + cmd_result["content"] + "\n")
+                print("-" * 60 + "\n")
+                continue
+        except Exception as e:
+            print(f"\n⚠️ Error en archivo de ideas: {e}\n")
+            continue
+        # ── end ARCHIVO DE IDEAS ──
+
+        try:
+            respuesta = procesar_mensaje_chat(mensaje)
+            print()
+            print(respuesta)
+            print()
+            ultimo_assistant = respuesta
+            print("-" * 60 + "\n")
+        except Exception as e:
+            print(f"\n❌ Error: {e}\n", file=sys.stderr)
+
+
 def _manejar_comandos_skill(mensaje: str, skill_actual: str, skills: list[dict]) -> str | None:
     """
     Maneja comandos de cambio de skill (/skill, /skills) de forma transversal.
@@ -1428,6 +1580,10 @@ def modo_interactivo():
                 break
         elif skill_key == "ideas_creativas":
             skill_key = _loop_ideas_creativas(skills)
+            if skill_key is None:
+                break
+        elif skill_key == "chat":
+            skill_key = _loop_chat(skills)
             if skill_key is None:
                 break
         else:

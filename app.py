@@ -46,6 +46,7 @@ from agents.creativo.agent import (
     iniciar_proceso_creativo,
     procesar_mensaje_proceso,
     procesar_mensaje_ideas_creativas,
+    procesar_mensaje_chat,
 )
 from agents.creativo.skills import (
     list_skills,
@@ -157,6 +158,12 @@ def responder(mensaje: str, historial: list, skill: str = "ficha") -> dict:
     # ────────────────────────────────────────────────────────────────────
     if skill == "ideas_creativas":
         return _responder_ideas_creativas(mensaje)
+
+    # ────────────────────────────────────────────────────────────────────
+    # Skill "chat": conversación libre con el chef usando todo el contexto
+    # ────────────────────────────────────────────────────────────────────
+    if skill == "chat":
+        return _responder_chat(mensaje)
 
     # ────────────────────────────────────────────────────────────────────
     # Skill "ficha" (default): flujo clásico
@@ -294,6 +301,26 @@ def _responder_ideas_creativas(mensaje: str) -> dict:
     except Exception as e:
         tipo = type(e).__name__
         logger.error(f"[{timestamp}] Error en ideas_creativas: {tipo}")
+        return {
+            "role": "assistant",
+            "content": f"❌ Error ({tipo}): {str(e)[:200]}"
+        }
+
+
+def _responder_chat(mensaje: str) -> dict:
+    """
+    Handler de la skill 'chat'.
+    Conversación libre con el chef. El modelo responde usando el contexto del
+    restaurante, catálogo, e ideas guardadas. Sin estructura fija.
+    """
+    timestamp = datetime.now().strftime("%H:%M:%S")
+    logger.info(f"[{timestamp}] Nueva petición (skill=chat, len={len(mensaje)})")
+    try:
+        respuesta = procesar_mensaje_chat(mensaje)
+        return {"role": "assistant", "content": respuesta}
+    except Exception as e:
+        tipo = type(e).__name__
+        logger.error(f"[{timestamp}] Error en chat: {tipo}")
         return {
             "role": "assistant",
             "content": f"❌ Error ({tipo}): {str(e)[:200]}"

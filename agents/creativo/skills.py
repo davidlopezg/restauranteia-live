@@ -64,6 +64,19 @@ SKILLS: list[dict] = [
             "Ideas de pizzas contemporáneas para la carta de primavera",
         ],
     },
+    {
+        "key": "chat",
+        "nombre": "Chat con el chef",
+        "descripcion": "Conversación libre con el chef. Hacele preguntas sobre producto, técnica, carta, estacionalidad, proveedores — usa todo el contexto del restaurante.",
+        "prompt_path": PROMPTS_DIR / "system_chat.md",
+        "ejemplos": [
+            "¿Qué te parece la alcachofa a la brasa como entrante de primavera?",
+            "Estoy pensando en sacar el tartar de la carta, ¿qué opinás?",
+            "¿Cómo maridás un risotto de setas con algo que no sea el clásico Barolo?",
+            "Tengo un cliente con celiaquía estricta, ¿qué puedo ofrecerle como principal?",
+            "¿Vale la pena meter cócteles sin alcohol en la carta de verano?",
+        ],
+    },
 ]
 
 
