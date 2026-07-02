@@ -606,6 +606,70 @@ git push origin main
 - **Sharing sin miedo**: podés compartir el template con cualquiera sin preocuparte por泄露 datos.
 - **Escalabilidad futura**: cuando el template soporte multi-tenant, cada restaurante tendrá su propia instancia privada desde el mismo template.
 
+### Sincronización automática (`scripts/sync.sh`)
+
+Cuando configurás tu instancia viva, el template te deja un script listo para sincronizar en un solo comando: [`scripts/sync.sh`](scripts/sync.sh).
+
+```bash
+cd restauranteia-live/
+./scripts/sync.sh
+```
+
+**Qué hace automáticamente:**
+
+1. Commitea cualquier cambio pendiente en `.agent_knowledge/` (tus ideas, config, etc.) con timestamp.
+2. Pull --rebase desde `template/main` (trae features nuevas).
+3. Si `origin` está ahead → pull --rebase desde origin primero (auto-recuperación).
+4. Push a `origin/main` (backup de tus datos al repo privado).
+5. Si algo falla → te dice exactamente qué correr manualmente.
+
+**Alias aún más corto** (configurá una vez):
+
+```bash
+# Agregalo a la sección [alias] de .git/config o:
+git config alias.sync '!./scripts/sync.sh'
+
+# Después en cualquier momento:
+git sync
+```
+
+**Ejemplo de salida:**
+
+```text
+==> Sincronizando instancia viva con template...
+
+[1/3] Hay cambios locales sin commitear. Commiteando...
+        Commit creado.
+[2/3] Pull --rebase desde template/main...
+        Sin conflictos.
+[3/3] Push a origin/main (tu repo privado)...
+        ✅ Push exitoso (después de rebase con origin).
+
+==> ✅ Sincronización completa.
+    Template → instancia viva, todo al día.
+```
+
+### Cuando algo falla
+
+| Síntoma | Causa | Solución |
+|---|---|---|
+| `⚠️  Hubo conflictos. Resolvelos manualmente` | Cambios en template y en instancia que se pisan | `git rebase --continue` después de resolver → `git push origin main` |
+| `⚠️  Push falló` después del rebase | Origin Ahead por pushear antes de tiempo | El script intenta auto-recuperar; si no, corré `git pull --rebase origin main && git push origin main` |
+| Working tree limpio pero el sync no hace nada | No hay nada nuevo en template ni local | Normal, todo al día |
+
+### Backup de datos sin esfuerzo
+
+Cada vez que corrés `sync.sh`, **si hay cambios en `.agent_knowledge/`**, se commitean automáticamente con un mensaje con timestamp. Tu instancia queda respaldada en GitHub con cada sync. Es backup automático sin pensarlo.
+
+Para hacer backup manual en cualquier momento (sin esperar cambios del template):
+
+```bash
+cd restauranteia-live/
+git add .agent_knowledge/
+git commit -m "chore(datos): respaldo manual $(date +%Y-%m-%d)"
+git push origin main
+```
+
 ---
 
 ### Alias para pushear el template a ambos remotes (HF + GitHub)
