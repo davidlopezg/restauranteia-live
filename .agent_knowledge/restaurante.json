@@ -1,0 +1,34 @@
+{
+  "precio_target_min": 15.0,
+  "precio_target_max": 22.0,
+  "precio_target_moda": 20.0,
+  "sofisticacion": "baja",
+  "productos_dominantes": [
+    "sobre todo pizzas y ensaladas",
+    "postres"
+  ],
+  "tecnicas_dominantes": [
+    "horno_leña"
+  ],
+  "tipo_servicio": [
+    "servicio_tradicional",
+    "take_away"
+  ],
+  "grupos": "con_grupos_pequenos",
+  "clases_comedores": [
+    "turistas y con segunda residencia"
+  ],
+  "origen_inspiracion": "de instagram, de otras pizzerias",
+  "orientacion_nutricional": [
+    "origen_producto"
+  ],
+  "localizacion": "la selva de mar, pueblo rural cerca de la costa...",
+  "religion": [
+    "ninguna"
+  ],
+  "tiempo_preparacion": "el cliente sentado esta un maximo de una hora y media, y de take unos 10 min.",
+  "epoca_estilo": [
+    "es pizzeria tradicional",
+    "pero quiero convertirla a traves de la.convinacion de productos en contemporanea"
+  ]
+}
