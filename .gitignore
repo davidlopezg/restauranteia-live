@@ -34,5 +34,6 @@ output/
 # Archivos huérfanos de pegados multilinea accidentales
 =*
 
-# Conocimiento específico del restaurante (generado en fase init, NO commitear)
-.agent_knowledge/
+# Conocimiento específico del restaurante — SÍ se trackea en este repo (instancia viva)
+# (en el template público está ignorado; acá guardamos datos reales)
+.agent_knowledge/ideas.md
