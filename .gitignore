@@ -40,3 +40,6 @@ output/
 # Conocimiento específico del restaurante — SÍ se trackea en este repo (instancia viva)
 # (en el template público está ignorado; acá guardamos datos reales)
 .agent_knowledge/ideas.md
+
+# Estado del script restauranteai-sync (última versión sincronizada del template)
+.template-version
