@@ -50,10 +50,12 @@ echo
 
 # 3. Push al repo privado (backup de datos)
 echo "[3/3] Push a origin/main (tu repo privado)..."
-if git push origin main; then
-  echo "        ✅ Push exitoso."
+if git push origin main 2>/dev/null; then
+  echo "        ✅ Push exitoso (sin rebase previo)."
+elif git pull --rebase origin main && git push origin main; then
+  echo "        ✅ Push exitoso (después de rebase con origin)."
 else
-  echo "        ⚠️  Push falló. Probablemente porque origin está ahead. Corré:"
+  echo "        ⚠️  Push falló. Resolvelos manualmente:"
   echo "            git pull --rebase origin main"
   echo "            git push origin main"
   exit 1
