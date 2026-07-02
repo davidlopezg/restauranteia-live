@@ -58,26 +58,28 @@ read_template_version() {
   echo "$latest_version"
 }
 
-# Compara versiones semver. Devuelve: 0 si iguales, 1 si a > b, 2 si a < b
+# Compara versiones semver. Imprime: 0 si iguales, 1 si a > b, 2 si a < b
+# (stdout en lugar de return code para convivir con set -e)
 version_compare() {
   local a="$1"
   local b="$2"
   local va=$(echo "$a" | sed 's/^v//')
   local vb=$(echo "$b" | sed 's/^v//')
   if [ "$va" = "$vb" ]; then
+    echo "0"
     return 0
   fi
-  local IFS=.
-  local i
   # Pad short versions to 3 parts
   while [ $(echo "$va" | tr -cd '.' | wc -c) -lt 2 ]; do va="$va.0"; done
   while [ $(echo "$vb" | tr -cd '.' | wc -c) -lt 2 ]; do vb="$vb.0"; done
+  local IFS=.
   local av=($va) bv=($vb)
+  local i
   for i in 0 1 2; do
-    if [ "${av[$i]:-0}" -gt "${bv[$i]:-0}" ]; then return 1; fi
-    if [ "${av[$i]:-0}" -lt "${bv[$i]:-0}" ]; then return 2; fi
+    if [ "${av[$i]:-0}" -gt "${bv[$i]:-0}" ]; then echo "1"; return 0; fi
+    if [ "${av[$i]:-0}" -lt "${bv[$i]:-0}" ]; then echo "2"; return 0; fi
   done
-  return 0
+  echo "0"
 }
 
 # Log resumido entre dos commits, formato compacto
@@ -99,8 +101,7 @@ if git fetch "$TEMPLATE_REMOTE" "$MAIN_BRANCH" --tags 2>/dev/null; then
   echo "Versión actual del template:    $TEMPLATE_VERSION"
   echo
 
-  version_compare "$TEMPLATE_VERSION" "$LOCAL_VERSION"
-  CMP=$?
+  CMP=$(version_compare "$TEMPLATE_VERSION" "$LOCAL_VERSION")
 
   if [ $CMP -eq 1 ]; then
     echo "🆕 HAY UNA VERSIÓN NUEVA DISPONIBLE: $LOCAL_VERSION → $TEMPLATE_VERSION"
