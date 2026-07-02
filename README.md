@@ -606,60 +606,81 @@ git push origin main
 - **Sharing sin miedo**: podés compartir el template con cualquiera sin preocuparte por泄露 datos.
 - **Escalabilidad futura**: cuando el template soporte multi-tenant, cada restaurante tendrá su propia instancia privada desde el mismo template.
 
-### Sincronización automática (`scripts/sync.sh`)
+### Sincronización automática (`scripts/restauranteai-sync`)
 
-Cuando configurás tu instancia viva, el template te deja un script listo para sincronizar en un solo comando: [`scripts/sync.sh`](scripts/sync.sh).
+El template incluye [`scripts/restauranteai-sync`](scripts/restauranteai-sync) — un script branded, version-aware, listo para sincronizar tu instancia en un solo comando.
 
 ```bash
 cd restauranteia-live/
-./scripts/sync.sh
+./scripts/restauranteai-sync
 ```
 
 **Qué hace automáticamente:**
 
-1. Commitea cualquier cambio pendiente en `.agent_knowledge/` (tus ideas, config, etc.) con timestamp.
-2. Pull --rebase desde `template/main` (trae features nuevas).
-3. Si `origin` está ahead → pull --rebase desde origin primero (auto-recuperación).
-4. Push a `origin/main` (backup de tus datos al repo privado).
-5. Si algo falla → te dice exactamente qué correr manualmente.
+1. **Verifica la versión del template** leyendo el archivo `VERSION` (raíz del template) y comparándola con la versión sincronizada en tu instancia (en `.template-version`, gitignored). Si hay una versión más nueva, te avisa con un resumen de los cambios.
+2. **Commitea cambios pendientes** en `.agent_knowledge/` (tus ideas, config, etc.) con timestamp.
+3. **Pull --rebase desde `template/main`** (trae features nuevas).
+4. **Si `origin` está ahead** → pull --rebase desde origin primero (auto-recuperación).
+5. **Push a `origin/main`** (backup de tus datos al repo privado).
+6. **Actualiza `.template-version`** con la versión actual del template.
+7. Si algo falla → te dice exactamente qué correr manualmente.
 
 **Alias aún más corto** (configurá una vez):
 
 ```bash
-# Agregalo a la sección [alias] de .git/config o:
-git config alias.sync '!./scripts/sync.sh'
+git config alias.sync '!./scripts/restauranteai-sync'
 
 # Después en cualquier momento:
 git sync
 ```
 
-**Ejemplo de salida:**
+**Ejemplo de salida con versión nueva disponible:**
 
 ```text
-==> Sincronizando instancia viva con template...
+==> 🍴 restauranteai-sync
 
-[1/3] Hay cambios locales sin commitear. Commiteando...
-        Commit creado.
-[2/3] Pull --rebase desde template/main...
-        Sin conflictos.
-[3/3] Push a origin/main (tu repo privado)...
-        ✅ Push exitoso (después de rebase con origin).
+── Verificando versión del template ──
+Tu instancia tiene sincronizada: v1.2.0
+Versión actual del template:    v1.3.0
+
+🆕 HAY UNA VERSIÓN NUEVA DISPONIBLE: v1.2.0 → v1.3.0
+Cambios desde v1.2.0:
+    abc1234 feat(chat): nueva skill 'chat'
+    def5678 docs(readme): documentar módulo de memoria
+
+[1/4] Working tree limpio...
+[2/4] Pull --rebase desde template/main...
+      ✅ Sin conflictos.
+[3/4] Push a origin/main (tu repo privado)...
+      ✅ Push exitoso.
+[4/4] Actualizando .template-version...
+      v1.2.0 → v1.3.0
 
 ==> ✅ Sincronización completa.
-    Template → instancia viva, todo al día.
 ```
+
+### Versionado del template
+
+| Concepto | Detalle |
+|---|---|
+| **Archivo VERSION** | En la raíz del template (formato `vX.Y.Z`, semver) |
+| **Tags de git** | Cada release tiene un tag (`v1.3.0`, etc.) |
+| **`.template-version`** | En la instancia viva (gitignored) — tracking local de qué versión tenés sincronizada |
+| **Detección** | El script compara y avisa si hay una versión más nueva |
+| **Cómo bumpear** | Cuando mergeás features nuevas, bumpeás `VERSION` y creás un tag nuevo: `git tag v1.4.0` |
 
 ### Cuando algo falla
 
 | Síntoma | Causa | Solución |
 |---|---|---|
-| `⚠️  Hubo conflictos. Resolvelos manualmente` | Cambios en template y en instancia que se pisan | `git rebase --continue` después de resolver → `git push origin main` |
+| `🆕 HAY UNA VERSIÓN NUEVA DISPONIBLE` | El template tiene cambios nuevos que no tenés | Normal, dejá correr el sync |
+| `⚠️  Hubo conflictos. Resolvelos manualmente` | Cambios en template y en instancia que se pisan | `git rebase --continue` después de resolver → `./scripts/restauranteai-sync` |
 | `⚠️  Push falló` después del rebase | Origin Ahead por pushear antes de tiempo | El script intenta auto-recuperar; si no, corré `git pull --rebase origin main && git push origin main` |
 | Working tree limpio pero el sync no hace nada | No hay nada nuevo en template ni local | Normal, todo al día |
 
 ### Backup de datos sin esfuerzo
 
-Cada vez que corrés `sync.sh`, **si hay cambios en `.agent_knowledge/`**, se commitean automáticamente con un mensaje con timestamp. Tu instancia queda respaldada en GitHub con cada sync. Es backup automático sin pensarlo.
+Cada vez que corrés `restauranteai-sync`, **si hay cambios en `.agent_knowledge/`**, se commitean automáticamente con un mensaje con timestamp. Tu instancia queda respaldada en GitHub con cada sync. Es backup automático sin pensarlo.
 
 Para hacer backup manual en cualquier momento (sin esperar cambios del template):
 
