@@ -40,11 +40,12 @@ short_description: "Chef IA: fichas y proceso creativo"
 4. [Sistema de skills](#sistema-de-skills)
 5. [Proceso creativo (state machine)](#proceso-creativo-state-machine)
 6. [Ideas creativas](#ideas-creativas)
-7. [Fase init — carga de conocimiento del restaurante](#fase-init--carga-de-conocimiento-del-restaurante)
-8. [Arquitectura técnica](#arquitectura-técnica)
-9. [Despliegue (HF Space)](#despliegue-hf-space)
-10. [Repos y remotes](#repos-y-remotes)
-11. [Roadmap](#roadmap)
+7. [Archivo de Ideas (módulo de memoria)](#archivo-de-ideas-módulo-de-memoria)
+8. [Fase init — carga de conocimiento del restaurante](#fase-init--carga-de-conocimiento-del-restaurante)
+9. [Arquitectura técnica](#arquitectura-técnica)
+10. [Despliegue (HF Space)](#despliegue-hf-space)
+11. [Repos y remotes — Template vs. Instancia viva](#repos-y-remotes--template-vs-instancia-viva)
+12. [Roadmap](#roadmap)
 
 > 📖 **¿Buscás un comando específico?** Mirá [`docs/COMMANDS.md`](docs/COMMANDS.md) — índice completo de entry points, comandos in-session, scripts, y paths importantes.
 
@@ -65,7 +66,10 @@ short_description: "Chef IA: fichas y proceso creativo"
 | Init con carta completa | ✅ | LLM extrae el catálogo desde texto libre |
 | Fix estructural de idioma | ✅ | Detección + reintento automático si chef responde en inglés |
 | Fix de surrogate UTF-8 | ✅ | Encoding correcto de emoji en payload |
-| Fase 4: Agente de Memoria / CRM | ⏳ | Próximo |
+| **Fase 4: Archivo de Ideas (módulo de memoria)** | ✅ | SQLite local + 11 comandos transversales + consent explícito |
+| Patrón template → live instance | ✅ | Repo público + repo privado sincronizable |
+| Fase 4.1: Memoria enriquecida / categorías / RGPD | ⏳ | Backlog |
+| Resto de agentes (Producción, Marketing, etc.) | ⏳ | Backlog |
 | Resto de agentes (Producción, Marketing, etc.) | ⏳ | Backlog |
 | SaaS + monetización | ⏳ | Cuando haya tracción real |
 
@@ -253,7 +257,7 @@ La skill `ideas_creativas` es una **exploración conversacional**: 10 ideas vari
 
 - **Considera siempre**: tipo de restaurante (ticket, sofisticación, productos, técnicas), carta actual (no duplicar, llenar huecos), estación.
 - **Diversidad**: mezcla plato, concepto, técnica, formato, extensión, rompedor.
-- **Estado en memoria**: las ideas viven mientras la sesión está activa. No persisten a disco todavía.
+- **Estado en memoria**: las ideas viven mientras la sesión está activa. Para persistencia entre sesiones, usá el **[Archivo de Ideas](#archivo-de-ideas-m%C3%B3dulo-de-memoria)** — el módulo de memoria te permite guardar cualquier idea con `/guardar`.
 
 ### Métodos creativos disponibles (de ElBulli + propios)
 
@@ -270,6 +274,117 @@ La skill `ideas_creativas` es una **exploración conversacional**: 10 ideas vari
 11. **Inspiración** — tomar una referencia (arte, naturaleza) como apoyo
 12. **Adaptación** — revisar clásicos bajo nueva filosofía
 13. **Sinergia** — todos los métodos interactúan entre sí
+
+---
+
+## Archivo de Ideas (módulo de memoria)
+
+> **🔒 Invariante central: solo se guarda lo que el usuario ordena explícitamente con un comando.** No hay heurística previa, no hay propuesta automática del agente. El comando ES el consentimiento.
+
+El módulo `agents/memoria/` te da una base de datos SQLite local para guardar ideas, sin que se evaporen al cerrar el chat. Es el **complemento persistente** de la skill `ideas_creativas`: ella genera ideas nuevas cada vez; este módulo las conserva cuando vos querés.
+
+### Quick start
+
+Probá estos comandos en el chat (HF Space o CLI, funcionan en cualquier skill):
+
+```
+/guardar probar kumquat en el postre de temporada
+✅ Idea #1 guardada: probar kumquat en el postre de temporada
+📁 1 guardada
+
+/ideas
+#1 | sin categoría | 2026-07-02
+> probar kumquat en el postre de temporada
+
+/ideas queso
+#3 | sin categoría | 2026-07-02
+> ensalada de queso de cabra con membrillo
+
+/olvidar 1
+⚠️ Vas a borrar: #1 'probar kumquat en el postre de temporada'.
+Escribí /olvidar 1 otra vez para confirmar.
+
+/export-ideas
+✅ 5 ideas exportadas a .agent_knowledge/ideas_export_2026-07-02.json
+```
+
+### Comandos disponibles
+
+Todos funcionan en **cualquier skill** (ficha, ideas creativas, proceso creativo) y tanto en HF Space como en CLI. Son transversales al dispatcher de skills.
+
+| Comando | Qué hace | Notas |
+|---|---|---|
+| `/guardar [texto]` | Guarda texto libre como idea nueva | La forma más común |
+| `/guardar` (sin args) | Guarda el último mensaje del asistente como idea | Si venís de una lista de ideas de `ideas_creativas`, te guarda la última respuesta entera |
+| `/guardar N` | Guarda la idea N de una lista numerada | Funciona tras respuestas con formato "1. ... 2. ... 3. ..." |
+| `/guardar igual` | Fuerza guardado tras advertencia de duplicado | Después de que el sistema detecte fuzzy ≥80% |
+| `/editar N [texto]` | Edita idea existente | Actualiza `updated_at` automáticamente |
+| `/ideas [filtro]` | Lista todas las ideas (desc por fecha) | Filtro opcional busca en el texto |
+| `/olvidar N` | Borra idea N (con confirmación) | Dos turnos: primero avisa, después confirmás |
+| `/olvidar todo` | Borra todo (con confirmación) | Útil para empezar de cero |
+| `/export-ideas` | Exporta todas las ideas a JSON | Portable, fácil de respaldar |
+| `/ayuda` | Lista todos los comandos disponibles | Útil para recordar |
+| `/silenciar-contador` | Oculta/muestra el "📁 N guardadas" | Opt-in en diseño |
+
+### Detección de duplicados
+
+El sistema detecta duplicados automáticamente antes de guardar:
+
+- **Exacto** (case-insensitive via `COLLATE NOCASE`): si es idéntico, te avisa y sugiere usar `/guardar igual`.
+- **Fuzzy** (≥80% similitud via `difflib.SequenceMatcher`): te avisa y ofrece opciones.
+
+```text
+⚠️ Ya tenés algo parecido (#3): "ensalada de queso de cabra"
+   ¿Usar /guardar igual para guardar igual, o cambiar la redacción?
+```
+
+### RGPD desde el día uno
+
+- **Borrado granular** con doble confirmación para evitar pérdidas accidentales.
+- **Export portable** a JSON para que vos tengas siempre una copia.
+- **Trazabilidad**: cada idea guarda `created_at`, `updated_at`, `origen` (comando), `origen_skill`, `confirmada_por_usuario=1`.
+- **Sin telemetría**: el módulo no envía datos a ningún lado. La DB vive en `.agent_knowledge/ideas.db`, en tu máquina.
+
+### Categorías externalizadas
+
+Las 9 categorías precargadas viven en `agents/ideas_categorias.json` y se pueden editar sin tocar código:
+
+```json
+["concepto", "plato", "técnica", "producto", "proveedor",
+ "menú completo", "ocasión/evento", "restricción", "otro (escribir)"]
+```
+
+Si necesitás una nueva categoría, agregala al JSON y reiniciá la app.
+
+### Cómo se almacenan los datos
+
+- **Path**: `.agent_knowledge/ideas.db` (SQLite local).
+- **Modo WAL** (`journal_mode=WAL`): lectores y escritor concurrentes sin bloqueos — crítico para HF Space con múltiples usuarios.
+- **Esquema** (`ideas` table):
+  ```
+  id | created_at | updated_at | idea | categoria | contexto
+  | confirmada_por_usuario | origen | origen_skill
+  ```
+- **Índices**: `idx_ideas_created_at`, `idx_ideas_categoria`, `idx_ideas_origen_skill`.
+- **Archivo companion**: `.agent_knowledge/ideas.md` con schema documentado (se autogenera al primer `init_db`).
+
+### Tests
+
+```bash
+python -m pytest tests/test_memoria_storage.py tests/test_memoria_formatters.py \
+                  tests/test_memoria_commands.py tests/test_memoria_duplicates.py \
+                  tests/test_memoria_counter.py tests/test_memoria_rgpd.py \
+                  tests/test_memoria_concurrency.py tests/test_regresion_skills.py -v
+```
+
+Resultado esperado: **120 tests pasando**. Cubre CRUD, formateo, comandos, duplicados, contador, RGPD, concurrencia WAL y regresión de skills existentes.
+
+### Por qué SQLite y no JSON
+
+- Las ideas tienen **queries**: filtrar por categoría, por fecha, por origen. JSON files son ineficientes acá.
+- Posibilidad de **búsqueda full-text** (FTS5) en versiones futuras sin reescribir.
+- **Concurrencia gratis** con WAL — crucial para HF Space.
+- **Backup trivial**: un solo archivo que podés copiar a cualquier lado.
 
 ---
 
@@ -415,14 +530,85 @@ git push hf main
 
 ---
 
-## Repos y remotes
+## Repos y remotes — Template vs. Instancia viva
 
-| Remote | URL | Push | Notas |
+Este repo (`restauranteia`, público en GitHub) es el **template**: el código limpio sin datos de usuario. Está pensado para que cualquiera lo clone y lo instale.
+
+Para tu **uso real con datos**, mantenés un repo separado, **privado**, sincronizado desde este template. Es el patrón clásico **template → instancia**.
+
+### Los dos repos
+
+| Repo | Visibilidad | Propósito | Datos del usuario |
 |---|---|---|---|
-| `origin` | `https://github.com/davidlopezg/restauranteai.git` | `git push origin main` | Repo de código fuente |
-| `hf` | `https://huggingface.co/spaces/davidlopezgamero/RestaurantEAI` | `git push hf main` | Space deployado (rebuild automático) |
+| `davidlopezg/restauranteai` (este) | 🔓 Público | Template: código limpio | ❌ No commitea nada en `.agent_knowledge/` |
+| `davidlopezg/restauranteia-live` | 🔒 Privado | Tu instancia viva: código + datos reales | ✅ Commitea `.agent_knowledge/ideas.db`, `restaurante.json`, etc. |
 
-### Alias para pushear a ambos
+### Set up de la instancia viva (una sola vez)
+
+```bash
+# 1. Clonar el template
+git clone https://github.com/davidlopezg/restauranteai.git restauranteia-live
+cd restauranteia-live
+
+# 2. Crear repo privado en GitHub (vía gh CLI)
+gh repo create davidlopezg/restauranteia-live --private
+
+# 3. Recablear remotes
+git remote rename origin template
+git remote add origin https://github.com/davidlopezg/restauranteia-live.git
+git push -u origin main
+
+# 4. Activar tracking de datos reales (quitar .agent_knowledge/ del .gitignore)
+# 5. Copiar tu .env con la API key real (NO commitear)
+cp ../restauranteia/.env .env
+```
+
+### Workflow diario
+
+**En el template** (trabajás features nuevas):
+
+```bash
+cd restauranteia/
+# desarrollar, probar
+git add -A
+git commit -m "feat: nueva skill foo"
+git push origin main && git push hf main    # deploy
+```
+
+**En la instancia viva** (tu uso real, con datos):
+
+```bash
+cd restauranteia-live/
+
+# Traer mejoras nuevas del template
+git pull template main
+
+# Guardar tus cambios locales (ideas, config, etc.)
+git add .agent_knowledge/
+git commit -m "chore(datos): 3 ideas nuevas guardadas hoy"
+
+# Respaldar tu instancia
+git push origin main
+```
+
+### Reglas de oro del patrón
+
+1. **El template nunca toca `.agent_knowledge/`**. Su `.gitignore` lo excluye.
+2. **La instancia viva sí commitea `.agent_knowledge/`** (excepto `ideas.md` que es autogenerado y ruidoso). Tenés backup automático de tus datos con cada push.
+3. **Los cambios estructurales** (features, bug fixes, dependencias) van al template primero; después la instancia los hereda via `git pull`.
+4. **Las secrets** (`MINIMAX_API_KEY` en `.env`) **nunca se commitean**, ni en la instancia viva. Copialas manualmente o usá GitHub Secrets.
+5. **El deploy a HF Space** se hace siempre desde el template (`git push hf main`), no desde la instancia viva.
+
+### Por qué este patrón
+
+- **Privacidad**: tu DB de ideas, tu config de restaurante, tus prompts iterados — todo queda en un repo privado.
+- **Portabilidad**: si cambiás de máquina, clonás la instancia y tenés todo (menos `.env`).
+- **Sharing sin miedo**: podés compartir el template con cualquiera sin preocuparte por泄露 datos.
+- **Escalabilidad futura**: cuando el template soporte multi-tenant, cada restaurante tendrá su propia instancia privada desde el mismo template.
+
+---
+
+### Alias para pushear el template a ambos remotes (HF + GitHub)
 
 ```bash
 git config alias.pushall '!git push hf main && git push origin main'
@@ -448,8 +634,17 @@ git push --force-with-lease=main:<hash-actual-de-hf> hf main
 ## Tests
 
 ```bash
-python scripts/test_app.py        # Tests de regresión de app.py
-python scripts/probar_estructura.py # Validación de estructura sin API
+# Tests del módulo de memoria (120 tests)
+python -m pytest tests/test_memoria_storage.py tests/test_memoria_formatters.py \
+                  tests/test_memoria_commands.py tests/test_memoria_duplicates.py \
+                  tests/test_memoria_counter.py tests/test_memoria_rgpd.py \
+                  tests/test_memoria_concurrency.py tests/test_regresion_skills.py -v
+
+# Tests de regresión de app.py
+python scripts/test_app.py
+
+# Validación de estructura sin API
+python scripts/probar_estructura.py
 ```
 
 ---
@@ -467,7 +662,8 @@ Por definir. El proyecto está en fase temprana.
 ## Links
 
 - 🌐 **App en vivo**: https://huggingface.co/spaces/davidlopezgamero/RestaurantEAI
-- 💻 **Código fuente**: https://github.com/davidlopezg/restauranteai
+- 💻 **Código fuente (template)**: https://github.com/davidlopezg/restauranteai
+- 🔒 **Instancia viva (privada)**: https://github.com/davidlopezg/restauranteia-live
 - 🏠 **Landing page**: `docs/index.html`
 
 ---
