@@ -31,6 +31,9 @@ output/
 .atl/
 .pi/
 
+# Estado del script restauranteai-sync (última versión sincronizada del template)
+.template-version
+
 # Archivos huérfanos de pegados multilinea accidentales
 =*
 

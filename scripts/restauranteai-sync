@@ -1,0 +1,185 @@
+#!/usr/bin/env bash
+# restauranteai-sync — Sincroniza la instancia RestaurantEAI con el template público.
+#
+# Uso:
+#   ./scripts/restauranteai-sync
+#
+# Qué hace:
+#   1. Lee la última versión sincronizada del template desde .template-version
+#      y la compara con la versión actual del template remoto.
+#   2. Si hay una versión más nueva disponible, te avisa con los cambios.
+#   3. Commitea cambios locales no commiteados (en .agent_knowledge/) con timestamp.
+#   4. Pull --rebase desde el remote 'template' (rama main).
+#   5. Si 'origin' está ahead → pull --rebase desde origin primero.
+#   6. Push al remote 'origin' (backup de datos al repo privado).
+#   7. Actualiza .template-version con la versión actual del template.
+#
+# Resultado: template → instancia viva, en un comando, con notificaciones de versión.
+
+set -e
+
+REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$REPO_DIR"
+
+# ── Configuración ──────────────────────────────────────────────────────────
+TEMPLATE_REMOTE="template"
+MAIN_BRANCH="main"
+ORIGIN_REMOTE="origin"
+VERSION_FILE=".template-version"
+TEMPLATE_VERSION_FILE="VERSION"
+
+echo "==> 🍴 restauranteai-sync"
+echo
+
+# ── Helpers ────────────────────────────────────────────────────────────────
+
+# Lee la versión que tenemos sincronizada localmente
+read_local_version() {
+  if [ -f "$VERSION_FILE" ]; then
+    cat "$VERSION_FILE" | tr -d '[:space:]'
+  else
+    echo "v0.0.0"
+  fi
+}
+
+# Lee la versión actual del template (del archivo VERSION en template/main)
+read_template_version() {
+  local latest_version="v0.0.0"
+  # Primero intenta leer del archivo VERSION
+  if git show "${TEMPLATE_REMOTE}/${MAIN_BRANCH}:${TEMPLATE_VERSION_FILE}" 2>/dev/null | grep -q .; then
+    latest_version=$(git show "${TEMPLATE_REMOTE}/${MAIN_BRANCH}:${TEMPLATE_VERSION_FILE}" | tr -d '[:space:]')
+  else
+    # Si no hay archivo VERSION, usa el último tag semver (vX.Y.Z) del template
+    latest_version=$(git tag -l "v*.*.*" --sort=-v:refname | grep -E "^v[0-9]+\.[0-9]+\.[0-9]+$" | head -1)
+    if [ -z "$latest_version" ]; then
+      latest_version="v0.0.0"
+    fi
+  fi
+  echo "$latest_version"
+}
+
+# Compara versiones semver. Devuelve: 0 si iguales, 1 si a > b, 2 si a < b
+version_compare() {
+  local a="$1"
+  local b="$2"
+  local va=$(echo "$a" | sed 's/^v//')
+  local vb=$(echo "$b" | sed 's/^v//')
+  if [ "$va" = "$vb" ]; then
+    return 0
+  fi
+  local IFS=.
+  local i
+  # Pad short versions to 3 parts
+  while [ $(echo "$va" | tr -cd '.' | wc -c) -lt 2 ]; do va="$va.0"; done
+  while [ $(echo "$vb" | tr -cd '.' | wc -c) -lt 2 ]; do vb="$vb.0"; done
+  local av=($va) bv=($vb)
+  for i in 0 1 2; do
+    if [ "${av[$i]:-0}" -gt "${bv[$i]:-0}" ]; then return 1; fi
+    if [ "${av[$i]:-0}" -lt "${bv[$i]:-0}" ]; then return 2; fi
+  done
+  return 0
+}
+
+# Log resumido entre dos commits, formato compacto
+commits_summary() {
+  local from="$1"
+  local to="$2"
+  git log --oneline --no-decorate --no-merges "${from}..${to}" 2>/dev/null | head -5 | sed 's/^/    /'
+}
+
+# ── Verificación de versión ────────────────────────────────────────────────
+
+echo "── Verificando versión del template ──"
+LOCAL_VERSION=$(read_local_version)
+echo "Tu instancia tiene sincronizada: $LOCAL_VERSION"
+
+# Traer refs del template (sin fallar si no hay conexión)
+if git fetch "$TEMPLATE_REMOTE" "$MAIN_BRANCH" --tags 2>/dev/null; then
+  TEMPLATE_VERSION=$(read_template_version)
+  echo "Versión actual del template:    $TEMPLATE_VERSION"
+  echo
+
+  version_compare "$TEMPLATE_VERSION" "$LOCAL_VERSION"
+  CMP=$?
+
+  if [ $CMP -eq 1 ]; then
+    echo "🆕 HAY UNA VERSIÓN NUEVA DISPONIBLE: $LOCAL_VERSION → $TEMPLATE_VERSION"
+    # Mostrar commits entre la versión local y la del template
+    LOCAL_COMMIT=$(git log --oneline | grep -F "$LOCAL_VERSION" | head -1 | awk '{print $1}')
+    if [ -n "$LOCAL_COMMIT" ]; then
+      echo
+      echo "Cambios desde $LOCAL_VERSION:"
+      commits_summary "$LOCAL_COMMIT" "${TEMPLATE_REMOTE}/${MAIN_BRANCH}"
+    fi
+    echo
+  else
+    echo "✅ Estás al día con el template."
+    echo
+  fi
+else
+  echo "⚠️  No pude hacer fetch del template (¿sin conexión?). Sigo con sync igual."
+  echo
+fi
+
+# ── Sync local ──────────────────────────────────────────────────────────────
+
+# 1. Commitear cambios locales no commiteados
+echo "[1/4] Working tree limpio..."
+if ! git diff --cached --quiet 2>/dev/null || ! git diff --quiet 2>/dev/null; then
+  echo "      Hay cambios sin commitear. Commiteando..."
+  git add -A
+  if git diff --cached --quiet; then
+    echo "      No había nada que commitear realmente."
+  else
+    mensaje="chore(sync): sync automático $(date +%Y-%m-%d\ %H:%M:%S)"
+    git commit -m "$mensaje"
+    echo "      Commit creado."
+  fi
+else
+  echo "      ✅ Sin cambios pendientes."
+fi
+echo
+
+# 2. Pull --rebase desde template
+echo "[2/4] Pull --rebase desde $TEMPLATE_REMOTE/$MAIN_BRANCH..."
+if git pull --rebase "$TEMPLATE_REMOTE" "$MAIN_BRANCH"; then
+  echo "      ✅ Sin conflictos."
+else
+  echo "      ⚠️  Conflictos. Resolvelos y después:"
+  echo "            git rebase --continue"
+  echo "            ./scripts/restauranteai-sync"
+  exit 1
+fi
+echo
+
+# 3. Push a origin (con auto-recuperación)
+echo "[3/4] Push a $ORIGIN_REMOTE/$MAIN_BRANCH..."
+if git push "$ORIGIN_REMOTE" "$MAIN_BRANCH" 2>/dev/null; then
+  echo "      ✅ Push exitoso (sin rebase previo)."
+elif git pull --rebase "$ORIGIN_REMOTE" "$MAIN_BRANCH" && git push "$ORIGIN_REMOTE" "$MAIN_BRANCH"; then
+  echo "      ✅ Push exitoso (después de rebase con $ORIGIN_REMOTE)."
+else
+  echo "      ⚠️  Push falló. Resolvelos manualmente:"
+  echo "            git pull --rebase $ORIGIN_REMOTE $MAIN_BRANCH"
+  echo "            git push $ORIGIN_REMOTE $MAIN_BRANCH"
+  exit 1
+fi
+echo
+
+# 4. Actualizar .template-version con la versión actual
+echo "[4/4] Actualizando $VERSION_FILE..."
+NEW_VERSION=$(read_template_version)
+if [ "$NEW_VERSION" != "$LOCAL_VERSION" ]; then
+  echo "$NEW_VERSION" > "$VERSION_FILE"
+  echo "      $LOCAL_VERSION → $NEW_VERSION"
+else
+  echo "      Sin cambios de versión."
+fi
+echo
+
+echo "==> ✅ Sincronización completa."
+echo "    Template → instancia viva, todo al día."
+echo
+echo "💡 Próximos pasos:"
+echo "    - Revisá si hay cambios del template que te interesen: git log --oneline $TEMPLATE_REMOTE/$MAIN_BRANCH | head"
+echo "    - Para revertir esta versión: rm $VERSION_FILE y editá con la versión anterior"
