@@ -35,6 +35,23 @@ from agents.herramientas.pubchem_client import (
     get_compound_by_cid,
     search_compound_by_name,
 )
+from agents.herramientas.recetario import (
+    Elaboration,
+    FullRecipe,
+    Machinery,
+    Product,
+    ProductWithRole,
+    Technique,
+    TechniqueWithStep,
+    elaboration_summary,
+    find_elaborations_with_all,
+    get_elaborations_with,
+    get_full_recipe,
+    get_machinery_for,
+    get_products_for,
+    get_techniques_for,
+    search_elaborations,
+)
 
 __all__ = [
     # flavor_engine
@@ -51,4 +68,20 @@ __all__ = [
     "cache_stats",
     "get_compound_by_cid",
     "search_compound_by_name",
+    # recetario
+    "Elaboration",
+    "FullRecipe",
+    "Machinery",
+    "Product",
+    "ProductWithRole",
+    "Technique",
+    "TechniqueWithStep",
+    "elaboration_summary",
+    "find_elaborations_with_all",
+    "get_elaborations_with",
+    "get_full_recipe",
+    "get_machinery_for",
+    "get_products_for",
+    "get_techniques_for",
+    "search_elaborations",
 ]
