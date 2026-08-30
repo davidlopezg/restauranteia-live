@@ -55,8 +55,14 @@ MODEL = os.getenv("MINIMAX_MODEL", DEFAULT_MODEL)
 
 # Timeout y reintentos
 REQUEST_TIMEOUT = 60.0
-MAX_RETRIES = 2
+MAX_RETRIES = 3
 LANGUAGE_RETRIES = 2  # reintentos adicionales si el chef responde en inglés
+# Backoff exponencial entre reintentos (segundos). Se duplica cada intento.
+RETRY_BACKOFF_BASE = 2.0
+RETRY_BACKOFF_MAX = 30.0
+# Para errores 429 (rate limit), usamos un backoff más agresivo.
+RATE_LIMIT_BACKOFF_BASE = 5.0
+RATE_LIMIT_BACKOFF_MAX = 60.0
 
 # Palabras de alta confianza que NO deberían aparecer en una ficha en castellano.
 # Son function words + vocabulario común inglés sin cognados en español.
@@ -536,8 +542,31 @@ def call_minimax(system_prompt: str, user_prompt: str, force_spanish: bool = Tru
 
         except (httpx.HTTPError, KeyError, ValueError) as e:
             last_error = e
+            is_rate_limit = (
+                isinstance(e, httpx.HTTPStatusError)
+                and e.response.status_code == 429
+            ) or "429 Too Many Requests" in str(e)
             if attempt < total_attempts:
-                print(f"  [retry {attempt}/{total_attempts}] Error: {e}", file=sys.stderr)
+                # Exponential backoff con jitter para evitar thundering herd.
+                import random
+                if is_rate_limit:
+                    base = RATE_LIMIT_BACKOFF_BASE
+                    cap = RATE_LIMIT_BACKOFF_MAX
+                else:
+                    base = RETRY_BACKOFF_BASE
+                    cap = RETRY_BACKOFF_MAX
+                delay = min(cap, base * (2 ** (attempt - 1)))
+                # Jitter: ±20% para evitar picos sincronizados entre workers.
+                jitter = delay * 0.2 * (random.random() * 2 - 1)
+                wait = max(0.5, delay + jitter)
+                kind = "rate-limit" if is_rate_limit else "transient"
+                print(
+                    f"  [retry {attempt}/{total_attempts}] {kind} error: {e}. "
+                    f"Esperando {wait:.1f}s antes del siguiente intento...",
+                    file=sys.stderr,
+                )
+                import time as _time
+                _time.sleep(wait)
             continue
 
     raise RuntimeError(
