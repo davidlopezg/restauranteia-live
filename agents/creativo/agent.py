@@ -483,9 +483,10 @@ def call_minimax(system_prompt: str, user_prompt: str, force_spanish: bool = Tru
         ],
         # Parámetros estándar OpenAI-completions soportados por MiniMax.
         # temperature 0.8 = creatividad media-alta, adecuada para brainstorming culinario.
-        # max_tokens 1500 = holgura para ficha técnica + maridaje + prompt de imagen.
+        # max_tokens 3500 = holgura para idea_cientifica (pairings + 3-5 ideas con
+        # 4 capas cada una). Las fichas técnicas (skill 'ficha') usan menos tokens.
         "temperature": 0.8,
-        "max_tokens": 1500,
+        "max_tokens": 3500,
     }
 
     current_user_prompt = user_prompt
@@ -1112,12 +1113,12 @@ def _build_flavor_context_block(peticion: str, max_pairings: int = 8) -> str:
 
         pairings = suggest_pairings(ing, top_k=max_pairings)
         if pairings:
-            lines.append("  Pairings por afinidad química:")
+            lines.append("  Top pairings por afinidad química:")
             for p in pairings:
                 shared_names = ", ".join(c.name for c in p.shared_compounds[:2])
                 more = f" (+{len(p.shared_compounds) - 2})" if len(p.shared_compounds) > 2 else ""
                 lines.append(
-                    f"    · {p.ingredient_b} (score {p.score:.0%}, comparten: {shared_names}{more})"
+                    f"    - {p.ingredient_b} — score {p.score:.0%}, comparten: {shared_names}{more}"
                 )
         lines.append("")
 
@@ -1179,7 +1180,7 @@ def procesar_mensaje_idea_cientifica(peticion: str) -> str:
 
     # 4. Inyectar datos del flavor engine (el corazón de esta skill)
     try:
-        flavor_block = _build_flavor_context_block(mensaje, max_pairings=6)
+        flavor_block = _build_flavor_context_block(mensaje, max_pairings=8)
         if flavor_block:
             system_prompt = system_prompt + flavor_block
     except Exception as e:
