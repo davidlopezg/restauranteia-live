@@ -57,10 +57,15 @@ Disponibles dentro de `python -m agents.creativo.agent` (en cualquier skill; `ch
 | `/guardar igual` | Fuerza guardado tras advertencia de duplicado. |
 | `/editar N [texto]` | Edita una idea guardada. |
 | `/lista-ideas [filtro]` | Lista ideas guardadas (filtro opcional por texto). |
+| `/lista-auto [filtro]` | **(v4.1)** Lista solo las ideas auto-guardadas por el chat. |
 | `/olvidar N` | Borra idea N (requiere confirmación en 2 turnos). |
 | `/olvidar todo` | Borra todas las ideas (requiere confirmación). |
+| `/olvidar auto` | **(v4.1)** Borra solo las ideas auto-guardadas (con confirmación). |
 | `/export-ideas` | Exporta todas las ideas a JSON. |
 | `/silenciar-contador` | Muestra/oculta el contador `📁 N guardadas`. |
+| `/memoria on\|off` | **(v4.1)** Activa/desactiva la detección automática. |
+| `/memoria alta\|sugerir` | **(v4.1)** Modo auto-guardar o sugerir antes de guardar. |
+| `/memoria-status` | **(v4.1)** Ver estado actual de la memoria automática + estadísticas. |
 
 ### Meta
 

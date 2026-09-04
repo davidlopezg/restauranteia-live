@@ -1,11 +1,422 @@
-[
-    "concepto",
-    "plato",
-    "técnica",
+{
+  "version": 2,
+  "_comment": "Taxonomía v2 — 5 categorías principales pedidas por David (producto/elaboración/técnica/herramienta/receta) + auxiliares (proveedor/cliente/evento/restricción/concepto). El campo `keywords` lo usa el trigger automático; el campo `categorias_principales` es lo que ve el usuario en /lista-ideas / filtros.",
+  "categorias_principales": [
     "producto",
+    "elaboracion",
+    "tecnica",
+    "herramienta",
+    "receta",
     "proveedor",
-    "menú completo",
-    "ocasión/evento",
-    "restricción",
-    "otro (escribir)"
-]
+    "cliente",
+    "evento",
+    "restriccion",
+    "concepto",
+    "otro"
+  ],
+  "categorias_alias_legacy": {
+    "_comment": "Mapeo de categorías v1 → v2 para no romper ideas ya guardadas. La v2 amplía; la v1 era más corta (concepto/plato/técnica/producto/proveedor/menú completo/ocasión-evento/restricción/otro).",
+    "plato": "elaboracion",
+    "menu_completo": "evento",
+    "ocasion": "evento",
+    "ocasion/evento": "evento"
+  },
+  "keywords": {
+    "producto": {
+      "_comment": "Ingredientes / materia prima. Heurística conservadora: si la frase dice 'me gusta/probar/usar X' y X es un ingrediente reconocible, categoría producto.",
+      "ingredientes_fruta": [
+        "manzana", "manzanas", "pera", "peras", "naranja", "naranjas",
+        "limón", "limones", "lima", "limas", "pomelo", "pomelos",
+        "mandarina", "mandarinas", "fresa", "fresas", "frutilla", "frutillas",
+        "cereza", "cerezas", "picota", "picotas", "griñon", "griñones",
+        "melocotón", "melocotones", "durazno", "duraznos",
+        "albaricoque", "albaricoques", "damasco", "damascos",
+        "ciruela", "ciruelas", "higo", "higos", "breva", "brevas",
+        "granada", "granadas", "caqui", "caquis",
+        "persimón", "persimones", "kiwi", "kiwis",
+        "aguacate", "aguacates", "palta", "paltas",
+        "mango", "mangos", "piña", "piñas", "ananá", "ananás",
+        "plátano", "plátanos", "banana", "bananas", "uva",
+        "arandano", "arándano", "frambuesa", "frambuesas",
+        "mora", "moras", "grosella", "grosellas",
+        "papaya", "coco", "cocos",
+        "dátil", "dátiles", "higo chumbo", "higos chumbos",
+        "tuna", "tunas", "níspero", "nísperos",
+        "lichi", "lichis", "kumquat", "quinoto", "fruta de la pasión",
+        "maracuyá", "carambola", "rambután"
+      ],
+      "ingredientes_verdura": [
+        "tomate", "tomate de ramallet", "pimiento", "pimiento del piquillo",
+        "calabacín", "calabacin", "berenjena", "alcachofa", "alcaucil",
+        "espárrago", "esparrago", "esparrago verde", "guisante", "habas", "haba",
+        "judía", "judia", "lenteja", "garbanzo", "calabaza", "boniato", "batata",
+        "patata", "papa", "zanahoria", "cebolla", "ajo", "puerro", "apio",
+        "lechuga", "escarola", "espinaca", "acelga", "col", "repollo", "brócoli",
+        "brocoli", "coliflor", "rúcula", "rucula", "canónigos", "canonigos",
+        "endibia", "remolacha", "nabo", "rábano", "rabano", "pepino", "card",
+        "tupinambo", "hinojo", "perejil"
+      ],
+      "ingredientes_seta": [
+        "seta", "setas", "boletus", "boleto", "boletos", "rebozuelo",
+        "rebozuelos", "senderuela", "senderuelas",
+        "trompeta de la muerte", "shiitake", "portobello",
+        "portobellos", "champiñón", "champiñones", "trufa", "trufas",
+        "colmenilla", "colmenillas", "morchella", "matacandil",
+        "hongos", "hongo"
+      ],
+      "ingredientes_carne": [
+        "ternera", "buey", "vaca", "cerdo", "ibérico", "iberico", "secreto",
+        "presa", "presita", "solomillo", "chuletón", "chuleton", "costilla",
+        "cordero", "lechal", "pollo", "pavo", "pato", "codorniz", "pollo de corral",
+        "conejo", "liebre", "jabalí", "jabali", "ciervo", "cabrito", "mollejas",
+        "riñones", "riñon", "hígado", "higado", "callos", "rabo de toro",
+        "carrillada", "picadillo"
+      ],
+      "ingredientes_pescado": [
+        "lubina", "lubinas", "dorada", "doradas", "rodaballo", "rodaballos",
+        "merluza", "merluzas", "rape", "rapes", "atún", "atun", "atunes",
+        "salmón", "salmon", "salmones", "bacalao", "bacalao fresco",
+        "sardina", "sardinas", "anchoa", "anchoas",
+        "boquerón", "boqueron", "boquerones", "caballa", "caballas",
+        "lenguado", "lenguados", "salmonete", "salmonetes",
+        "gallo", "gallos", "besugo", "besugos",
+        "bonito", "bonitos", "ventresca", "palometa", "palometas",
+        "trucha", "truchas", "anguila", "anguilas",
+        "corvina", "corvinas", "mero", "meros",
+        "halibut", "turbot", "pescado de roca", "pescado azul"
+      ],
+      "ingredientes_marisco": [
+        "gamba", "gambas", "langostino", "langostinos", "cigala", "cigalas",
+        "bogavante", "langosta", "carabineros", "carabinero", "gamba roja",
+        "gamba de pals", "camarón", "camarones", "mejillón", "mejillon",
+        "almeja", "almejas", "navaja", "navajas", "ostra", "ostras", "vieira",
+        "vieiras", "berberechos", "pulpo", "calamar", "sepia", "chipirón",
+        "chipiron", "calamar de potera"
+      ],
+      "ingredientes_lacteo": [
+        "leche", "mantequilla", "nata", "crema de leche", "crema",
+        "yogur", "yogurt", "requesón", "requeson", "cuajada", "kéfir", "kefir"
+      ],
+      "ingredientes_queso": [
+        "queso", "queso de cabra", "queso de oveja", "queso de vaca",
+        "queso manchego", "manchego", "brie", "camembert", "roquefort",
+        "parmesano", "parmigiano", "mozzarella", "burrata", "ricotta",
+        "gorgonzola", "comté", "comte", "cheddar", "tetilla", "mahón",
+        "mahon", "garrotxa", "idiazábal", "idiazabal", "queso fresco",
+        "queso curado", "queso azul", "cabrales", "picón", "picon",
+        "torta del casar", "torta de la serena", "reblochon"
+      ],
+      "ingredientes_cereal_legumbre": [
+        "arroz", "pasta", "cuscús", "cuscus", "quinoa", "avena", "cebada",
+        "centeno", "trigo sarraceno", "mijo", "polenta", " sémola"
+      ],
+      "ingredientes_harina": [
+        "harina", "harina de trigo", "harina de espelta", "harina de centeno",
+        "harina de almendra", "harina de coco", "maicena", "fécula",
+        "almidón", "almidon", "sémola", "semola"
+      ],
+      "ingredientes_especia_hierba": [
+        "pimienta", "pimienta negra", "pimienta blanca",
+        "sal", "sal Maldon",
+        "pimentón", "pimenton", "azafrán", "azafran", "canela", "comino",
+        "nuez moscada", "clavo", "cardamomo", "cúrcuma", "curcuma", "jengibre",
+        "perejil", "albahaca", "cilantro", "culantro", "menta", "mentas",
+        "hierbabuena", "romero", "tomillo",
+        "orégano", "oregano", "laurel", "cebollino",
+        "estragón", "estragon", "eneldo", "mejorana", "salvia", "hisopo"
+      ],
+      "ingredientes_aceite_vinagre": [
+        "aceite", "aceite de oliva", "AOVE", "aceite virgen extra",
+        "vinagre", "vinagre balsámico", "vinagre balsamico", "vinagre de jerez",
+        "vinagre de manzana", "vinagre de vino"
+      ],
+      "ingredientes_bebida": [
+        "vino", "vino tinto", "vino blanco", "vino rosado", "rioja",
+        "ribera del duero", "rueda", "albariño", "albarino", "priorat",
+        "cava", "champán", "champan", "champagne", "cerveza", "sidra",
+        "vermut", "vermouth", "ginebra", "gin", "ron", "whisky", "whiskey",
+        "anís", "anis", "pacharán", "pacharan", "orujo", "licor"
+      ],
+      "ingredientes_pan_reposteria": [
+        "pan", "masa", "masa madre", "baguette", "hogaza", "focaccia",
+        "brioche", "croissant", "hojaldre", "chocolate", "vainilla",
+        "caramelo", "miel", "azúcar", "azucar", "almendra", "avellana",
+        "nueces", "pistacho", "frutos secos"
+      ],
+      "patrones_frase": [
+        "me gusta el ", "me gusta la ", "me gusta los ",
+        "me gusta probar el ", "me gusta probar la ",
+        "probar el ", "probar la ", "probar con ",
+        "usar el ", "usar la ", "trabajar con ",
+        "meter el ", "meter la ",
+        "el ", "la ", "los ", "las "
+      ]
+    },
+    "elaboracion": {
+      "_comment": "Platos / preparaciones. La heurística mira si la frase menciona un plato reconocible o habla de un plato genérico ('entrante', 'principal').",
+      "platos_genericos": [
+        "entrante", "primer plato", "primero", "segundo plato", "segundo",
+        "principal", "postre", "guarnición", "guarnicion", "acompañamiento",
+        "plato único", "plato unico", "tapa", "pincho", "ración", "racion",
+        "montadito", "canapé", "canape"
+      ],
+      "tipos_plato": [
+        "risotto", "pasta", "espaguetis", "spaghetti", "tagliatelle", "ravioles",
+        "gnocchi", "ñoquis", "lasaña", "lasagna", "canelones",
+        "pizza", "calzone", "focaccia",
+        "paella", "arroz", "arroz meloso", "arroz caldoso",
+        "gazpacho", "salmorejo", "ajoblanco", "consomé", "consomme",
+        "crema", "sopa", "vellum",
+        "ensalada", "carpaccio", "tartar", "tataki", "ceviche", "sashimi",
+        "tarta", "pastel", "flan", "mousse", "helado", "sorbete",
+        "coulis", "crumble", "brownie", "tiramisú", "tiramisu",
+        "crème brûlée", "creme brulee", "crema catalana",
+        "hamburguesa", "burger", "sándwich", "sandwich",
+        "wrap", "taco", "burrito", "quesadilla",
+        "sushi", "ramen", "gyoza", "dumpling", "wonton",
+        "curry", "tikka masala", "vindaloo", "korma",
+        "cous cous", "cuscús", "tabulé", "tabule", "hummus",
+        "falafel", "shawarma", "kebab",
+        "poke", "bowl", " Buddha bowl",
+        "tortilla", "tortilla de patatas", "tortilla española",
+        "huevos rotos", "huevos benedictinos",
+        "croqueta", "croquetas", "empanadilla", "empanada",
+        "buñuelo", "buñuelos", "berlinesa", "rosquilla"
+      ],
+      "patrones_frase": [
+        "plato de ", "plato con ", "plato a base de ",
+        "receta de ", "versión de ", "opción de ",
+        "menú de ", "menú con ", "carta de ",
+        " hacer un ", " hacer una ", "montar un ", "montar una ",
+        " servir un ", " servir una ", "presentar un ", "presentar una "
+      ]
+    },
+    "tecnica": {
+      "_comment": "Métodos de cocina. Heurística por keyword de técnica explícita.",
+      "cocciones": [
+        "sous-vide", "sous vide", "roner", "al vacío", "al vacio",
+        "a baja temperatura", "a 56 grados", "a 60 grados", "a 65 grados",
+        "a la brasa", "a la parrilla",
+        "a la plancha",
+        "al horno", "al vapor",
+        "fritura", "frito", "frita", "fritos", "rebozado",
+        "confitado", "confit", "confitura",
+        "salteado", "saltear", "wok",
+        "pochado", "pochar", "estofado", "guiso", "guisar",
+        "asado", "asar", "rostizado"
+      ],
+      "fermentacion_conservacion": [
+        "fermentación", "fermentacion", "lacto-fermentación",
+        "maduración", "maduracion", "curación", "curacion",
+        "salazón", "salazon", "escabeche", "ahumado", "ahumar",
+        "deshidratación", "deshidratacion", "liofilización",
+        "liofilizacion", "encurtido", "encurtidos", "pickle"
+      ],
+      "texturas_avanzadas": [
+        "gelificación", "gelificacion", "gelatina",
+        "esferificación", "esferificacion", "esfera", "esferas",
+        "espumas", "espuma", "aire", "aires",
+        "emulsión", "emulsion", "emulsionar",
+        "nitrógeno", "nitrogeno", "criococina",
+        "crio-concentración", "crioconcentración"
+      ],
+      "mise_en_place": [
+        "mise en place", "mise en place",
+        "corte", "juliana", "brunoise", "chiffonade", "chiffonade",
+        "rallar", "laminar", "laminado",
+        "marinada", "marinar", "macerar", "maceración",
+        "infusión", "infusion", " infusionar",
+        "remojar", "remojo", "hidratación", "hidratacion"
+      ],
+      "montaje_emplatado": [
+        "montaje", "montar", "emplatado", "emplatar",
+        "presentación", "presentacion", "decorar", "decoración",
+        "acabado", "terminar el plato", "servir"
+      ],
+      "patrones_frase": [
+        " técnica de ", "técnica ", "método ",
+        "cocinar a ", "cocinar en ",
+        "elaborar con ", "elaborar a ",
+        "preparar al ", "preparar a la ",
+        " a fuego ", "al punto ", " en su punto "
+      ]
+    },
+    "herramienta": {
+      "_comment": "Aparatos, utensilios, equipo. La heurística mira keywords de herramientas explícitas.",
+      "coccion": [
+        "horno", "horno de leña", "horno de convección", "horno de vapor",
+        "horno racional", "horno josper", "horno de piedra",
+        "salamandra", "parrilla eléctrica", "plancha eléctrica", "grill", "wok de hierro",
+        "freidora", "freidora de aire", "airfryer", "freidora a presión",
+        "olla a presión", "olla exprés", "olla express",
+        "baño maría", "baño maria", "bain-marie"
+      ],
+      "frio": [
+        "nevera", "refrigerador", "congelador", "freezer",
+        "abatidor", "abatidor de temperatura", "cámara", "cámara de frío",
+        "cámara frigorífica", "arcón", "arcon congelador"
+      ],
+      "preparacion": [
+        "thermomix", "robot de cocina", "robot cocina", "kitchen aid", "kitchenaid",
+        "batidora", "batidora de varillas", "batidora de vaso",
+        "batidora de inmersión", "batidora inmersion", "minipimer",
+        "amasadora", "mezcladora", "varilladora",
+        "mandolina", "mandoline", "cortafiambre", "rallador",
+        "procesador", "procesador de alimentos", "picadora",
+        "cutter", "turmix", "túrmix"
+      ],
+      "vacio_conservacion": [
+        "envasadora", "envasadora al vacío", "envasadora al vacio",
+        "bolsa de vacío", "bolsa de vacio", "al vacío", "al vacio",
+        "sous-vide", "roner", "circulador"
+      ],
+      "medicion": [
+        "termómetro", "termometro", "sonda", "sonda de temperatura",
+        "pirómetro", "pirometro", "termómetro de cocina",
+        "balanza", "báscula", "bascula", "balanza de precisión",
+        "refractómetro", "refractometro", "brix", " phmetro",
+        "densímetro", "densimetro", "areómetro", "areometro",
+        "cronómetro", "cronometro", "timer"
+      ],
+      "utensilios": [
+        "cuchillo", "cuchillo cebollero", "cuchillo santoku", "cuchillo de pan",
+        "cuchillo deshuesar", "cuchillo filetear", "cuchillo jamonero",
+        "espátula", "espatula", "espátula de cocina", "paleta",
+        "espumadera", "espumaderas", "pinza", "pinzas", "tenazas",
+        "cuchara", "cuchara de madera", "cucharón", "cucharon",
+        "aro", "aros de emplatar", "aro de cocina", "aro de repostería",
+        "molde", "moldes", "molde de silicona", "molde desmontable",
+        "biberón", "biberones de cocina",
+        "fuente", "bandeja", "bandeja de horno",
+        "sartén", "cazuela", "cacerola", "tetera",
+        "colador", "escurridor", "chino", "colador chino",
+        "mortero", "mano de mortero",
+        "batidor", "batidor de mano", "varillas",
+        "rodillo", "rodillo de cocina",
+        "tamiz", "cedazo"
+      ],
+      "patrones_frase": [
+        " la nueva ", " el nuevo ", "el ", "la ", "los ", "las ",
+        "herramienta", "aparato", "utensilio", "instrumento", "equipo",
+        "máquina", "maquina", "dispositivo"
+      ]
+    },
+    "receta": {
+      "_comment": "Recetas completas (vs elaboraciones como concepto). Detecta cuando la frase tiene 'receta de X' o habla de pasos concretos.",
+      "indicadores": [
+        "receta de ", "mi receta", "nuestra receta", "receta propia",
+        " receta:", "receta —", "receta -",
+        " cómo hago ", "cómo hacemos ", "cómo se hace ",
+        "los pasos para ", "la fórmula de ", "fórmula de "
+      ]
+    },
+    "proveedor": {
+      "_comment": "Proveedores, marcas, gente que vende producto. Conservadora: solo si hay keyword de proveedor explícito.",
+      "indicadores": [
+        "proveedor", "proveedores", "suministrador", "suministra",
+        "me trae ", "nos trae ", "nos venden ",
+        "el de ", "la de ", "el señor ", "la señora ",
+        " distribuidor", "distribuidora",
+        " marca", "de marca ", "de la marca "
+      ]
+    },
+    "cliente": {
+      "_comment": "Información sobre clientes concretos. Muy conservadora: solo si el contexto indica cliente explícito.",
+      "indicadores": [
+        "el cliente ", "la cliente ", "los clientes ",
+        "el señor ", "la señora ", "el caballero ",
+        "siempre pide ", "siempre pide el ", "siempre pide la ",
+        "alergia", "alérgico", "alergica", "intolerante",
+        "comensal", "comensales", "mesa "
+      ]
+    },
+    "evento": {
+      "_comment": "Eventos, ocasiones, fechas especiales.",
+      "indicadores": [
+        "menú de navidad", "menu de navidad", "cena de nochebuena",
+        "menú de nochevieja", "cena de gala", "comida de empresa",
+        "banquete", "boda", "comunión", "bautizo",
+        "cumpleaños", "aniversario", "celebración",
+        "para el día de ", "para la fiesta ",
+        "menú de primavera", "menú de verano", "menú de otoño",
+        "menú de invierno", "menú de semana santa", "menú de san juan",
+        "menú degustación", "menú de temporada"
+      ]
+    },
+    "restriccion": {
+      "_comment": "Restricciones alimentarias, alergias, requisitos dietéticos.",
+      "indicadores": [
+        "sin gluten", "sin lactosa", "vegano", "vegana", "vegetariano",
+        "vegetariana", "celíaco", "celiaco", "celiaca",
+        "alergia a ", "alérgico a ", "alérgica a ",
+        "intolerancia a ", "intolerante a ",
+        "diabético", "diabetico", "diabética",
+        "kosher", "halal", "sin frutos secos", "sin marisco",
+        "sin alcohol", "alcohol-free", "sin azúcar", "sin azucar"
+      ]
+    },
+    "concepto": {
+      "_comment": "Conceptos generales / filosofía / observación de negocio. Categoría comodín para cosas que no encajan en las otras.",
+      "indicadores": [
+        "filosofía", "filosofia", "concepto de ", "concepto del ",
+        "tendencias", "moda gastronómica", "moda en cocina",
+        "observación", "observacion", "nota mental", "apunte",
+        "tengo que ", "hay que ", "habría que ", "habria que ",
+        "debería ", "deberia ", "podría ", "podria ",
+        "se me ocurrió ", "se me ocurrio ", "se me ha ocurrido ",
+        "idea para ", "sugerencia", "apuntarse ",
+        "importante: ", "recordar: ", "nota: "
+      ]
+    }
+  },
+  "patrones_intencion_alta_confianza": {
+    "_comment": "Patrones que indican intención clara de guardar. Si una frase matchea uno de estos + una keyword de categoría, confianza ALTA → guarda auto.",
+    "frases_explicitas": [
+      "^me gusta\\s+(mucho\\s+)?(el|la|los|las|probar\\s+(el|la|los|las))",
+      "^me gustaria\\s+", "^me gustar\u00eda\\s+",
+      "^me encantaria\\s+", "^me encantar\u00eda\\s+",
+      "^me\\s+apetece\\s+(probar\\s+)?",
+      "^quiero\\s+(probar|usar|trabajar\\s+con|hacer|montar)\\s+",
+      "^tengo\\s+que\\s+(probar|usar|trabajar|hacer|montar)\\s+",
+      "^tengo\\s+(un|una)\\s+(proveedor|cliente|receta|nota|idea)",
+      "^tengo\\s+(un|una)\\s+",
+      "^hay\\s+que\\s+(probar|usar|trabajar|hacer|montar)\\s+",
+      "^habria\\s+que\\s+", "^habr\u00eda\\s+que\\s+",
+      "^deberiamos\\s+", "^deber\u00edamos\\s+",
+      "^se\\s+me\\s+(ocurrio|ocurri\u00f3|ha\\s+ocurrido)\\s+",
+      "^apuntar\\s*:?\\s+",
+      "^nota\\s*:?\\s+",
+      "^recordar\\s*:?\\s+",
+      "^importante\\s*:?\\s+",
+      "^tengo\\s+una\\s+idea\\s*:?\\s+",
+      "^mi\\s+idea\\s+es\\s+",
+      "^nuestra\\s+idea\\s+es\\s+",
+      "^receta\\s+de\\s+",
+      "^proveedor\\s+",
+      "^cliente\\s+"
+    ]
+  },
+  "palabras_vacias_contexto_no_relevante": {
+    "_comment": "Frases donde el sistema NO debe guardar nada aunque matchee algo. Son charla casual, no ideas.",
+    "frases_cortesia": [
+      "hola", "buenas", "buenos días", "buenas tardes", "buenas noches",
+      "qué tal", "como estás", "como va", "qué hay",
+      "gracias", "muchas gracias", "mil gracias",
+      "hasta luego", "adios", "adiós", "chao", "chau",
+      "ok", "vale", "perfecto", "genial", "estupendo",
+      "de acuerdo", "entendido", "vale"
+    ],
+    "preguntas_meta": [
+      "qué puedes hacer", "que puedes hacer",
+      "qué sabes hacer", "que sabes hacer",
+      "qué comandos hay", "que comandos hay",
+      "cómo te llamo", "como te llamo",
+      "quién eres", "quien eres",
+      "ayuda", " ayuda"
+    ],
+    "mensajes_cortos": [
+      " mm", " hmm", "ah", "ahá", "si", "sí", "no",
+      "vale", "ok", "ya"
+    ]
+  }
+}

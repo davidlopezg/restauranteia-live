@@ -921,13 +921,17 @@ def procesar_mensaje_chat(peticion: str) -> str:
     el contexto del restaurante (ticket, línea, productos, carta) y las ideas
     guardadas (si hay), y devuelve la respuesta del modelo.
 
+    v4.1 — además ejecuta la memoria automática: detecta comentarios
+    relevantes en el mensaje y los guarda (si el toggle está activo) o los
+    sugiere (modo 'sugerir'). El anexo va al final de la respuesta del chef.
+
     No devuelve estructura fija — es texto conversacional.
 
     Args:
         peticion: pregunta o consulta libre del usuario.
 
     Returns:
-        String con la respuesta del chef.
+        String con la respuesta del chef (+ anexo de memoria si aplica).
     """
     mensaje = (peticion or "").strip()
     if not mensaje:
@@ -975,6 +979,7 @@ def procesar_mensaje_chat(peticion: str) -> str:
         pass
 
     # 5. Recordatorio de idioma y llamada al modelo
+    respuesta_base = ""
     try:
         aviso = check_estacionalidad(mensaje, load_estacionalidad())
         contexto_adicional = ""
@@ -991,10 +996,36 @@ def procesar_mensaje_chat(peticion: str) -> str:
             "Solo alfabeto latino."
         )
         user_message = user_message + instruccion_idioma
-        respuesta = call_minimax(system_prompt, user_message)
-        return respuesta
+        respuesta_base = call_minimax(system_prompt, user_message)
     except Exception as e:
         return f"❌ Error ({type(e).__name__}): {str(e)[:200]}"
+
+    # 6. v4.1 — Memoria automática del chat.
+    # Detecta comentarios relevantes en el mensaje del usuario y los guarda
+    # automáticamente (o los sugiere). El anexo va al final de la respuesta.
+    try:
+        from agents.memoria.triggers import (
+            analizar_mensaje,
+            guardar_automatico,
+            formatear_anexo_chat,
+            is_memoria_activa,
+        )
+        if is_memoria_activa():
+            resultado = analizar_mensaje(mensaje)
+            from agents.memoria.storage import init_db as _init_db
+            conn = _init_db()
+            try:
+                guardadas = guardar_automatico(conn, mensaje, skill_origen="chat")
+            finally:
+                conn.close()
+            anexo = formatear_anexo_chat(guardadas, resultado)
+            if anexo:
+                respuesta_base = respuesta_base + anexo
+    except Exception:
+        # Si falla la memoria automática, la respuesta del chef se devuelve igual
+        pass
+
+    return respuesta_base
 
 
 # ─────────────────────────────────────────────────────────────────────────────

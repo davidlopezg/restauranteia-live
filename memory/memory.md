@@ -444,3 +444,32 @@ La skill `ideas_creativas` (en `agents/creativo/skills.py:54-66`, con handler en
 - Crecer el mapping curado a 200+ ingredientes (David lo puede hacer editando el JSON).
 - Integrar Spoonacular cuando haya API key.
 - Sumar constraints operativos del restaurante al prompt (equipment, cadencia).
+
+---
+
+## Decisiones de la Fase 4.1 — Memoria automática del chat (2026-09-04)
+
+**Por qué:** David pidió "haz que el agente de chat recuerde todo lo que se le vaya comentario relevante en una memoria". Refinó después: separar por **productos, elaboraciones, técnicas, herramientas/aparatos/utensilios, recetas**.
+
+**Cambio fundamental vs v1 (Archivo de Ideas):**
+- v1: solo comando explícito (`/guardar`). "El comando es el consentimiento".
+- v4.1: detección heurística automática + guardado. Toggle on/off. **Esto invierte la decisión v1**.
+
+**Por qué se invirtió:**
+- La fricción de tener que escribir `/guardar` cada vez era alta.
+- David explícitamente pidió la automatización.
+- Se mantiene el principio RGPD con: toggle persistente, separación auto/manual, `/olvidar auto`.
+
+**Diseño:**
+- 11 categorías: 5 principales (`producto`, `elaboracion`, `tecnica`, `herramienta`, `receta`) + 6 auxiliares (`proveedor`, `cliente`, `evento`, `restriccion`, `concepto`, `otro`).
+- Heurística por keywords (en `agents/ideas_categorias.json`) — sin LLM para mantener determinismo y 0 coste extra.
+- Tres niveles de confianza (alta/media/baja). Solo ALTA se guarda auto. MEDIA sugiere.
+- `origen='auto-chat'` para distinguir auto de manual.
+- `agentes/memoria/triggers.py` — heurística.
+- `agentes/memoria/config.py` — estado persistente del toggle.
+
+**Decisiones clave:**
+- **D5.1**: Trigger solo activo en skill `chat`, no en `/ficha` ni `/ideas` (esas generan output estructurado, no chat libre).
+- **D5.2**: Cuando hay empate de keywords, prioridad: `receta > producto > herramienta > tecnica > elaboracion > evento > proveedor > cliente > restriccion > concepto`.
+- **D5.3**: Word boundary siempre para single-word keywords (evita "menta" en "fermentación"). JSON incluye plurales explícitos.
+- **D5.4**: Detección conservadora — prefiere no detectar a guardar ruido.

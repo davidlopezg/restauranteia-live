@@ -73,7 +73,7 @@ short_description: "Chef IA: fichas y proceso creativo"
 | Fix de surrogate UTF-8 | ✅ | Encoding correcto de emoji en payload |
 | **Fase 4: Archivo de Ideas (módulo de memoria)** | ✅ | SQLite local + 11 comandos transversales + consent explícito |
 | Patrón template → live instance | ✅ | Repo público + repo privado sincronizable |
-| Fase 4.1: Memoria enriquecida / categorías / RGPD | ⏳ | Backlog |
+| **Fase 4.1: Memoria automática del chat** | ✅ | Detección heurística en 5 categorías (producto/elaboración/técnica/herramienta/receta) + 4 comandos nuevos |
 | Resto de agentes (Producción, Marketing, etc.) | ⏳ | Backlog |
 | Resto de agentes (Producción, Marketing, etc.) | ⏳ | Backlog |
 | SaaS + monetización | ⏳ | Cuando haya tracción real |
@@ -345,9 +345,9 @@ La skill `ideas_creativas` es una **exploración conversacional**: 10 ideas vari
 
 ## Archivo de Ideas (módulo de memoria)
 
-> **🔒 Invariante central: solo se guarda lo que el usuario ordena explícitamente con un comando.** No hay heurística previa, no hay propuesta automática del agente. El comando ES el consentimiento.
+> **v4.1 — Memoria automática del chat**: además del guardado manual (`/guardar`), el chat detecta heurísticamente comentarios relevantes en tus mensajes y los guarda automáticamente. Se clasifica en **5 categorías principales** (producto / elaboración / técnica / herramienta / receta) + auxiliares (proveedor / cliente / evento / restricción / concepto). Todo desactivable con `/memoria off`.
 
-El módulo `agents/memoria/` te da una base de datos SQLite local para guardar ideas, sin que se evaporen al cerrar el chat. Es el **complemento persistente** de la skill `ideas_creativas`: ella genera ideas nuevas cada vez; este módulo las conserva cuando vos querés.
+El módulo `agents/memoria/` te da una base de datos SQLite local para guardar ideas, sin que se evaporen al cerrar el chat. Es el **complemento persistente** de la skill `ideas_creativas`: ella genera ideas nuevas cada vez; este módulo las conserva cuando vos querés. Además, en v4.1 detecta y guarda automáticamente las ideas relevantes que mencionás en conversación.
 
 ### Quick start
 
@@ -413,14 +413,68 @@ El sistema detecta duplicados automáticamente antes de guardar:
 
 ### Categorías externalizadas
 
-Las 9 categorías precargadas viven en `agents/ideas_categorias.json` y se pueden editar sin tocar código:
+La taxonomía v4.1 incluye 11 categorías (5 principales + 6 auxiliares) en `agents/ideas_categorias.json`. Cada categoría tiene listas de keywords que alimentan la heurística de detección automática:
 
 ```json
-["concepto", "plato", "técnica", "producto", "proveedor",
- "menú completo", "ocasión/evento", "restricción", "otro (escribir)"]
+["producto", "elaboracion", "tecnica", "herramienta", "receta",
+ "proveedor", "cliente", "evento", "restriccion", "concepto", "otro"]
 ```
 
-Si necesitás una nueva categoría, agregala al JSON y reiniciá la app.
+Las **5 categorías principales** son las que pediste separar:
+- **producto** — ingredientes, materia prima (ej: "me gusta el kumquat" → producto)
+- **elaboración** — platos, preparaciones (ej: "quiero hacer un risotto de setas")
+- **técnica** — métodos de cocina (ej: "sous-vide a 56 grados")
+- **herramienta** — aparatos, utensilios (ej: "la thermomix nueva")
+- **receta** — recetas completas (ej: "receta de mi gazpacho")
+
+Si necesitás nuevas keywords para una categoría, agregalas al JSON y reiniciá la app.
+
+### Memoria automática del chat (v4.1)
+
+> **Activada por defecto.** El chat detecta comentarios relevantes en tus mensajes y los guarda automáticamente con un anexo discreto: `📌 Guardé 1 idea en tu archivo: #5`.
+
+El sistema es **conservador** para no contaminar la DB con ruido:
+
+- **Alta confianza** (frase explícita + keyword) → guarda auto con `📌`.
+- **Media confianza** (en modo `sugerir`) → muestra como sugerencia: `💡 ¿Guardo esto?: [extracto]`.
+- **Baja confianza** → no hace nada.
+
+Cada idea auto-guardada se marca con `origen='auto-chat'` y se distingue de las manuales.
+
+**Comandos de gestión** (transversales, funcionan en cualquier skill):
+
+| Comando | Qué hace |
+|---|---|
+| `/memoria on` | Activar la detección automática |
+| `/memoria off` | Desactivarla (volves al guardado manual con `/guardar`) |
+| `/memoria alta` | Modo auto-guardar sin pedir permiso (default) |
+| `/memoria sugerir` | Modo sugerir: no guarda, solo pregunta antes |
+| `/memoria-status` | Ver estado actual + conteo auto vs manual |
+| `/lista-auto [filtro]` | Ver solo las ideas auto-guardadas |
+| `/olvidar auto` | Borrar solo las auto-guardadas (con confirmación) |
+
+**Ejemplo de flujo:**
+
+```
+Vos: me gustaría probar el kumquat en el postre
+Chef: [responde con sugerencias culinarias...]
+      📌 Guardé 1 idea en tu archivo: #5
+      *(esto es automático, `/memoria off` para desactivarlo)*
+
+Vos: /lista-auto
+      #5 | producto | 2026-09-04
+      > me gustaría probar el kumquat en el postre
+
+Vos: /memoria off
+      🧠 Memoria automática **desactivada**. El chat ya no guardará ideas
+      automáticamente. Seguí usando `/guardar` manualmente.
+```
+
+**RGPD en v4.1**:
+
+- El toggle persiste en disco en `conocimiento/interno_restaurante/memoria_config.json`.
+- Las ideas auto se distinguen claramente (origen='auto-chat') y se pueden borrar masivamente con `/olvidar auto`.
+- Sin telemetría. Todo es local.
 
 ### Cómo se almacenan los datos
 
@@ -440,7 +494,9 @@ Si necesitás una nueva categoría, agregala al JSON y reiniciá la app.
 python -m pytest tests/test_memoria_storage.py tests/test_memoria_formatters.py \
                   tests/test_memoria_commands.py tests/test_memoria_duplicates.py \
                   tests/test_memoria_counter.py tests/test_memoria_rgpd.py \
-                  tests/test_memoria_concurrency.py tests/test_regresion_skills.py -v
+                  tests/test_memoria_concurrency.py tests/test_regresion_skills.py \
+                  tests/test_memoria_triggers.py tests/test_memoria_config.py \
+                  tests/test_memoria_auto.py -v
 ```
 
 Resultado esperado: **120 tests pasando**. Cubre CRUD, formateo, comandos, duplicados, contador, RGPD, concurrencia WAL y regresión de skills existentes.
