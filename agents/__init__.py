@@ -1,7 +1,7 @@
 """
 agents — paquete de agentes con bootstrap automático del contexto compartido.
 
-Cualquier agente del proyecto comparte `.agent_knowledge/` (gestionádo por
+Cualquier agente del proyecto comparte `conocimiento/interno_restaurante/` (gestionádo por
 `agents/knowledge_context.py`). La fase init es idempotente y se corre solo
 la primera vez.
 

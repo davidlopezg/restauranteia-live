@@ -17,7 +17,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
 
-_DEFAULT_DB_PATH = Path(".agent_knowledge/ideas.db")
+_DEFAULT_DB_PATH = Path("conocimiento/interno_restaurante/ideas.db")
 
 # ── Schema D2 ──────────────────────────────────────────────────────────────
 
@@ -43,7 +43,7 @@ _CREATE_INDEXES_SQL = [
 
 _IDEAS_MD_CONTENT = """# Archivo de Ideas — Schema
 
-Base de datos local SQLite en `.agent_knowledge/ideas.db`.
+Base de datos local SQLite en `conocimiento/interno_restaurante/ideas.db`.
 
 ## Tabla `ideas`
 
@@ -78,15 +78,15 @@ Base de datos local SQLite en `.agent_knowledge/ideas.db`.
 def init_db(db_path: Optional[Path] = None) -> sqlite3.Connection:
     """Initialize or open the ideas database.
 
-    Creates the .agent_knowledge/ directory if it doesn't exist.
+    Creates the conocimiento/interno_restaurante/ directory if it doesn't exist.
     Opens a SQLite connection with WAL mode, foreign_keys ON,
     check_same_thread=False, and timeout=5.0.
     Creates the ideas table and indexes if they don't exist.
-    Also creates the companion .agent_knowledge/ideas.md if missing.
+    Also creates the companion conocimiento/interno_restaurante/ideas.md if missing.
 
     Args:
         db_path: Path to the SQLite DB file. Defaults to
-                 ``.agent_knowledge/ideas.db``.
+                 ``conocimiento/interno_restaurante/ideas.db``.
 
     Returns:
         An open sqlite3.Connection.
@@ -340,7 +340,7 @@ def export_ideas(
     Args:
         conn: Open SQLite connection.
         export_path: Target file path. Defaults to
-                     ``.agent_knowledge/ideas_export_<YYYYMMDD-HHMMSS>.json``.
+                     ``conocimiento/interno_restaurante/ideas_export_<YYYYMMDD-HHMMSS>.json``.
 
     Returns:
         Path to the created JSON file.
@@ -354,7 +354,7 @@ def export_ideas(
 
     if export_path is None:
         timestamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
-        export_path = Path(f".agent_knowledge/ideas_export_{timestamp}.json")
+        export_path = Path(f"conocimiento/interno_restaurante/ideas_export_{timestamp}.json")
 
     export_path = Path(export_path)
     export_dir = export_path.parent
@@ -441,7 +441,7 @@ def _row_to_dict(row: sqlite3.Row) -> dict[str, Any]:
 
 
 def _ensure_ideas_md(db_dir: Path) -> None:
-    """Create the companion .agent_knowledge/ideas.md if it doesn't exist."""
+    """Create the companion conocimiento/interno_restaurante/ideas.md if it doesn't exist."""
     ideas_md_path = db_dir / "ideas.md"
     if not ideas_md_path.exists():
         try:

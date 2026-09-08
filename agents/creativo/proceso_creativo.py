@@ -21,7 +21,7 @@ Comandos del usuario (vía input de chat):
     /reiniciar       — reset de todas las fases
     /salir           — terminar la sesión (la guarda)
 
-El state machine persiste cada cambio en `.agent_knowledge/sessions/`.
+El state machine persiste cada cambio en `conocimiento/interno_restaurante/sessions/`.
 """
 
 from __future__ import annotations
@@ -50,101 +50,32 @@ from agents.creativo.agent import (
     load_estacionalidad,
 )
 
+# Las fases del flujo se leen del .md (fuente de verdad, ver conocimiento/interno_app/procesos/proceso_creativo.md)
+from agents.creativo.proceso_creativo_md import parse_proceso_creativo_md
+
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 load_dotenv(PROJECT_ROOT / ".env")
 
 
+def _load_fases() -> list[dict]:
+    """Lee las fases del .md del proceso creativo. Llamado al importar."""
+    return parse_proceso_creativo_md()
+
+
 # ══════════════════════════════════════════════════════════════════════════════
-# Definición de las fases
+# Definición de las fases (leídas del .md al importar el módulo)
 # ══════════════════════════════════════════════════════════════════════════════
 
-FASES: list[dict] = [
-    {
-        "key": "alma",
-        "orden": 1,
-        "nombre": "El alma del plato",
-        "descripcion_corta": "Qué evoca, qué recuerdo, qué estación, qué producto.",
-        "instruccion_llm": (
-            "Describí el ALMA del plato: qué evoca, qué recuerdo, qué estación, qué producto. "
-            "2-3 frases. Tono poético pero no cursi. Hacés que el lector quiera probar sin haber visto nada. "
-            "Devolvé SOLO el contenido de esta fase, sin encabezado."
-        ),
-    },
-    {
-        "key": "metodos",
-        "orden": 2,
-        "nombre": "Métodos creativos que aplico",
-        "descripcion_corta": "2-3 métodos creativos específicos (ElBulli + propios) y por qué.",
-        "instruccion_llm": (
-            "Elegí 2-3 métodos creativos ESPECÍFICOS para este plato (de los siguientes: "
-            "lo autóctono, influencias externas, los sentidos como punto de partida, "
-            "el sexto sentido, simbiosis dulce/salado, asociación, inspiración, "
-            "adaptación, deconstrucción, minimalismo, sinergia). NO listes todos — elegí los relevantes. "
-            "Explicá brevemente por qué aplican. "
-            "Devolvé SOLO el contenido de esta fase."
-        ),
-    },
-    {
-        "key": "equilibrio",
-        "orden": 3,
-        "nombre": "El equilibrio",
-        "descripcion_corta": "Análisis dulce/salado/ácido/amargo/umami/graso.",
-        "instruccion_llm": (
-            "Analizá el EQUILIBRIO del plato en términos de: dulce / salado / ácido / amargo / umami / graso. "
-            "Indicá qué vértices del polígono tiene este plato. Cuál es el 'punto crítico' donde se cae si te pasás. "
-            "3-5 frases. Devolvé SOLO el contenido de esta fase."
-        ),
-    },
-    {
-        "key": "tecnica",
-        "orden": 4,
-        "nombre": "La técnica",
-        "descripcion_corta": "Qué procesos potencian el producto sin enmascararlo.",
-        "instruccion_llm": (
-            "Describí la TÉCNICA del plato: qué procesos potencian el producto sin enmascararlo. "
-            "Si hay una técnica 'de autor' que aplica, mencionala. "
-            "Si la técnica obvia es suficiente, decilo (pedantería detectada). "
-            "3-4 frases. Devolvé SOLO el contenido de esta fase."
-        ),
-    },
-    {
-        "key": "storytelling",
-        "orden": 5,
-        "nombre": "El storytelling",
-        "descripcion_corta": "Qué historia va a contar, a quién, por qué.",
-        "instruccion_llm": (
-            "Describí el STORYTELLING del plato: qué historia va a contar. "
-            "A quién va dirigido (público del restaurante). "
-            "Por qué la gente lo va a recordar. "
-            "3-4 frases. Devolvé SOLO el contenido de esta fase."
-        ),
-    },
-    {
-        "key": "descartadas",
-        "orden": 6,
-        "nombre": "Cosas que consideré y descarté",
-        "descripcion_corta": "2-3 alternativas evaluadas con por qué no.",
-        "instruccion_llm": (
-            "Mencioná 2-3 ALTERNATIVAS que evaluaste pero no elegiste, con una frase explicando por qué cada una. "
-            "Esto muestra tu criterio — el usuario ve que NO es la única opción válida. "
-            "Formato: lista de 'Opción X: razón de descarte'. "
-            "Devolvé SOLO el contenido de esta fase."
-        ),
-    },
-    {
-        "key": "preguntas",
-        "orden": 7,
-        "nombre": "Cosas que me preocupan / preguntas al usuario",
-        "descripcion_corta": "Estacionalidad, accesibilidad, complejidad, riesgos + preguntas.",
-        "instruccion_llm": (
-            "Mencioná cosas que te PREOCUPAN de este plato: estacionalidad, accesibilidad, complejidad técnica, riesgos. "
-            "Si algo está fuera de temporada, mencionalo con propuesta de alternativa. "
-            "Si falta info crítica para decidir (ej: ¿vegetariano estricto?), hacé UNA pregunta concreta al final. "
-            "Si no hay nada que preguntar, decilo. "
-            "Devolvé SOLO el contenido de esta fase."
-        ),
-    },
-]
+try:
+    FASES: list[dict] = _load_fases()
+except (FileNotFoundError, ValueError) as e:
+    # Fallar ruidosamente si el .md no se puede cargar — no tiene sentido
+    # que el proceso creativo funcione sin su definición.
+    raise ImportError(
+        f"No se pudo cargar el flujo del proceso creativo desde el .md: {e}. "
+        f"Verificá que existe conocimiento/interno_app/procesos/proceso_creativo.md "
+        f"y respeta el formato esperado (bloques <!-- fase --> ... <!-- /fase -->)."
+    ) from e
 
 FASES_POR_KEY: dict[str, dict] = {f["key"]: f for f in FASES}
 

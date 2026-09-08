@@ -134,15 +134,25 @@ _RE_GUARDAR_NUM = re.compile(r"^/guardar\s+(\d+)$")
 _RE_GUARDAR_SIMPLE = re.compile(r"^/guardar$")
 _RE_GUARDAR_TEXTO = re.compile(r"^/guardar\s+(.+)$")
 _RE_EDITAR = re.compile(r"^/editar\s+(\d+)\s+(.+)$")
-_RE_IDEAS = re.compile(r"^/ideas(\s+.+)?$")
+# /ideas ahora es del dispatcher principal (genera 10 ideas creativas).
+# El archivo de ideas usa /lista-ideas para listar las guardadas.
+_RE_LISTA_IDEAS = re.compile(r"^/lista-ideas(\s+.+)?$")
+_RE_LISTA_AUTO = re.compile(r"^/lista-auto(\s+.+)?$")  # v4.1: solo auto-guardadas
 _RE_OLVIDAR_TODO = re.compile(r"^/olvidar\s+todo$")
+_RE_OLVIDAR_AUTO = re.compile(r"^/olvidar\s+auto$")  # v4.1: olvidar solo auto-guardadas
 _RE_OLVIDAR_N = re.compile(r"^/olvidar\s+(\d+)$")
 _RE_EXPORT = re.compile(r"^/export-ideas$")
 _RE_SILENCIAR = re.compile(r"^/silenciar-contador$")
-_RE_AYUDA = re.compile(r"^/ayuda$")
+
+# ── v4.1: comandos de la memoria automática (Fase 4.1) ──
+_RE_MEMORIA_TOGGLE = re.compile(r"^/memoria\s+(\S+)$", re.IGNORECASE)
+_RE_MEMORIA_STATUS = re.compile(r"^/memoria-status$", re.IGNORECASE)
+# /ayuda lo maneja el dispatcher principal del chat (incluye
+# los comandos del archivo deideas también).
 
 # Confirmation responses (without /)
 _RE_CONFIRMAR_TODO = re.compile(r"^olvidar\s+todo$", re.IGNORECASE)
+_RE_CONFIRMAR_TODO_AUTO = re.compile(r"^olvidar\s+auto$", re.IGNORECASE)
 _RE_CONFIRMAR_N = re.compile(r"^olvidar\s+(\d+)$", re.IGNORECASE)
 
 # ── Help text ──────────────────────────────────────────────────────────────
@@ -154,11 +164,16 @@ _AYUDA_TEXTO = """**Comandos disponibles:**
 `/guardar N` — Guardá la idea número N de una lista numerada.
 `/guardar igual` — Guardá igual si hay advertencia de duplicado.
 `/editar N [nuevo texto]` — Editá una idea guardada.
-`/ideas [filtro]` — Listá tus ideas guardadas.
+`/lista-ideas [filtro]` — Listá tus ideas guardadas.
+`/lista-auto [filtro]` — Listá solo las auto-guardadas por el chat.
 `/olvidar todo` — Borrar TODAS las ideas (requiere confirmación).
+`/olvidar auto` — Borrar solo las auto-guardadas (requiere confirmación).
 `/olvidar N` — Borrar una idea específica (requiere confirmación).
 `/export-ideas` — Exportá tus ideas a un archivo JSON.
 `/silenciar-contador` — Activá o desactivá el contador al guardar.
+`/memoria on|off` — Activá o desactivá la memoria automática del chat.
+`/memoria alta|sugerir` — Modo auto-guardar o sugerir antes de guardar.
+`/memoria-status` — Ver estado actual de la memoria automática.
 `/ayuda` — Mostrá esta lista de comandos."""
 
 
@@ -214,6 +229,25 @@ def handle_command(
                     "content": f"✅ Archivo de ideas borrado. Se eliminaron {count} ideas.",
                 }
             # else: ignore, fall through — user must re-issue /olvidar
+
+        # --- Pending "olvidar auto" (v4.1: borrar solo auto-guardadas) ---
+        if pending["type"] == "olvidar_auto":
+            if _RE_CONFIRMAR_TODO_AUTO.match(mensaje_stripped):
+                _clear_pending()
+                resolved_conn, owned = _resolve_conn(conn)
+                try:
+                    count = _delete_auto_ideas(resolved_conn)
+                finally:
+                    if owned:
+                        resolved_conn.close()
+                return {
+                    "role": "assistant",
+                    "content": (
+                        f"✅ Borradas {count} ideas auto-guardadas. "
+                        "Las tuyas manuales se conservan."
+                    ),
+                }
+            # else: ignore, fall through
 
         # --- Pending "olvidar N" ---
         if pending["type"] == "olvidar_n":
@@ -274,8 +308,13 @@ def handle_command(
                 }
             # else: ignore, fall through
 
-    # ── Special: "olvidar todo" / "olvidar N" without pending → error ──
+    # ── Special: "olvidar todo" / "olvidar auto" / "olvidar N" without pending → error ──
     if _RE_CONFIRMAR_TODO.match(mensaje_stripped) and pending is None:
+        return {
+            "role": "assistant",
+            "content": format_error("No había nada que confirmar."),
+        }
+    if _RE_CONFIRMAR_TODO_AUTO.match(mensaje_stripped) and pending is None:
         return {
             "role": "assistant",
             "content": format_error("No había nada que confirmar."),
@@ -344,11 +383,35 @@ def handle_command(
                 editar_match.group(2).strip(),
             )
 
-        # --- /ideas [filtro] ---
-        ideas_match = _RE_IDEAS.match(mensaje)
+        # --- /lista-ideas [filtro] ---
+        ideas_match = _RE_LISTA_IDEAS.match(mensaje)
         if ideas_match:
             filtro_raw = ideas_match.group(1)
             return _handle_ideas(resolved_conn, filtro_raw)
+
+        # --- /lista-auto [filtro] (v4.1: solo auto-guardadas por el chat) ---
+        lista_auto_match = _RE_LISTA_AUTO.match(mensaje)
+        if lista_auto_match:
+            filtro_raw = lista_auto_match.group(1)
+            return _handle_ideas(resolved_conn, filtro_raw, solo_auto=True)
+
+        # --- /memoria on|off|alta|sugerir (v4.1: gestión memoria automática) ---
+        mem_match = _RE_MEMORIA_TOGGLE.match(mensaje)
+        if mem_match:
+            arg = mem_match.group(1).lower()
+            if arg in ("on", "off", "alta", "sugerir", "status"):
+                return _handle_memoria(arg)
+            # Argumento desconocido: mensaje de error
+            return {
+                "role": "assistant",
+                "content": format_error(
+                    f"argumento desconocido: {arg!r}. Probá: on, off, alta, sugerir, status."
+                ),
+            }
+
+        # --- /memoria-status (v4.1) ---
+        if _RE_MEMORIA_STATUS.match(mensaje):
+            return _handle_memoria_status(resolved_conn)
 
         # --- /olvidar todo ---
         if _RE_OLVIDAR_TODO.match(mensaje):
@@ -358,6 +421,28 @@ def handle_command(
                 "content": (
                     "⚠️ Escribí `olvidar todo` (sin la /) "
                     "para confirmar que querés borrar TODAS tus ideas guardadas."
+                ),
+            }
+
+        # --- /olvidar auto (v4.1: borrar solo auto-guardadas) ---
+        if _RE_OLVIDAR_AUTO.match(mensaje):
+            n_auto = sum(
+                1 for _ in resolved_conn.execute(
+                    "SELECT id FROM ideas WHERE origen = 'auto-chat'"
+                ).fetchall()
+            )
+            if n_auto == 0:
+                return {
+                    "role": "assistant",
+                    "content": "ℹ️ No hay ideas auto-guardadas para borrar.",
+                }
+            _set_pending({"type": "olvidar_auto", "count": n_auto})
+            return {
+                "role": "assistant",
+                "content": (
+                    f"⚠️ Hay {n_auto} ideas auto-guardadas por el chat. "
+                    "Escribí `olvidar auto` (sin la /) para borrarlas "
+                    "(las tuyas manuales se conservan)."
                 ),
             }
 
@@ -400,16 +485,15 @@ def handle_command(
             }
 
         # --- /ayuda ---
-        if _RE_AYUDA.match(mensaje):
-            return {"role": "assistant", "content": _AYUDA_TEXTO}
+        # Lo maneja el dispatcher principal del chat (ver app._texto_ayuda).
+        # Aquí no interceptamos para mantener la transversalidad: el chat
+        # decide qué comandos mostrar.
 
-        # ── Unknown /command ──
-        return {
-            "role": "assistant",
-            "content": format_error(
-                "Comando no reconocido. Escribí `/ayuda` para ver los comandos disponibles."
-            ),
-        }
+        # ── Unknown /command (no es del archivo de ideas) ──
+        # Devolvemos None para que el dispatcher principal del chat decida
+        # si lo maneja o no. Mantiene la transversalidad: el archivo de
+        # ideas solo intercepta SUS comandos, no todos los `/comando`.
+        return None
 
     finally:
         if owned:
@@ -648,24 +732,6 @@ def _handle_editar(
     }
 
 
-def _handle_ideas(
-    conn: Any,
-    filtro_raw: Optional[str],
-) -> dict[str, str]:
-    """Handle ``/ideas [filtro]``."""
-    filtro: dict[str, Any] | None = None
-    if filtro_raw:
-        filtro_texto = filtro_raw.strip()
-        if filtro_texto:
-            filtro = {"search": filtro_texto}
-
-    ideas = load_ideas(conn, filtro)
-    return {
-        "role": "assistant",
-        "content": format_idea_list(ideas),
-    }
-
-
 def _handle_export(conn: Any) -> dict[str, str]:
     """Handle ``/export-ideas``."""
     from pathlib import Path
@@ -686,3 +752,203 @@ def _handle_export(conn: Any) -> dict[str, str]:
                 f"No pude exportar: {e}. Intentá de nuevo."
             ),
         }
+
+
+# ── v4.1: handlers de memoria automática + helpers ────────────────────────
+
+
+def _delete_auto_ideas(conn: Any) -> int:
+    """Borra SOLO las ideas con origen='auto-chat' (v4.1).
+
+    Devuelve el número de filas borradas.
+    """
+    cursor = conn.execute("DELETE FROM ideas WHERE origen = 'auto-chat'")
+    conn.commit()
+    return cursor.rowcount
+
+
+def _handle_ideas(
+    conn: Any,
+    filtro_raw: Optional[str],
+    solo_auto: bool = False,
+) -> dict[str, str]:
+    """Handle ``/lista-ideas [filtro]`` (y ``/lista-auto``).
+
+    Args:
+        conn: Conexión SQLite.
+        filtro_raw: Texto del filtro opcional (ej: 'kumquat').
+        solo_auto: Si True, filtra solo las auto-guardadas (v4.1).
+    """
+    filtro: dict[str, Any] | None = None
+    if filtro_raw:
+        filtro_texto = filtro_raw.strip()
+        if filtro_texto:
+            filtro = {"search": filtro_texto}
+
+    # Si solo_auto, cargar primero los IDs y pasarlos como lista exacta
+    if solo_auto:
+        cursor = conn.execute(
+            "SELECT id FROM ideas WHERE origen = 'auto-chat' ORDER BY created_at DESC"
+        )
+        auto_ids = [row[0] for row in cursor.fetchall()]
+        if not auto_ids:
+            return {
+                "role": "assistant",
+                "content": (
+                    "📂 No hay ideas auto-guardadas todavía. "
+                    "El chat detecta ideas cuando usás frases como "
+                    "'me gustaría probar X' o 'tengo que hacer Y'."
+                ),
+            }
+        # Filtrar auto_ids por el texto si hay filtro
+        if filtro and "search" in filtro:
+            cursor = conn.execute(
+                "SELECT id FROM ideas WHERE origen = 'auto-chat' AND idea LIKE ? ORDER BY created_at DESC",
+                (f"%{filtro['search']}%",),
+            )
+            filtered_ids = [row[0] for row in cursor.fetchall()]
+        else:
+            filtered_ids = auto_ids
+
+        ideas_list: list[dict[str, Any]] = []
+        for idea_id in filtered_ids:
+            row = conn.execute(
+                "SELECT * FROM ideas WHERE id = ?", (idea_id,)
+            ).fetchone()
+            if row:
+                ideas_list.append(dict(row))
+        # Marcar visualmente que son auto
+        content = format_idea_list(ideas_list)
+        # Añadir nota arriba
+        return {
+            "role": "assistant",
+            "content": "📂 **Ideas auto-guardadas por el chat**\n\n" + content,
+        }
+
+    # Lista normal (comportamiento original)
+    ideas = load_ideas(conn, filtro)
+    return {
+        "role": "assistant",
+        "content": format_idea_list(ideas),
+    }
+
+
+def _handle_memoria(arg: str) -> dict[str, str]:
+    """Handler de ``/memoria on|off|alta|sugerir``.
+
+    - on/off → activa o desactiva la memoria automática.
+    - alta/sugerir → cambia el modo (auto-guardar vs sugerir).
+    """
+    from agents.memoria.config import (
+        set_memoria_activa,
+        set_memoria_modo,
+        is_memoria_activa,
+        get_memoria_modo,
+    )
+
+    if arg == "on":
+        set_memoria_activa(True)
+        modo = get_memoria_modo()
+        return {
+            "role": "assistant",
+            "content": (
+                "🧠 Memoria automática **activada**. "
+                f"Modo: `{modo}`. El chat detecta y guarda ideas de tus mensajes. "
+                "Usá `/memoria off` para desactivar."
+            ),
+        }
+
+    if arg == "off":
+        set_memoria_activa(False)
+        return {
+            "role": "assistant",
+            "content": (
+                "🧠 Memoria automática **desactivada**. "
+                "El chat ya no guardará ideas automáticamente. "
+                "Seguí usando `/guardar` manualmente. "
+                "Usá `/memoria on` para reactivarla."
+            ),
+        }
+
+    if arg == "alta":
+        set_memoria_modo("alta")
+        return {
+            "role": "assistant",
+            "content": (
+                "🧠 Memoria automática en modo **auto-guardar**. "
+                "El chat guardará las ideas de alta confianza sin pedirte permiso "
+                "(te lo avisa con 📌 al final de su respuesta). "
+                "Las ideas de confianza media aparecerán como sugerencia 💡."
+            ),
+        }
+
+    if arg == "sugerir":
+        set_memoria_modo("sugerir")
+        return {
+            "role": "assistant",
+            "content": (
+                "🧠 Memoria automática en modo **sugerir**. "
+                "El chat NO guardará ideas automáticamente. "
+                "Solo te las mostrará como sugerencia 💡 para que decidas tú con `/guardar`."
+            ),
+        }
+
+    # 'status' lo maneja _handle_memoria_status(), pero por si acaso
+    if arg == "status":
+        return _handle_memoria_status()
+
+    return {
+        "role": "assistant",
+        "content": format_error(
+            f"argumento desconocido: {arg!r}. Probá: on, off, alta, sugerir."
+        ),
+    }
+
+
+def _handle_memoria_status(conn: Any = None) -> dict[str, str]:
+    """Handler de ``/memoria-status``: estado actual de la memoria automática."""
+    from agents.memoria.config import (
+        is_memoria_activa,
+        get_memoria_modo,
+        get_umbral_confianza,
+    )
+
+    activa = is_memoria_activa()
+    modo = get_memoria_modo()
+    umbral = get_umbral_confianza()
+
+    # Contar auto-guardadas vs manuales usando la conexión del caller si existe
+    resolved_conn, owned = _resolve_conn(conn)
+    try:
+        n_auto = resolved_conn.execute(
+            "SELECT COUNT(*) FROM ideas WHERE origen = 'auto-chat'"
+        ).fetchone()[0]
+        n_total = resolved_conn.execute("SELECT COUNT(*) FROM ideas").fetchone()[0]
+        n_manual = n_total - n_auto
+    finally:
+        if owned:
+            resolved_conn.close()
+
+    estado = "🟢 **activa**" if activa else "🔴 **desactivada**"
+    modo_str = {
+        "alta": "auto-guardar (sin pedir permiso)",
+        "sugerir": "sugerir antes de guardar",
+    }.get(modo, modo)
+
+    return {
+        "role": "assistant",
+        "content": (
+            f"🧠 **Estado de la memoria automática**\n\n"
+            f"- Estado: {estado}\n"
+            f"- Modo: `{modo}` — {modo_str}\n"
+            f"- Umbral de confianza: `{umbral}`\n"
+            f"- Ideas auto-guardadas: {n_auto}\n"
+            f"- Ideas manuales: {n_manual}\n"
+            f"- Total: {n_total}\n\n"
+            f"Comandos:\n"
+            f"- `/memoria on|off` — activar/desactivar\n"
+            f"- `/memoria alta|sugerir` — cambiar modo\n"
+            f"- `/lista-auto` — ver solo auto-guardadas\n"
+            f"- `/olvidar auto` — borrar solo auto-guardadas"
+        ),
+    }

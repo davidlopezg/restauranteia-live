@@ -21,7 +21,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-PROMPTS_DIR = Path(__file__).parent / "prompts"
+# Prompts viven en conocimiento/interno_app/prompts/ (migrado desde agents/creativo/prompts/)
+# __file__ = .../agents/creativo/skills.py → subimos 2 niveles al PROJECT_ROOT
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+PROMPTS_DIR = PROJECT_ROOT / "conocimiento" / "interno_app" / "prompts"
 
 
 SKILLS: list[dict] = [
@@ -62,6 +65,19 @@ SKILLS: list[dict] = [
             "Ideas para un hueco de la carta (postres con chocolate)",
             "Ideas de temporada con producto local",
             "Ideas de pizzas contemporáneas para la carta de primavera",
+        ],
+    },
+    {
+        "key": "idea_cientifica",
+        "nombre": "Idea científica",
+        "descripcion": "Combina intuición culinaria con datos moleculares (PubChem + mapping curado) para proponer combinaciones disruptivas pero viables. Estructura cada propuesta en 4 capas: Base, Contraste, Textura, Viabilidad operativa.",
+        "prompt_path": PROMPTS_DIR / "system_idea_cientifica.md",
+        "ejemplos": [
+            "Topping con base de alcachofa",
+            "Postre con fresas y algo inesperado",
+            "Combinación molecular para untable de queso de cabra",
+            "Tres ideas para emulsionar aceite con ingredientes inesperados",
+            "Pairing molecular con chocolate negro para menú de invierno"
         ],
     },
     {

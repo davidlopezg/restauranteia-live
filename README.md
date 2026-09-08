@@ -14,19 +14,24 @@ short_description: "Chef IA: fichas y proceso creativo"
 
 # 🍂 Chef Creativo — RestaurantEAI
 
-> Estado: **MVP-3** — Chef Creativo con 3 skills (ficha + proceso creativo + ideas creativas), conocimiento del restaurante y carta inyectados automáticamente. Deployado en Hugging Face Spaces. End-to-end con la API oficial de MiniMax.
+> Estado: **MVP-3** — Chef Creativo con **4 skills** (ficha + proceso creativo + ideas creativas + chat), conocimiento del restaurante y carta inyectados automáticamente. Deployado en Hugging Face Spaces. End-to-end con la API oficial de MiniMax.
 
-**¿Qué es?** Ecosistema de agentes IA para restauración. El **Chef Creativo** ofrece tres modos, todos con conocimiento automático de tu restaurante (ticket, línea culinaria, carta) y catálogo de platos:
+**¿Qué es?** Ecosistema de agentes IA para restauración. El **Chef Creativo** ofrece cuatro modos, todos con conocimiento automático de tu restaurante (ticket, línea culinaria, carta) y catálogo de platos:
 
 1. 🍂 **Ficha técnica** — Una petición → ficha estructurada (nombre, historia, ficha técnica, maridaje, prompt de imagen).
-2. 🧠 **Proceso creativo** — State machine de 7 fases que muestra **cómo piensa el chef** paso a paso, con persistencia entre sesiones y comandos para iterar.
-3. 💡 **Ideas creativas** — 10 ideas variadas para explorar (renovar carta, ideas de temporada, llenar huecos), con refinamiento vía métodos creativos de ElBulli.
+2. � **Proceso creativo** — State machine de 7 fases que muestra **cómo piensa el chef** paso a paso, con persistencia entre sesiones y comandos para iterar.
+3. � **Ideas creativas** — 10 ideas variadas para explorar (renovar carta, ideas de temporada, llenar huecos), con refinamiento vía métodos creativos de ElBulli.
+4. 💬 **Chat con el chef** — Conversación libre por defecto (en CLI y UI), siempre con el contexto del restaurante cargado.
 
-**¿Cómo se usa?** Abrí el chat, elegí el modo en el selector de arriba a la izquierda, y escribí tu petición.
+**¿Cómo se usa?** Abrí el chat y escribí tu petición. El chef responde con el contexto de tu restaurante siempre presente:
 
-- **Modo Ficha**: `"Entrante vegetariano con calabaza y queso de cabra"`
-- **Modo Proceso creativo**: `"Risotto de setas con trufa"` y avanzás fase por fase
-- **Modo Ideas creativas**: `"Ideas para otoño"` y recibís 10 ideas iterables
+- 🍂 **Ficha técnica**: `/ficha Entrante vegetariano con calabaza y queso de cabra`
+- 🧠 **Proceso creativo**: `/proceso Risotto de setas con trufa` y avanzás fase por fase
+- 💡 **Ideas creativas**: `/ideas Ideas para otoño` y recibís 10 ideas iterables
+- 💬 **Chat libre**: cualquier mensaje sin prefijo (preguntas, asesoría, conversación)
+- `/ayuda` para ver todos los comandos disponibles
+
+> 💡 Desde cualquier modo podés guardar ideas con `/guardar [texto]` y consultarlas con `/lista-ideas` (módulo de memoria con SQLite local + RGPD desde el día uno).
 
 *(Abajo: documentación técnica completa, diagrama de flujo, cómo correrlo local, estructura, decisiones de diseño.)*
 
@@ -58,7 +63,7 @@ short_description: "Chef IA: fichas y proceso creativo"
 | MVP-0: Agente Chef Creativo (CLI local) | ✅ | Validado end-to-end |
 | MVP-0.5: Deploy en Hugging Face Space | ✅ | https://huggingface.co/spaces/davidlopezgamero/RestaurantEAI |
 | MVP-1: Landing page | ✅ | `docs/index.html` |
-| MVP-1.1: Sistema de skills | ✅ | 3 skills: ficha, proceso_creativo, ideas_creativas |
+| MVP-1.1: Sistema de skills | ✅ | 4 skills: ficha, proceso_creativo, ideas_creativas, chat (default) |
 | MVP-2: Proceso creativo con state machine | ✅ | 7 fases + persistencia + comandos |
 | MVP-3: Ideas creativas | ✅ | 10 ideas + iteración con métodos ElBulli + ficha |
 | Conocimiento automático del restaurante | ✅ | restaurante.json + catalogo_platos.json inyectados al chef |
@@ -68,7 +73,7 @@ short_description: "Chef IA: fichas y proceso creativo"
 | Fix de surrogate UTF-8 | ✅ | Encoding correcto de emoji en payload |
 | **Fase 4: Archivo de Ideas (módulo de memoria)** | ✅ | SQLite local + 11 comandos transversales + consent explícito |
 | Patrón template → live instance | ✅ | Repo público + repo privado sincronizable |
-| Fase 4.1: Memoria enriquecida / categorías / RGPD | ⏳ | Backlog |
+| **Fase 4.1: Memoria automática del chat** | ✅ | Detección heurística en 5 categorías (producto/elaboración/técnica/herramienta/receta) + 4 comandos nuevos |
 | Resto de agentes (Producción, Marketing, etc.) | ⏳ | Backlog |
 | Resto de agentes (Producción, Marketing, etc.) | ⏳ | Backlog |
 | SaaS + monetización | ⏳ | Cuando haya tracción real |
@@ -77,9 +82,9 @@ short_description: "Chef IA: fichas y proceso creativo"
 
 ## Diagrama de flujo
 
-El diagrama de flujo completo del sistema (init phase, 3 skills, persistencia, detección de idioma, destinos) está en [`docs/FLOW.md`](docs/FLOW.md). Es un diagrama Mermaid — abrílo en [mermaid.live](https://mermaid.live/) o cualquier visor Mermaid para verlo renderizado.
+El diagrama de flujo completo del sistema (init phase, 4 skills, persistencia, detección de idioma, destinos) está en [`docs/FLOW.md`](docs/FLOW.md). Es un diagrama Mermaid — abrílo en [mermaid.live](https://mermaid.live/) o cualquier visor Mermaid para verlo renderizado.
 
-**Resumen del flujo en una línea**: Init phase (carga restaurante + carta) → Knowledge inyectado automáticamente en cada skill → 3 skills disponibles (ficha / proceso creativo / ideas creativas) → Detección de idioma con reintentos → Deploy a HF Space + backup en GitHub.
+**Resumen del flujo en una línea**: Init phase (carga restaurante + carta) → Knowledge inyectado automáticamente en cada skill → 4 skills disponibles (ficha / proceso creativo / ideas creativas / chat) con dispatch por comandos (`/ficha`, `/proceso`, `/ideas`, mensaje libre) → Detección de idioma con reintentos → Deploy a HF Space + backup en GitHub.
 
 
 ## Quick start (local)
@@ -122,32 +127,89 @@ python -m agents.init_phase
 
 Te hace 15 preguntas sobre el restaurante + te permite pegar tu carta/menú completo (recomendado) o meter los platos uno a uno. Genera `.agent_knowledge/restaurante.json` y `.agent_knowledge/catalogo_platos.json`.
 
-### 5. Probar las 3 skills
+### 5. Probar el agente desde la terminal
 
-**Modo interactivo** (selector de skill al inicio):
+> 💡 **El modo por defecto es `chat`**. Abrís el chat y, dentro del mismo chat, dispatchás a las otras skills con `/ficha`, `/proceso` o `/ideas`. No hay selector de skill al inicio (esa decisión se removió: el chat es el punto de entrada único).
+
+**Modo interactivo (REPL)** — chat por defecto + dispatch por comandos:
 
 ```bash
+cd ~/repos/restauranteia
 python -m agents.creativo.agent
 ```
 
-**Ficha rápida**:
+Vas a ver algo así:
+
+```
+============================================================
+🍂 Chef Creativo — Modo Interactivo
+============================================================
+
+✓ Skill activa: Chat con el chef
+  Escribí lo que quieras — el chef responde usando el contexto del restaurante.
+  Cuando quieras una skill específica, tipeá /skill (o /skills para listar).
+
+➤ _
+```
+
+**Ficha rápida one-shot** (genera y sale):
 
 ```bash
 python -m agents.creativo.agent "Risotto de setas con trufa"
 ```
 
-**Proceso creativo**:
+**Proceso creativo directo** (arranca el state machine):
 
 ```bash
 python -m agents.creativo.agent pc "Risotto de setas con trufa"
 python -m agents.creativo.agent pc --reanudar SESION_ID
 ```
 
-**Ideas creativas**:
+**Ideas creativas directo** (loop de exploración):
 
 ```bash
 python -m agents.creativo.agent ideas "Ideas para otoño"
 ```
+
+**Atajo con alias (opcional)** — si querés un comando corto, en Termux:
+
+```bash
+echo "alias chef='cd ~/repos/restauranteia && python -m agents.creativo.agent'" >> ~/.bashrc
+source ~/.bashrc
+chef
+```
+
+#### 💬 Comandos in-session (dentro del REPL)
+
+Disponibles en cualquier skill (CLI y UI), con `chat` como default:
+
+| Comando | Qué hace |
+|---|---|
+| `/skills` | Lista las 4 skills con descripción |
+| `/skill` | Cambia de skill (te muestra un menú numerado) |
+| `/ficha <texto>` | Cambia a ficha técnica y la genera con ese texto |
+| `/proceso [texto]` | Arranca (o continúa) el Proceso Creativo de 7 fases |
+| `/ideas <texto>` | Cambia a ideas creativas y genera 10 ideas |
+| `/ideas-cien <texto>` | Cambia a idea científica (4 capas con datos moleculares) |
+| `/estado` | Ver progreso del Proceso Creativo (si hay sesión activa) |
+| `/fase N` o `/fase nombre` | Saltar a una fase específica del Proceso Creativo |
+| `/volver` | Regenerar la fase actual |
+| `/ficha` | (en Proceso Creativo) generar ficha final |
+| `/reiniciar` | (en Proceso Creativo) volver al inicio con la misma petición |
+| `/sesiones` | Listar sesiones guardadas del Proceso Creativo |
+| `/reanudar <id>` | Retomar una sesión anterior |
+| `/guardar [texto]` | Guardá una idea nueva (Archivo de Ideas) |
+| `/guardar` (sin args) | Guardá el último mensaje del chef como idea |
+| `/guardar N` | Guardá la idea N de una lista numerada |
+| `/editar N <texto>` | Editá idea N |
+| `/lista-ideas [filtro]` | Listá ideas guardadas (filtro opcional por texto) |
+| `/olvidar N` / `/olvidar todo` | Borrar idea N o todo (con confirmación) |
+| `/export-ideas` | Exportá todas las ideas a JSON |
+| `/silenciar-contador` | Mostrar/ocultar el contador `📁 N guardadas` |
+| `/ayuda` | Listar todos los comandos disponibles |
+| `salir` / `exit` / `quit` / `Ctrl+C` | Terminar el REPL |
+
+> Cualquier mensaje **sin prefijo** se trata como chat libre con el chef (siempre con el contexto del restaurante inyectado).
 
 ---
 
@@ -159,15 +221,19 @@ El Chef Creativo tiene un **sistema de skills extensible**. Cada skill tiene su 
 
 | Key | Nombre | Cuándo usarla | Comandos especiales |
 |---|---|---|---|
+| `chat` | Chat con el chef (default) | Conversación libre: preguntas, asesoría, consulta sobre producto/técnica/carta | `/skill`, `/ficha`, `/proceso`, `/ideas`, `/ideas-cien` (dispatch) |
 | `ficha` | Ficha técnica | Ya sabés qué ficha querés | (ninguno, one-shot) |
+| `idea_cientifica` | Idea científica | Combinaciones disruptivas con datos moleculares (PubChem + mapping curado) estructuradas en 4 capas: Base/Contraste/Textura/Viabilidad | `/ideas-cien <texto>` |
 | `proceso_creativo` | Proceso creativo | Querés ver el razonamiento paso a paso con persistencia | `/estado`, `/fase N`, `/volver`, `/ficha`, `/reiniciar`, `/sesiones`, `/reanudar` |
 | `ideas_creativas` | Ideas creativas | Querés **explorar** 10 ideas antes de comprometerte | `más ideas`, `aplicá [método] a la idea N`, `ficha de la idea N`, `ver métodos` |
 
 ### Cómo elegir skill
 
-**En la UI web**: selector Radio en la parte superior del chat (automático con 3 opciones).
+**En la UI web (Gradio)**: el chat es único — no hay Radio ni selector. Las skills se invocan con comandos al inicio del mensaje (`/ficha`, `/proceso`, `/ideas`). Mensaje sin prefijo = chat libre.
 
-**En CLI**: el `modo_interactivo` te pregunta al inicio, y podés cambiar con `/skill` en cualquier momento.
+**En CLI**: el `modo_interactivo` arranca directamente en `chat` (no pregunta skill). Dentro del chat dispatchás a las otras con `/ficha`, `/proceso`, `/ideas` o usás el cambio legacy `/skill` + menú numerado.
+
+**Entry points directos** (sin pasar por el chat): `python -m agents.creativo.agent "..."` (ficha), `pc "..."`, `ideas "..."`.
 
 ### Cómo agregar una skill nueva
 
@@ -279,9 +345,9 @@ La skill `ideas_creativas` es una **exploración conversacional**: 10 ideas vari
 
 ## Archivo de Ideas (módulo de memoria)
 
-> **🔒 Invariante central: solo se guarda lo que el usuario ordena explícitamente con un comando.** No hay heurística previa, no hay propuesta automática del agente. El comando ES el consentimiento.
+> **v4.1 — Memoria automática del chat**: además del guardado manual (`/guardar`), el chat detecta heurísticamente comentarios relevantes en tus mensajes y los guarda automáticamente. Se clasifica en **5 categorías principales** (producto / elaboración / técnica / herramienta / receta) + auxiliares (proveedor / cliente / evento / restricción / concepto). Todo desactivable con `/memoria off`.
 
-El módulo `agents/memoria/` te da una base de datos SQLite local para guardar ideas, sin que se evaporen al cerrar el chat. Es el **complemento persistente** de la skill `ideas_creativas`: ella genera ideas nuevas cada vez; este módulo las conserva cuando vos querés.
+El módulo `agents/memoria/` te da una base de datos SQLite local para guardar ideas, sin que se evaporen al cerrar el chat. Es el **complemento persistente** de la skill `ideas_creativas`: ella genera ideas nuevas cada vez; este módulo las conserva cuando vos querés. Además, en v4.1 detecta y guarda automáticamente las ideas relevantes que mencionás en conversación.
 
 ### Quick start
 
@@ -292,11 +358,11 @@ Probá estos comandos en el chat (HF Space o CLI, funcionan en cualquier skill):
 ✅ Idea #1 guardada: probar kumquat en el postre de temporada
 📁 1 guardada
 
-/ideas
+/lista-ideas
 #1 | sin categoría | 2026-07-02
 > probar kumquat en el postre de temporada
 
-/ideas queso
+/lista-ideas queso
 #3 | sin categoría | 2026-07-02
 > ensalada de queso de cabra con membrillo
 
@@ -319,7 +385,7 @@ Todos funcionan en **cualquier skill** (ficha, ideas creativas, proceso creativo
 | `/guardar N` | Guarda la idea N de una lista numerada | Funciona tras respuestas con formato "1. ... 2. ... 3. ..." |
 | `/guardar igual` | Fuerza guardado tras advertencia de duplicado | Después de que el sistema detecte fuzzy ≥80% |
 | `/editar N [texto]` | Edita idea existente | Actualiza `updated_at` automáticamente |
-| `/ideas [filtro]` | Lista todas las ideas (desc por fecha) | Filtro opcional busca en el texto |
+| `/lista-ideas [filtro]` | Lista todas las ideas (desc por fecha) | Filtro opcional busca en el texto |
 | `/olvidar N` | Borra idea N (con confirmación) | Dos turnos: primero avisa, después confirmás |
 | `/olvidar todo` | Borra todo (con confirmación) | Útil para empezar de cero |
 | `/export-ideas` | Exporta todas las ideas a JSON | Portable, fácil de respaldar |
@@ -347,18 +413,72 @@ El sistema detecta duplicados automáticamente antes de guardar:
 
 ### Categorías externalizadas
 
-Las 9 categorías precargadas viven en `agents/ideas_categorias.json` y se pueden editar sin tocar código:
+La taxonomía v4.1 incluye 11 categorías (5 principales + 6 auxiliares) en `agents/ideas_categorias.json`. Cada categoría tiene listas de keywords que alimentan la heurística de detección automática:
 
 ```json
-["concepto", "plato", "técnica", "producto", "proveedor",
- "menú completo", "ocasión/evento", "restricción", "otro (escribir)"]
+["producto", "elaboracion", "tecnica", "herramienta", "receta",
+ "proveedor", "cliente", "evento", "restriccion", "concepto", "otro"]
 ```
 
-Si necesitás una nueva categoría, agregala al JSON y reiniciá la app.
+Las **5 categorías principales** son las que pediste separar:
+- **producto** — ingredientes, materia prima (ej: "me gusta el kumquat" → producto)
+- **elaboración** — platos, preparaciones (ej: "quiero hacer un risotto de setas")
+- **técnica** — métodos de cocina (ej: "sous-vide a 56 grados")
+- **herramienta** — aparatos, utensilios (ej: "la thermomix nueva")
+- **receta** — recetas completas (ej: "receta de mi gazpacho")
+
+Si necesitás nuevas keywords para una categoría, agregalas al JSON y reiniciá la app.
+
+### Memoria automática del chat (v4.1)
+
+> **Activada por defecto.** El chat detecta comentarios relevantes en tus mensajes y los guarda automáticamente con un anexo discreto: `📌 Guardé 1 idea en tu archivo: #5`.
+
+El sistema es **conservador** para no contaminar la DB con ruido:
+
+- **Alta confianza** (frase explícita + keyword) → guarda auto con `📌`.
+- **Media confianza** (en modo `sugerir`) → muestra como sugerencia: `💡 ¿Guardo esto?: [extracto]`.
+- **Baja confianza** → no hace nada.
+
+Cada idea auto-guardada se marca con `origen='auto-chat'` y se distingue de las manuales.
+
+**Comandos de gestión** (transversales, funcionan en cualquier skill):
+
+| Comando | Qué hace |
+|---|---|
+| `/memoria on` | Activar la detección automática |
+| `/memoria off` | Desactivarla (volves al guardado manual con `/guardar`) |
+| `/memoria alta` | Modo auto-guardar sin pedir permiso (default) |
+| `/memoria sugerir` | Modo sugerir: no guarda, solo pregunta antes |
+| `/memoria-status` | Ver estado actual + conteo auto vs manual |
+| `/lista-auto [filtro]` | Ver solo las ideas auto-guardadas |
+| `/olvidar auto` | Borrar solo las auto-guardadas (con confirmación) |
+
+**Ejemplo de flujo:**
+
+```
+Vos: me gustaría probar el kumquat en el postre
+Chef: [responde con sugerencias culinarias...]
+      📌 Guardé 1 idea en tu archivo: #5
+      *(esto es automático, `/memoria off` para desactivarlo)*
+
+Vos: /lista-auto
+      #5 | producto | 2026-09-04
+      > me gustaría probar el kumquat en el postre
+
+Vos: /memoria off
+      🧠 Memoria automática **desactivada**. El chat ya no guardará ideas
+      automáticamente. Seguí usando `/guardar` manualmente.
+```
+
+**RGPD en v4.1**:
+
+- El toggle persiste en disco en `conocimiento/interno_restaurante/memoria_config.json`.
+- Las ideas auto se distinguen claramente (origen='auto-chat') y se pueden borrar masivamente con `/olvidar auto`.
+- Sin telemetría. Todo es local.
 
 ### Cómo se almacenan los datos
 
-- **Path**: `.agent_knowledge/ideas.db` (SQLite local).
+- **Path**: `conocimiento/interno_restaurante/ideas.db` (SQLite local).
 - **Modo WAL** (`journal_mode=WAL`): lectores y escritor concurrentes sin bloqueos — crítico para HF Space con múltiples usuarios.
 - **Esquema** (`ideas` table):
   ```
@@ -366,7 +486,7 @@ Si necesitás una nueva categoría, agregala al JSON y reiniciá la app.
   | confirmada_por_usuario | origen | origen_skill
   ```
 - **Índices**: `idx_ideas_created_at`, `idx_ideas_categoria`, `idx_ideas_origen_skill`.
-- **Archivo companion**: `.agent_knowledge/ideas.md` con schema documentado (se autogenera al primer `init_db`).
+- **Archivo companion**: `conocimiento/interno_restaurante/ideas.md` con schema documentado (se autogenera al primer `init_db`).
 
 ### Tests
 
@@ -374,7 +494,9 @@ Si necesitás una nueva categoría, agregala al JSON y reiniciá la app.
 python -m pytest tests/test_memoria_storage.py tests/test_memoria_formatters.py \
                   tests/test_memoria_commands.py tests/test_memoria_duplicates.py \
                   tests/test_memoria_counter.py tests/test_memoria_rgpd.py \
-                  tests/test_memoria_concurrency.py tests/test_regresion_skills.py -v
+                  tests/test_memoria_concurrency.py tests/test_regresion_skills.py \
+                  tests/test_memoria_triggers.py tests/test_memoria_config.py \
+                  tests/test_memoria_auto.py -v
 ```
 
 Resultado esperado: **120 tests pasando**. Cubre CRUD, formateo, comandos, duplicados, contador, RGPD, concurrencia WAL y regresión de skills existentes.
@@ -437,7 +559,7 @@ Cada vez que genera una ficha o trabaja una fase, el system prompt se enriquece 
 restauranteia/
 ├── agents/
 │   ├── creativo/                       # Agente Chef Creativo
-│   │   ├── agent.py                    # Entry point CLI + handlers de las 3 skills
+│   │   ├── agent.py                    # Entry point CLI + handlers de las 4 skills (chat es default)
 │   │   ├── skills.py                   # Registry de skills (extensible)
 │   │   ├── proceso_creativo.py         # State machine de 7 fases + persistencia
 │   │   ├── sessions.py                 # CRUD de sesiones en .agent_knowledge/
@@ -541,7 +663,7 @@ Para tu **uso real con datos**, mantenés un repo separado, **privado**, sincron
 | Repo | Visibilidad | Propósito | Datos del usuario |
 |---|---|---|---|
 | `davidlopezg/restauranteai` (este) | 🔓 Público | Template: código limpio | ❌ No commitea nada en `.agent_knowledge/` |
-| `davidlopezg/restauranteia-live` | 🔒 Privado | Tu instancia viva: código + datos reales | ✅ Commitea `.agent_knowledge/ideas.db`, `restaurante.json`, etc. |
+| `davidlopezg/restauranteia-live` | 🔒 Privado | Tu instancia viva: código + datos reales | ✅ Commitea `conocimiento/interno_restaurante/ideas.db`, `restaurante.json`, etc. |
 
 ### Set up de la instancia viva (una sola vez)
 

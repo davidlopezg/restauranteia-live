@@ -138,7 +138,7 @@ class TestProcesarMensajeChat:
         """Verify the system prompt sent to the LLM includes restaurant context."""
         mock, captured = mock_call_minimax
         # First inject a restaurant.json in tmp location
-        # (default load_restaurante reads from .agent_knowledge/, may return None)
+        # (default load_restaurante reads from conocimiento/interno_restaurante/, may return None)
         from agents.creativo.agent import procesar_mensaje_chat
         procesar_mensaje_chat("Test query")
         # The system prompt should at least include the chat skill's instructions
@@ -171,10 +171,10 @@ class TestResponderChat:
         # Reset state before testing
         from agents.memoria.commands import _reset_state
         _reset_state()
+        # Mensaje sin prefijo → chat libre (post-Bloque 3: ya no hay skill="chat")
         result = app_module.responder(
             mensaje="¿Qué te parece la carta actual?",
             historial=[],
-            skill="chat"
         )
         assert isinstance(result, dict)
         assert "role" in result and result["role"] == "assistant"
@@ -190,29 +190,29 @@ class TestResponderChat:
         result = app_module.responder(
             mensaje="",
             historial=[],
-            skill="chat"
         )
         assert result == {"role": "assistant", "content": ""}
 
     def test_responder_chat_does_not_break_other_skills(self, mock_call_minimax):
-        """Adding chat skill should not break ficha or ideas_creativas dispatch."""
+        """Adding chat skill should not break ficha or ideas_creativas dispatch.
+
+        Post-Bloque 3: ficha → /ficha, ideas → /ideas, chat → mensaje sin prefijo.
+        """
         mock, captured = mock_call_minimax
         import app as app_module
         from agents.memoria.commands import _reset_state
         _reset_state()
-        # ficha should still work
+        # ficha: /ficha <texto>
         result_ficha = app_module.responder(
-            mensaje="Risotto de setas con trufa",
+            mensaje="/ficha Risotto de setas con trufa",
             historial=[],
-            skill="ficha"
         )
         assert "role" in result_ficha
         assert "content" in result_ficha
-        # ideas_creativas should still work
+        # ideas: /ideas <texto>
         result_ideas = app_module.responder(
-            mensaje="Ideas para otoño",
+            mensaje="/ideas Ideas para otoño",
             historial=[],
-            skill="ideas_creativas"
         )
         assert "role" in result_ideas
         assert "content" in result_ideas

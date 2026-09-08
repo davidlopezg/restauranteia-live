@@ -97,13 +97,20 @@ def test_firma_responder() -> bool:
 
     check("función responder() existe", True)
 
-    # Debe tener 2 parámetros: mensaje e historial
+    # Firma real desde v1.3.x: responder(mensaje, historial, skill="ficha").
+    # El parámetro 'skill' se agregó al añadir el selector de skills en la UI;
+    # este test esperaba solo 2 args y quedó desactualizado (fallaba ANTES de
+    # este change, verified baseline 2026-08-05). Aceptamos 2 args o 3 args
+    # donde el 3º tiene default. NO se cambia la firma del código.
     args = [a.arg for a in funcion.args.args]
-    if len(args) != 2:
-        return check("responder() tiene 2 argumentos", False,
-                     f"tiene {len(args)}: {args}")
-
-    check("responder() tiene 2 argumentos (mensaje, historial)", True)
+    defaults = list(funcion.args.defaults)
+    if len(args) == 2:
+        check("responder() acepta 2 argumentos (mensaje, historial)", True)
+    elif len(args) == 3 and defaults and args[2] == "skill":
+        check("responder() acepta 3 argumentos (mensaje, historial, skill=...) con default en el 3º", True)
+    else:
+        return check("responder() tiene 2 args o 3 con default en el 3º", False,
+                     f"args={args}, defaults={defaults}")
 
     # Debe retornar un dict (no un str) por el formato messages API
     src = ast.unparse(funcion.returns) if funcion.returns else "None"

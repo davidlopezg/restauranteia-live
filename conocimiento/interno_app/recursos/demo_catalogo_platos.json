@@ -1,0 +1,12 @@
+[
+  {"nombre": "Tomate de ramallet con ventresca", "categoria": "entrante", "descripcion": "Tomate de ramallet aliñado con aceite de oliva virgen extra y ventresca de bonito.", "precio": 14},
+  {"nombre": "Coca de trampó con anchoa", "categoria": "entrante", "descripcion": "Coca fina con pimiento, tomate y cebolla, anchoa del Cantábrico.", "precio": 12},
+  {"nombre": "Arroz de montaña con setas", "categoria": "principal", "descripcion": "Arroz meloso con setas de temporada y hierbas del bosque.", "precio": 22},
+  {"nombre": "Lubina a la brasa con verduras", "categoria": "principal", "descripcion": "Lubina salvaje a la brasa con verduras de temporada asadas.", "precio": 26},
+  {"nombre": "Secreto ibérico con peras", "categoria": "principal", "descripcion": "Secreto de cerdo ibérico con peras al vino tinto y puré de patata.", "precio": 21},
+  {"nombre": "Escalivada con queso fresco", "categoria": "guarnicion", "descripcion": "Escalivada de berenjena, pimiento y cebolla con queso fresco.", "precio": 9},
+  {"nombre": "Crema catalana", "categoria": "postre", "descripcion": "Crema catalana tradicional con costra de azúcar caramelizada.", "precio": 7},
+  {"nombre": "Tarta de almendra", "categoria": "postre", "descripcion": "Tarta de almendra con helado de vainilla.", "precio": 8},
+  {"nombre": "Pan con tomate y aceite", "categoria": "otro", "descripcion": "Pan de payés con tomate, aceite de oliva y sal.", "precio": 5},
+  {"nombre": "Ensalada de la casa", "categoria": "otro", "descripcion": "Mezclum, tomate, atún, huevo y aceitunas.", "precio": 13}
+]

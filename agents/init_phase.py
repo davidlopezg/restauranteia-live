@@ -3,7 +3,7 @@ init_phase.py — fase de inicialización de un agente.
 
 Se corre UNA SOLA VEZ, la primera vez que se usa cualquier agente del proyecto.
 Recolecta 15 dimensiones conceptuales del restaurante y catálogo de platos,
-y los guarda en .agent_knowledge/ para que estén disponibles para todos
+y los guarda en conocimiento/interno_restaurante/ para que estén disponibles para todos
 los agentes del proyecto.
 
 Entrada CLI explícita:
@@ -764,7 +764,7 @@ def fase_init_interactiva() -> bool:
     print("\n" + "═" * 60)
     print("✅ INIT COMPLETO")
     print("═" * 60)
-    print("Tus datos están en .agent_knowledge/.")
+    print("Tus datos están en conocimiento/interno_restaurante/.")
     print("Cualquier agente nuevo los va a leer automáticamente.")
     print()
 
@@ -777,7 +777,7 @@ def main() -> None:
         from agents.knowledge_context import resumen_estado
         print("Init ya estaba completo. Estado actual:")
         print(resumen_estado())
-        print("(Borrá .agent_knowledge/ si querés volver a correr el init)")
+        print("(Borrá conocimiento/interno_restaurante/ si querés volver a correr el init)")
 
 
 if __name__ == "__main__":

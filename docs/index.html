@@ -8,375 +8,836 @@
     <meta property="og:title" content="Chef Creativo — RestaurantEAI">
     <meta property="og:description" content="Generador de fichas culinarias con IA para hostelería.">
     <meta property="og:type" content="website">
+    <meta name="theme-color" content="#c44d34">
+
+    <!-- Tipografía curada: Fraunces (display, alma editorial/culinaria) + Inter (UI/cuerpo) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600&display=swap">
+
+    <!-- GSAP + ScrollTrigger (Nivel 3: hero entrance, parallax, counter-ups, demo interactivo).
+         Cargados con defer para no bloquear el parse.
+         Si la CDN falla, la página degrada con IntersectionObserver nativo (graceful). -->
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/ScrollTrigger.min.js" defer></script>
+
+    <!-- Vanilla-Tilt: parallax 3D en cards (Nivel 4) - ~8.5KB minified -->
+    <script src="https://cdn.jsdelivr.net/npm/vanilla-tilt@1.8.1/dist/vanilla-tilt.min.js" defer></script>
+
     <style>
         /* ═══════════════════════════════════════════════════════════════════
-           Chef Creativo — Landing Page
-           Single-file, no dependencies, responsive.
+           Chef Creativo — Landing Page (Refinamiento Nivel 1)
+           - Fluid typography (clamp)
+           - OKLCH palette, AAA contrast on body text
+           - Micro-interactions (hover lift, focus-visible)
+           - Reveal-on-scroll via IntersectionObserver nativo
+           - prefers-reduced-motion respetado
+           - Skip-to-content + landmark semánticos
            ═══════════════════════════════════════════════════════════════════ */
 
         :root {
-            --bg: #faf7f2;
-            --surface: #ffffff;
-            --text: #2d2a26;
-            --text-muted: #6b635b;
-            --accent: #c44d34;
-            --accent-hover: #a83a25;
-            --accent-light: #fdf0ec;
-            --border: #e8e3dc;
-            --gold: #b8860b;
-            --radius: 12px;
-            --max-w: 820px;
+            /* Surfaces — identidad mediterránea mantenida */
+            --bg:           oklch(98.5% 0.012 75);
+            --surface:      oklch(100% 0 0);
+            --surface-alt:  oklch(96.8% 0.01 70);
+
+            /* Texto — ratios AAA sobre blanco (≥ 7:1) */
+            --text:         oklch(22% 0.012 60);
+            --text-strong:  oklch(15% 0.012 60);
+            --text-muted:   oklch(45% 0.014 60);
+
+            /* Acento mediterráneo (terracotta) */
+            --accent:       oklch(53% 0.16 28);
+            --accent-hover: oklch(45% 0.17 28);
+            --accent-soft:  oklch(96% 0.04 28);
+
+            /* Bordes */
+            --border:        oklch(91% 0.015 70);
+            --border-strong: oklch(85% 0.018 70);
+
+            /* Tipografía */
+            --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+            --font-sans:    'Inter', system-ui, -apple-system, 'Segoe UI', Roboto,
+                            'Helvetica Neue', Arial, sans-serif;
+
+            /* Misc */
+            --gold:      oklch(55% 0.13 80);
+            --radius:    14px;
+            --radius-sm: 8px;
+            --max-w:     820px;
+
+            /* Tipografía fluida */
+            --fs-xs:   clamp(0.78rem, 0.74rem + 0.2vw, 0.85rem);
+            --fs-sm:   clamp(0.88rem, 0.82rem + 0.3vw, 0.98rem);
+            --fs-base: clamp(1rem, 0.95rem + 0.3vw, 1.125rem);
+            --fs-lg:   clamp(1.15rem, 1.05rem + 0.5vw, 1.35rem);
+            --fs-xl:   clamp(1.4rem, 1.2rem + 1vw, 1.85rem);
+            --fs-2xl:  clamp(2rem, 1.6rem + 2vw, 2.8rem);
+            --fs-3xl:  clamp(2.5rem, 2rem + 2.5vw, 3.5rem);
+
+            /* Espaciado (escala 8-px) */
+            --space-2:  8px;
+            --space-3:  12px;
+            --space-4:  16px;
+            --space-5:  24px;
+            --space-6:  32px;
+            --space-8:  48px;
+            --space-10: 64px;
+            --space-12: 96px;
+
+            /* Curvas y duraciones */
+            --ease-out:    cubic-bezier(0.16, 1, 0.3, 1);
+            --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+            --dur-fast:    160ms;
+            --dur:         220ms;
+            --dur-slow:    400ms;
         }
 
+        /* ── Reset ──────────────────────────────────────────────────── */
         *, *::before, *::after {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
         }
 
-        body {
-            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            line-height: 1.7;
-            font-size: 17px;
-            -webkit-font-smoothing: antialiased;
+        html {
+            scroll-behavior: smooth;
+            scroll-padding-top: 80px;
+            -webkit-text-size-adjust: 100%;
+            text-rendering: optimizeLegibility;
         }
 
-        /* ── Layout ────────────────────────────────────────────────────── */
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.65;
+            font-size: var(--fs-base);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            font-feature-settings: 'kern', 'liga', 'calt';
+        }
 
+        img, svg { display: block; max-width: 100%; }
+        a { color: inherit; }
+
+        /* ── Layout ────────────────────────────────────────────────── */
         .container {
             max-width: var(--max-w);
             margin: 0 auto;
-            padding: 0 24px;
+            padding: 0 var(--space-5);
         }
 
-        /* ── Hero ──────────────────────────────────────────────────────── */
+        /* ── Skip-to-content (a11y) ────────────────────────────────── */
+        .skip-link {
+            position: absolute;
+            top: -100px;
+            left: var(--space-4);
+            background: var(--text-strong);
+            color: var(--surface);
+            padding: var(--space-2) var(--space-4);
+            border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: var(--fs-sm);
+            z-index: 100;
+            transition: top var(--dur) var(--ease-out);
+        }
+        .skip-link:focus-visible {
+            top: 0;
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
 
+        /* ── Site nav (fixed + blur-on-scroll) ────────────────────────── */
+        .site-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 50;
+            padding: var(--space-3) 0;
+            background: transparent;
+            border-bottom: 1px solid transparent;
+            transition:
+                background var(--dur) var(--ease-out),
+                backdrop-filter var(--dur) var(--ease-out),
+                padding var(--dur) var(--ease-out),
+                border-color var(--dur) var(--ease-out);
+        }
+        .site-nav.is-scrolled {
+            background: oklch(98.5% 0.012 75 / 0.78);
+            backdrop-filter: blur(14px) saturate(1.5);
+            -webkit-backdrop-filter: blur(14px) saturate(1.5);
+            border-bottom-color: var(--border);
+            padding: 10px 0;
+        }
+        .site-nav-inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: var(--space-4);
+        }
+        .site-nav-brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-variation-settings: 'opsz' 24;
+            font-size: 1.05rem;
+            color: var(--text-strong);
+            text-decoration: none;
+            letter-spacing: -0.01em;
+        }
+        .site-nav-brand:focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 4px;
+            border-radius: 4px;
+        }
+        .site-nav-cta {
+            padding: 10px 18px;
+            font-size: var(--fs-sm);
+            border-radius: 999px;
+            box-shadow: 0 2px 10px rgba(196, 77, 52, 0.22);
+        }
+        @supports not (backdrop-filter: blur(1px)) {
+            .site-nav.is-scrolled {
+                background: var(--surface);
+            }
+        }
+
+        /* ── Hero ──────────────────────────────────────────────────── */
         .hero {
-            padding: 80px 0 60px;
+            position: relative;
+            padding: var(--space-12) 0 var(--space-10);
             text-align: center;
+            overflow: hidden;
         }
-
+        .hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 80% 60% at 50% 0%, oklch(94% 0.07 30 / 0.55) 0%, transparent 60%),
+                radial-gradient(ellipse 70% 50% at 50% 0%, oklch(96% 0.04 60 / 0.4) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: -1;
+        }
+        .hero::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.045 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+            opacity: 0.5;
+            pointer-events: none;
+            mix-blend-mode: multiply;
+            z-index: -1;
+        }
         .hero-emoji {
-            font-size: 64px;
-            margin-bottom: 8px;
-            display: block;
+            font-size: 4rem;
+            margin-bottom: var(--space-2);
+            display: inline-block;
+            position: relative;
+            filter: drop-shadow(0 4px 12px rgba(196, 77, 52, 0.22));
+            animation: floaty 6s var(--ease-out) infinite;
         }
-
+        .hero-emoji::before {
+            content: '';
+            position: absolute;
+            inset: -28px -28px;
+            background: radial-gradient(circle, oklch(85% 0.12 30 / 0.35) 0%, transparent 65%);
+            z-index: -1;
+            border-radius: 50%;
+            animation: pulse-glow 5s var(--ease-out) infinite;
+        }
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50%      { opacity: 0.7; transform: scale(1.08); }
+        }
+        @keyframes floaty {
+            0%, 100% { transform: translateY(0); }
+            50%      { transform: translateY(-4px); }
+        }
         .hero h1 {
-            font-size: 2.8rem;
-            font-weight: 800;
-            letter-spacing: -0.02em;
-            color: #1a1714;
-            margin-bottom: 12px;
+            font-family: var(--font-display);
+            font-size: var(--fs-3xl);
+            font-weight: 700;
+            font-variation-settings: 'opsz' 144;
+            letter-spacing: -0.025em;
+            color: var(--text-strong);
+            margin-bottom: var(--space-3);
+            line-height: 1.04;
         }
-
+        .hero h1 .accent-word {
+            font-style: italic;
+            font-weight: 500;
+            color: var(--accent-hover);
+        }
         .hero .subtitle {
-            font-size: 1.25rem;
+            font-size: var(--fs-lg);
             color: var(--text-muted);
-            max-width: 540px;
-            margin: 0 auto 32px;
+            max-width: 56ch;
+            margin: 0 auto var(--space-8);
         }
-
         .hero .badge {
             display: inline-block;
-            background: var(--accent-light);
-            color: var(--accent);
+            background: var(--accent-soft);
+            color: var(--accent-hover);
             border: 1px solid var(--accent);
-            font-size: 0.82rem;
+            font-size: var(--fs-xs);
             font-weight: 600;
-            padding: 4px 14px;
+            padding: 6px 14px;
             border-radius: 20px;
-            margin-bottom: 20px;
+            margin-bottom: var(--space-5);
             letter-spacing: 0.02em;
         }
 
-        /* ── Buttons ───────────────────────────────────────────────────── */
-
+        /* ── Buttons (micro-interaction: lift + press) ────────────── */
         .btn {
-            display: inline-block;
-            padding: 14px 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 14px 32px;
             border-radius: var(--radius);
-            font-size: 1.05rem;
+            font-size: var(--fs-base);
             font-weight: 600;
             text-decoration: none;
-            transition: all 0.2s ease;
             cursor: pointer;
-            border: none;
+            border: 1.5px solid transparent;
+            transition:
+                transform var(--dur) var(--ease-spring),
+                box-shadow var(--dur) var(--ease-out),
+                background var(--dur) var(--ease-out),
+                color var(--dur) var(--ease-out),
+                border-color var(--dur) var(--ease-out);
+            will-change: transform;
         }
-
+        .btn:focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 3px;
+        }
         .btn-primary {
             background: var(--accent);
-            color: #fff;
-            box-shadow: 0 2px 12px rgba(196, 77, 52, 0.25);
+            color: var(--surface);
+            box-shadow: 0 4px 14px rgba(196, 77, 52, 0.25);
         }
         .btn-primary:hover {
             background: var(--accent-hover);
-            box-shadow: 0 4px 20px rgba(196, 77, 52, 0.35);
-            transform: translateY(-1px);
+            box-shadow: 0 8px 24px rgba(196, 77, 52, 0.35);
+            transform: translateY(-2px);
         }
-
+        .btn-primary:active {
+            transform: translateY(0) scale(0.98);
+            box-shadow: 0 2px 8px rgba(196, 77, 52, 0.25);
+        }
         .btn-secondary {
             background: var(--surface);
             color: var(--text);
-            border: 1.5px solid var(--border);
-            margin-left: 12px;
+            border-color: var(--border);
         }
         .btn-secondary:hover {
             border-color: var(--accent);
             color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
         }
-
+        .btn-secondary:active {
+            transform: translateY(0) scale(0.98);
+            box-shadow: none;
+        }
         .btn-group {
             display: flex;
             justify-content: center;
             align-items: center;
             flex-wrap: wrap;
-            gap: 8px;
+            gap: var(--space-3);
         }
 
-        /* ── Sections ──────────────────────────────────────────────────── */
-
+        /* ── Sections ──────────────────────────────────────────────── */
         section {
-            padding: 60px 0;
+            padding: var(--space-10) 0;
         }
-
         section h2 {
-            font-size: 1.7rem;
-            font-weight: 700;
-            margin-bottom: 28px;
+            font-family: var(--font-display);
+            font-size: var(--fs-xl);
+            font-weight: 500;
+            font-variation-settings: 'opsz' 96;
+            margin-bottom: var(--space-8);
             text-align: center;
-            letter-spacing: -0.01em;
+            letter-spacing: -0.02em;
+            color: var(--text-strong);
+            line-height: 1.15;
+        }
+        section h2 .accent-word {
+            font-style: italic;
+            font-weight: 500;
+            color: var(--accent-hover);
         }
 
-        /* ── Features grid ─────────────────────────────────────────────── */
-
+        /* ── Features grid (hover: lift + border accent) ───────────── */
         .features {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-            gap: 24px;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: var(--space-5);
         }
-
         .feature-card {
             background: var(--surface);
             border: 1px solid var(--border);
             border-radius: var(--radius);
-            padding: 28px 24px;
-            transition: box-shadow 0.2s;
+            padding: var(--space-5);
+            transition:
+                transform var(--dur) var(--ease-spring),
+                box-shadow var(--dur) var(--ease-out),
+                border-color var(--dur) var(--ease-out);
         }
         .feature-card:hover {
-            box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.07);
+            border-color: var(--border-strong);
         }
-
         .feature-card .icon {
-            font-size: 32px;
-            margin-bottom: 12px;
+            font-size: 2rem;
+            margin-bottom: var(--space-3);
             display: block;
+            line-height: 1;
         }
-
         .feature-card h3 {
-            font-size: 1.05rem;
+            font-size: var(--fs-base);
             font-weight: 700;
-            margin-bottom: 6px;
+            margin-bottom: var(--space-2);
+            color: var(--text-strong);
         }
-
         .feature-card p {
-            font-size: 0.92rem;
+            font-size: var(--fs-sm);
             color: var(--text-muted);
+            line-height: 1.55;
         }
 
-        /* ── Demo / Preview ────────────────────────────────────────────── */
-
+        /* ── Demo / Preview ────────────────────────────────────────── */
         .demo-box {
             background: var(--surface);
             border: 1px solid var(--border);
             border-radius: var(--radius);
-            padding: 32px 28px;
+            padding: var(--space-6) var(--space-5);
             text-align: center;
+            transition: box-shadow var(--dur) var(--ease-out);
         }
-
+        .demo-box:hover {
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+        }
         .demo-box .prompt-example {
             background: var(--bg);
             border: 1px dashed var(--border);
-            border-radius: 8px;
-            padding: 14px 20px;
-            margin: 12px 0;
+            border-radius: var(--radius-sm);
+            padding: var(--space-3) var(--space-5);
+            margin: var(--space-3) 0;
             font-style: italic;
             color: var(--text-muted);
-            font-size: 0.95rem;
+            font-size: var(--fs-sm);
+            transition:
+                border-color var(--dur) var(--ease-out),
+                background var(--dur) var(--ease-out),
+                transform var(--dur) var(--ease-spring);
+        }
+        .demo-box .prompt-example:hover {
+            border-color: var(--accent);
+            background: var(--accent-soft);
+            transform: translateX(2px);
+        }
+        .demo-box .prompt-example:focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+        .demo-box .prompt-example.is-active {
+            border-style: solid;
+            border-color: var(--accent);
+            background: var(--accent-soft);
+            color: var(--text-strong);
+            transform: translateX(2px);
+        }
+        .demo-response {
+            margin-top: var(--space-5);
+            padding: var(--space-4) var(--space-5);
+            background: var(--accent-soft);
+            border: 1px solid var(--accent);
+            border-radius: var(--radius);
+            text-align: left;
+            font-size: var(--fs-sm);
+            color: var(--text);
+            line-height: 1.55;
+            min-height: 56px;
+        }
+        .demo-response strong { color: var(--accent-hover); }
+        .demo-response em { color: var(--text-muted); font-style: normal; opacity: 0.85; }
+        .demo-response:empty { display: none; }
+
+        /* ── Stats (counter-up con GSAP) ──────────────────────────────────────────── */
+        .stats {
+            padding: var(--space-8) 0;
+            background: var(--surface-alt);
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: var(--space-5);
+            text-align: center;
+        }
+        .stat {
+            padding: var(--space-3) var(--space-2);
+        }
+        .stat-number {
+            display: block;
+            font-family: var(--font-display);
+            font-variation-settings: 'opsz' 144;
+            font-size: clamp(2.5rem, 1.5rem + 4vw, 3.75rem);
+            font-weight: 700;
+            line-height: 1;
+            color: var(--accent-hover);
+            letter-spacing: -0.03em;
+            margin-bottom: var(--space-3);
+            font-variant-numeric: tabular-nums;
+        }
+        .stat-label {
+            display: block;
+            font-size: var(--fs-sm);
+            color: var(--text-muted);
+            line-height: 1.4;
+            max-width: 22ch;
+            margin: 0 auto;
         }
 
-        /* ── How it works ──────────────────────────────────────────────── */
-
+        /* ── How it works ──────────────────────────────────────────── */
         .steps {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
+            gap: var(--space-5);
             counter-reset: step;
         }
-
         .step {
             background: var(--surface);
             border: 1px solid var(--border);
             border-radius: var(--radius);
-            padding: 24px 20px;
-            position: relative;
+            padding: var(--space-5);
             text-align: center;
+            transition:
+                transform var(--dur) var(--ease-spring),
+                box-shadow var(--dur) var(--ease-out),
+                border-color var(--dur) var(--ease-out);
         }
-
+        .step:hover {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+            border-color: var(--border-strong);
+        }
         .step::before {
             counter-increment: step;
             content: counter(step);
-            display: inline-block;
-            width: 32px;
-            height: 32px;
-            line-height: 32px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             background: var(--accent);
             color: #fff;
             font-weight: 700;
-            font-size: 0.9rem;
-            margin-bottom: 12px;
+            font-size: 0.95rem;
+            margin-bottom: var(--space-3);
+            box-shadow: 0 2px 8px rgba(196, 77, 52, 0.25);
         }
-
         .step h4 {
-            font-size: 1rem;
+            font-size: var(--fs-base);
             font-weight: 700;
-            margin-bottom: 6px;
+            margin-bottom: var(--space-2);
+            color: var(--text-strong);
         }
-
         .step p {
-            font-size: 0.88rem;
+            font-size: var(--fs-sm);
             color: var(--text-muted);
         }
 
-        /* ── Footer ────────────────────────────────────────────────────── */
-
-        footer {
-            text-align: center;
-            padding: 40px 24px;
-            color: var(--text-muted);
-            font-size: 0.85rem;
-            border-top: 1px solid var(--border);
-        }
-
-        footer a {
-            color: var(--accent);
-            text-decoration: none;
-        }
-        footer a:hover {
-            text-decoration: underline;
-        }
-
-        /* ── Proceso creativo ────────────────────────────────────────────── */
-
+        /* ── Proceso creativo ──────────────────────────────────────── */
         .callout {
-            background: var(--accent-light);
+            background: var(--accent-soft);
             border: 1px solid var(--accent);
             border-radius: var(--radius);
-            padding: 18px 22px;
-            margin: 0 auto 32px;
-            max-width: 640px;
+            padding: var(--space-4) var(--space-5);
+            margin: 0 auto var(--space-8);
+            max-width: 64ch;
             text-align: center;
-            font-size: 0.98rem;
+            font-size: var(--fs-sm);
             color: var(--text);
+            line-height: 1.6;
         }
         .callout strong {
-            color: var(--accent);
+            color: var(--accent-hover);
         }
-
         .fase-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-            gap: 14px;
-            margin-bottom: 36px;
+            gap: var(--space-3);
+            margin-bottom: var(--space-8);
         }
-
         .fase-card {
             background: var(--surface);
             border: 1px solid var(--border);
             border-left: 3px solid var(--accent);
-            border-radius: 8px;
-            padding: 16px 16px;
+            border-radius: var(--radius-sm);
+            padding: var(--space-4);
             text-align: left;
+            transition:
+                transform var(--dur) var(--ease-spring),
+                box-shadow var(--dur) var(--ease-out);
         }
-
+        .fase-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
         .fase-card .fase-num {
             display: inline-block;
-            font-size: 0.72rem;
+            font-size: var(--fs-xs);
             font-weight: 700;
             letter-spacing: 0.06em;
             color: var(--accent);
             text-transform: uppercase;
-            margin-bottom: 4px;
+            margin-bottom: var(--space-1);
         }
-
         .fase-card h4 {
-            font-size: 0.95rem;
+            font-size: var(--fs-sm);
             font-weight: 700;
-            margin-bottom: 4px;
-            color: var(--text);
+            margin-bottom: var(--space-1);
+            color: var(--text-strong);
         }
-
         .fase-card p {
-            font-size: 0.82rem;
+            font-size: var(--fs-xs);
             color: var(--text-muted);
             line-height: 1.45;
         }
-
         .methods-block {
             text-align: center;
-            margin-top: 12px;
+            margin-top: var(--space-3);
         }
-
         .methods-block .methods-title {
-            font-size: 0.78rem;
+            font-size: var(--fs-xs);
             font-weight: 700;
             letter-spacing: 0.08em;
             text-transform: uppercase;
             color: var(--text-muted);
-            margin-bottom: 14px;
+            margin-bottom: var(--space-4);
         }
-
         .methods-pills {
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
-            gap: 8px;
+            gap: var(--space-2);
             max-width: 680px;
             margin: 0 auto;
         }
-
         .pill {
             display: inline-block;
             background: var(--surface);
             color: var(--text);
             border: 1px solid var(--border);
-            font-size: 0.82rem;
+            font-size: var(--fs-xs);
             font-weight: 500;
             padding: 6px 14px;
             border-radius: 20px;
+            transition:
+                transform var(--dur) var(--ease-spring),
+                border-color var(--dur) var(--ease-out);
+        }
+        .pill:hover {
+            transform: translateY(-1px);
+            border-color: var(--border-strong);
         }
         .pill.pill-accent {
-            background: var(--accent-light);
-            color: var(--accent);
+            background: var(--accent-soft);
+            color: var(--accent-hover);
             border-color: var(--accent);
             font-weight: 600;
         }
 
-        /* ── Responsive ────────────────────────────────────────────────── */
+        /* ── Tech stack (logo wall de badges) ────────────────────────── */
+        .tech-stack {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: var(--space-3);
+            margin-bottom: var(--space-6);
+        }
+        .tech-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 18px;
+            border-radius: 999px;
+            font-size: var(--fs-sm);
+            font-weight: 600;
+            border: 1.5px solid;
+            transition:
+                transform var(--dur) var(--ease-spring),
+                box-shadow var(--dur) var(--ease-out);
+        }
+        .tech-badge:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+        }
+        .tech-mark { font-size: 1.15rem; line-height: 1; }
+        .tech-name { font-family: var(--font-sans); letter-spacing: -0.01em; }
+        .tech-badge[data-color="model"]   { background: oklch(96% 0.04 280); color: oklch(35% 0.16 280); border-color: oklch(85% 0.08 280); }
+        .tech-badge[data-color="host"]    { background: oklch(97% 0.05 25);  color: oklch(40% 0.18 25);  border-color: oklch(85% 0.1 25); }
+        .tech-badge[data-color="lang"]    { background: oklch(96% 0.04 230); color: oklch(40% 0.16 230); border-color: oklch(85% 0.08 230); }
+        .tech-badge[data-color="ui"]      { background: oklch(96% 0.04 320); color: oklch(38% 0.18 320); border-color: oklch(85% 0.08 320); }
+        .tech-badge[data-color="license"] { background: var(--surface); color: var(--text-strong); border-color: var(--border-strong); }
+        .tech-note {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: var(--fs-sm);
+            max-width: 56ch;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        .tech-note strong { color: var(--text); font-weight: 600; }
 
+        /* ── Footer ────────────────────────────────────────────────── */
+        footer {
+            text-align: center;
+            padding: var(--space-8) var(--space-5);
+            color: var(--text-muted);
+            font-size: var(--fs-sm);
+            border-top: 1px solid var(--border);
+            margin-top: var(--space-10);
+        }
+        footer a {
+            color: var(--accent);
+            text-decoration: none;
+            transition: color var(--dur) var(--ease-out);
+        }
+        footer a:hover {
+            color: var(--accent-hover);
+            text-decoration: underline;
+        }
+        footer a:focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+            border-radius: 2px;
+        }
+
+        /* ── Reveal-on-scroll (IntersectionObserver nativo) ───────────
+           Solo si JS está activo Y el usuario no ha pedido
+           reducir movimiento. Si JS está desactivado, todo se ve
+           inmediatamente (graceful degradation).
+           ────────────────────────────────────────────────────────── */
+        @media (prefers-reduced-motion: no-preference) {
+            /* Solo se oculta cuando JS est\u00e1 activo Y GSAP no tom\u00f3 el control.
+               Si GSAP est\u00e1 disponible, se a\u00f1ade .gsap-ready y este selector
+               deja de aplicar para que GSAP.from() pueda animar sin conflicto. */
+            html.js:not(.gsap-ready) .reveal {
+                opacity: 0;
+                transform: translateY(16px);
+                transition:
+                    opacity var(--dur-slow) var(--ease-out),
+                    transform var(--dur-slow) var(--ease-out);
+            }
+            html.js:not(.gsap-ready) .reveal.is-visible {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            html.js:not(.gsap-ready) .reveal:nth-child(2) { transition-delay: 60ms; }
+            html.js:not(.gsap-ready) .reveal:nth-child(3) { transition-delay: 120ms; }
+            html.js:not(.gsap-ready) .reveal:nth-child(4) { transition-delay: 180ms; }
+            html.js:not(.gsap-ready) .reveal:nth-child(5) { transition-delay: 240ms; }
+            html.js:not(.gsap-ready) .reveal:nth-child(6) { transition-delay: 300ms; }
+            html.js:not(.gsap-ready) .reveal:nth-child(7) { transition-delay: 360ms; }
+        }
+
+        /* ── Reduced motion: desactiva TODO el movimiento ───────────── */
+        @media (prefers-reduced-motion: reduce) {
+            html { scroll-behavior: auto; }
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+                scroll-behavior: auto !important;
+            }
+        }
+
+        /* ── Cursor dot (Nivel 4: solo desktop) ──────────────────────── */
+        .cursor-dot {
+            position: fixed;
+            top: -4px;
+            left: -4px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent);
+            pointer-events: none;
+            z-index: 200;
+            opacity: 0;
+            transition:
+                width var(--dur) var(--ease-out),
+                height var(--dur) var(--ease-out),
+                top var(--dur) var(--ease-out),
+                left var(--dur) var(--ease-out),
+                background var(--dur) var(--ease-out),
+                opacity var(--dur) var(--ease-out);
+            mix-blend-mode: multiply;
+            will-change: transform;
+        }
+        .cursor-dot.is-active { opacity: 1; }
+        .cursor-dot.is-hover {
+            width: 32px;
+            height: 32px;
+            top: -16px;
+            left: -16px;
+            background: oklch(53% 0.16 28 / 0.35);
+        }
+        @media (pointer: coarse) {
+            .cursor-dot { display: none; }
+        }
+
+        /* ── Hero particles canvas (Nivel 4) ────────────────────────────── */
+        .hero-canvas {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.55;
+        }
+
+        /* ── Tilt cards (Nivel 4) ─────────────────────────────────────────── */
+        .feature-card, .step, .fase-card {
+            transform-style: preserve-3d;
+            will-change: transform;
+        }
+
+        /* ── Responsive ────────────────────────────────────────────── */
         @media (max-width: 600px) {
-            .hero h1 { font-size: 2rem; }
-            .hero .subtitle { font-size: 1.05rem; }
-            .btn-group { flex-direction: column; }
-            .btn-secondary { margin-left: 0; margin-top: 8px; }
-            section { padding: 40px 0; }
+            section { padding: var(--space-8) 0; }
+            .hero { padding: var(--space-10) 0 var(--space-8); }
+            .hero-emoji { font-size: 3.25rem; }
+            .btn-group { flex-direction: column; width: 100%; }
+            .btn { width: 100%; }
         }
     </style>
 </head>
 <body>
+
+<a href="#main" class="skip-link">Saltar al contenido principal</a>
+
+<header class="site-nav" role="banner">
+    <div class="container site-nav-inner">
+        <a href="#el-chef-te-conoce" class="site-nav-brand" aria-label="Chef Creativo — inicio">
+            <span aria-hidden="true">🍂</span>
+            <span>Chef Creativo</span>
+        </a>
+        <a href="https://huggingface.co/spaces/davidlopezgamero/RestaurantEAI"
+           class="btn btn-primary site-nav-cta" target="_blank" rel="noopener">
+            Probar <span aria-hidden="true">→</span>
+        </a>
+    </div>
+</header>
 
 <!-- ═══════════════════════════════════════════════════════════════════════════
      HERO
@@ -385,8 +846,8 @@
 <header class="hero">
     <div class="container">
         <span class="badge">MVP-0.5 · Desplegado en Hugging Face</span>
-        <span class="hero-emoji">🍂</span>
-        <h1>Chef Creativo</h1>
+        <span class="hero-emoji" aria-hidden="true">🍂</span>
+        <h1>Chef <span class="accent-word">Creativo</span></h1>
         <p class="subtitle">
             Generador de fichas culinarias con inteligencia artificial.
             Describí un plato en lenguaje natural y recibí nombre evocador,
@@ -395,22 +856,24 @@
         <div class="btn-group">
             <a href="https://huggingface.co/spaces/davidlopezgamero/RestaurantEAI"
                class="btn btn-primary" target="_blank" rel="noopener">
-                🍳 Probar ahora
+                <span aria-hidden="true">🍳</span> Probar ahora
             </a>
             <a href="#como-funciona" class="btn btn-secondary">
-                Cómo funciona →
+                Cómo funciona <span aria-hidden="true">↓</span>
             </a>
         </div>
     </div>
 </header>
 
+<main id="main">
+
 <!-- ═══════════════════════════════════════════════════════════════════════════
      EL CHEF TE CONOCE
      ═══════════════════════════════════════════════════════════════════════════ -->
 
-<section id="el-chef-te-conoce">
+<section id="el-chef-te-conoce" aria-labelledby="h-chef-conoce">
     <div class="container">
-        <h2>El chef te conoce</h2>
+        <h2 id="h-chef-conoce">El chef te conoce</h2>
 
         <div class="callout">
             La primera vez te hace <strong>15 preguntas</strong> sobre tu restaurante
@@ -420,78 +883,97 @@
         </div>
 
         <div class="features">
-            <div class="feature-card">
-                <span class="icon">💶</span>
+            <article class="feature-card reveal">
+                <span class="icon" aria-hidden="true">💶</span>
                 <h3>Tu ticket medio</h3>
                 <p>Mínimo, máximo y moda. El chef dimensiona la ficha a tu rango real, no al de un restaurante que no es el tuyo.</p>
-            </div>
-            <div class="feature-card">
-                <span class="icon">🔥</span>
+            </article>
+            <article class="feature-card reveal">
+                <span class="icon" aria-hidden="true">🔥</span>
                 <h3>Tus técnicas</h3>
                 <p>Brasas, arroces, fermentación, baja temperatura... las que ya dominás son el punto de partida, no una opción más.</p>
-            </div>
-            <div class="feature-card">
-                <span class="icon">👥</span>
+            </article>
+            <article class="feature-card reveal">
+                <span class="icon" aria-hidden="true">👥</span>
                 <h3>Tus comensales</h3>
                 <p>Familias, business, turistas, banquetes. El plato se piensa para quien se sienta en tu mesa, no para un público genérico.</p>
-            </div>
-            <div class="feature-card">
-                <span class="icon">🌿</span>
+            </article>
+            <article class="feature-card reveal">
+                <span class="icon" aria-hidden="true">🌿</span>
                 <h3>Tus valores</h3>
                 <p>Km0, temporada, vegetariana, sin gluten, halal. Lo que tu cocina ya abrazó se respeta en cada ficha.</p>
-            </div>
-            <div class="feature-card">
-                <span class="icon">📍</span>
+            </article>
+            <article class="feature-card reveal">
+                <span class="icon" aria-hidden="true">📍</span>
                 <h3>Tu entorno</h3>
                 <p>Localización, época y estilo. El chef sabe si estás en el litoral mediterráneo o en un pueblo de interior.</p>
-            </div>
-            <div class="feature-card">
-                <span class="icon">🚫</span>
+            </article>
+            <article class="feature-card reveal">
+                <span class="icon" aria-hidden="true">🚫</span>
                 <h3>Tus límites</h3>
                 <p>Restricciones religiosas, tiempo de servicio, política de grupos. El chef no te va a proponer cosas que no podés sostener.</p>
-            </div>
+            </article>
         </div>
     </div>
 </section>
 
 <!-- ═══════════════════════════════════════════════════════════════════════════
-     FEATURES
+     STATS (counter-up con GSAP)
      ═══════════════════════════════════════════════════════════════════════════ -->
 
-<section>
+<section class="stats" aria-label="Cifras clave del sistema">
     <div class="container">
-        <h2>Qué hace el chef</h2>
+        <div class="stats-grid">
+            <div class="stat reveal">
+                <span class="stat-number" data-count="15">0</span>
+                <span class="stat-label">preguntas para conocerte la primera vez</span>
+            </div>
+            <div class="stat reveal">
+                <span class="stat-number" data-count="7">0</span>
+                <span class="stat-label">fases de razonamiento por ficha</span>
+            </div>
+            <div class="stat reveal">
+                <span class="stat-number" data-count="11">0</span>
+                <span class="stat-label">métodos creativos que el chef puede aplicar</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section aria-labelledby="h-que-hace">
+    <div class="container">
+        <h2 id="h-que-hace">Qué hace el chef</h2>
         <div class="features">
-            <div class="feature-card">
-                <span class="icon">🍂</span>
+            <article class="feature-card reveal">
+                <span class="icon" aria-hidden="true">🍂</span>
                 <h3>Nombre evocador</h3>
                 <p>2-4 palabras que capturan el alma del plato, en castellano, con identidad mediterránea.</p>
-            </div>
-            <div class="feature-card">
-                <span class="icon">📝</span>
+            </article>
+            <article class="feature-card reveal">
+                <span class="icon" aria-hidden="true">📝</span>
                 <h3>Storytelling</h3>
                 <p>Historia, origen, recuerdo. El plato cuenta algo. La gente no recuerda platos, recuerda historias.</p>
-            </div>
-            <div class="feature-card">
-                <span class="icon">📋</span>
+            </article>
+            <article class="feature-card reveal">
+                <span class="icon" aria-hidden="true">📋</span>
                 <h3>Ficha técnica</h3>
                 <p>Ingredientes precisos para 4 raciones + elaboración resumida en 3-5 pasos accionables.</p>
-            </div>
-            <div class="feature-card">
-                <span class="icon">🍷</span>
+            </article>
+            <article class="feature-card reveal">
+                <span class="icon" aria-hidden="true">🍷</span>
                 <h3>Maridaje</h3>
                 <p>Sugerencia de bebida con justificación técnica. Vinos, cervezas, cócteles que potencian el plato.</p>
-            </div>
-            <div class="feature-card">
-                <span class="icon">🎨</span>
+            </article>
+            <article class="feature-card reveal">
+                <span class="icon" aria-hidden="true">🎨</span>
                 <h3>Prompt para imagen</h3>
                 <p>Descripción detallada en inglés lista para DALL-E, Midjourney o Stable Diffusion.</p>
-            </div>
-            <div class="feature-card">
-                <span class="icon">🌿</span>
+            </article>
+            <article class="feature-card reveal">
+                <span class="icon" aria-hidden="true">🌿</span>
                 <h3>Estacionalidad</h3>
                 <p>Conocimiento real de producto de temporada en Cataluña. Avisa si un ingrediente está fuera de época.</p>
-            </div>
+            </article>
         </div>
     </div>
 </section>
@@ -500,9 +982,9 @@
      DEMO / EXAMPLES
      ═══════════════════════════════════════════════════════════════════════════ -->
 
-<section style="background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">
+<section style="background: var(--surface-alt); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);" aria-labelledby="h-ejemplos">
     <div class="container">
-        <h2>Probá con estos ejemplos</h2>
+        <h2 id="h-ejemplos">Probá con estos ejemplos</h2>
         <div class="demo-box">
             <div class="prompt-example">
                 "Entrante vegetariano con calabaza y queso de cabra"
@@ -520,13 +1002,15 @@
                 "Plato de verano con tomate y anchoas"
             </div>
             <p style="margin-top: 20px; color: var(--text-muted); font-size: 0.9rem;">
-                Copiá cualquiera de estos y pegalo en el chat del chef.
+                <strong>Click</strong> en uno para ver una respuesta t\u00edpica del chef.
+                Despu\u00e9s prob\u00e1 tu propia versi\u00f3n en el chat.
             </p>
             <a href="https://huggingface.co/spaces/davidlopezgamero/RestaurantEAI"
                class="btn btn-primary" target="_blank" rel="noopener"
                style="margin-top: 16px;">
                 Ir al chat →
             </a>
+            <div class="demo-response" id="demo-response" role="region" aria-live="polite"></div>
         </div>
     </div>
 </section>
@@ -535,26 +1019,26 @@
      HOW IT WORKS
      ═══════════════════════════════════════════════════════════════════════════ -->
 
-<section id="como-funciona">
+<section id="como-funciona" aria-labelledby="h-como-funciona">
     <div class="container">
-        <h2>Cómo funciona</h2>
+        <h2 id="h-como-funciona">Cómo funciona</h2>
         <div class="steps">
-            <div class="step">
+            <article class="step reveal">
                 <h4>Escribís tu idea</h4>
                 <p>Describí un plato en lenguaje natural. Vago, específico o sólo palabras sueltas.</p>
-            </div>
-            <div class="step">
+            </article>
+            <article class="step reveal">
                 <h4>El chef pregunta</h4>
                 <p>Antes de cocinar, detecta lo que falta (estacionalidad, ocasión, comensales, presupuesto, restricciones) y te hace sólo las preguntas necesarias. No inventa, no asume.</p>
-            </div>
-            <div class="step">
+            </article>
+            <article class="step reveal">
                 <h4>El chef razona</h4>
                 <p>Trabaja 7 fases: alma del plato, métodos creativos, equilibrio, técnica, storytelling, descartadas y preguntas finales.</p>
-            </div>
-            <div class="step">
+            </article>
+            <article class="step reveal">
                 <h4>Recibís la ficha</h4>
                 <p>Nombre, historia, ingredientes, elaboración, maridaje y prompt de imagen. Listo para usar.</p>
-            </div>
+            </article>
         </div>
     </div>
 </section>
@@ -563,9 +1047,9 @@
      PROCESO CREATIVO
      ═══════════════════════════════════════════════════════════════════════════ -->
 
-<section id="proceso-creativo" style="background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">
+<section id="proceso-creativo" style="background: var(--surface-alt); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);" aria-labelledby="h-proceso">
     <div class="container">
-        <h2>Proceso creativo</h2>
+        <h2 id="h-proceso">Proceso creativo</h2>
 
         <div class="callout">
             Además del modo directo, podés lanzar el <strong>proceso creativo explícito</strong>:
@@ -573,41 +1057,41 @@
         </div>
 
         <div class="fase-grid">
-            <div class="fase-card">
+            <article class="fase-card reveal">
                 <span class="fase-num">Fase 1</span>
                 <h4>Alma</h4>
                 <p>Qué evoca, qué recuerdo, qué estación, qué producto.</p>
-            </div>
-            <div class="fase-card">
+            </article>
+            <article class="fase-card reveal">
                 <span class="fase-num">Fase 2</span>
                 <h4>Métodos creativos</h4>
                 <p>Qué técnicas de creación aplican (de ElBulli y propias).</p>
-            </div>
-            <div class="fase-card">
+            </article>
+            <article class="fase-card reveal">
                 <span class="fase-num">Fase 3</span>
                 <h4>Equilibrio</h4>
                 <p>Dulce / salado / ácido / amargo / umami / graso. El punto crítico.</p>
-            </div>
-            <div class="fase-card">
+            </article>
+            <article class="fase-card reveal">
                 <span class="fase-num">Fase 4</span>
                 <h4>Técnica</h4>
                 <p>Qué procesos potencian el producto sin enmascararlo.</p>
-            </div>
-            <div class="fase-card">
+            </article>
+            <article class="fase-card reveal">
                 <span class="fase-num">Fase 5</span>
                 <h4>Storytelling</h4>
                 <p>Qué historia va a contar, a quién, por qué se va a recordar.</p>
-            </div>
-            <div class="fase-card">
+            </article>
+            <article class="fase-card reveal">
                 <span class="fase-num">Fase 6</span>
                 <h4>Descartadas</h4>
                 <p>Cosas que consideró y rechazó. Por qué este plato y no otro.</p>
-            </div>
-            <div class="fase-card">
+            </article>
+            <article class="fase-card reveal">
                 <span class="fase-num">Fase 7</span>
                 <h4>Preguntas</h4>
                 <p>Lo que aún le preocupa o necesita validar contigo.</p>
-            </div>
+            </article>
         </div>
 
         <div class="methods-block">
@@ -636,28 +1120,40 @@
      TECH STACK
      ═══════════════════════════════════════════════════════════════════════════ -->
 
-<section>
+<section aria-labelledby="h-tecnologia">
     <div class="container">
-        <h2>Tecnología</h2>
-        <div class="features">
-            <div class="feature-card">
-                <span class="icon">🧠</span>
-                <h3>MiniMax-M3</h3>
-                <p>Modelo frontier con 1M de ventana de contexto. Razonamiento culinario de alto nivel.</p>
+        <h2 id="h-tecnologia">Tecnología</h2>
+        <div class="tech-stack">
+            <div class="tech-badge reveal" data-color="model">
+                <span class="tech-mark" aria-hidden="true">🧠</span>
+                <span class="tech-name">MiniMax-M3</span>
             </div>
-            <div class="feature-card">
-                <span class="icon">🤗</span>
-                <h3>Hugging Face Spaces</h3>
-                <p>Desplegado en infraestructura gratuita de HF. Sin coste de servidor.</p>
+            <div class="tech-badge reveal" data-color="host">
+                <span class="tech-mark" aria-hidden="true">🤗</span>
+                <span class="tech-name">Hugging Face Spaces</span>
             </div>
-            <div class="feature-card">
-                <span class="icon">🐍</span>
-                <h3>Python + Gradio</h3>
-                <p>Backend en Python con httpx directo a la API. UI en Gradio 6. Código abierto (MIT).</p>
+            <div class="tech-badge reveal" data-color="lang">
+                <span class="tech-mark" aria-hidden="true">🐍</span>
+                <span class="tech-name">Python</span>
+            </div>
+            <div class="tech-badge reveal" data-color="ui">
+                <span class="tech-mark" aria-hidden="true">🎛️</span>
+                <span class="tech-name">Gradio 6</span>
+            </div>
+            <div class="tech-badge reveal" data-color="license">
+                <span class="tech-mark" aria-hidden="true">⚖️</span>
+                <span class="tech-name">MIT License</span>
             </div>
         </div>
+        <p class="tech-note reveal">
+            Modelo <strong>frontier</strong>, despliegue gratuito en HF,
+            backend en Python con <strong>httpx directo</strong> a la API y
+            UI en Gradio 6. Todo el código es abierto.
+        </p>
     </div>
 </section>
+
+</main>
 
 <!-- ═══════════════════════════════════════════════════════════════════════════
      FOOTER
@@ -680,6 +1176,342 @@
         </p>
     </div>
 </footer>
+
+<script>
+/* =====================================================================
+   Chef Creativo — landing behavior (single-file, vanilla + GSAP opcional)
+   - Si GSAP y ScrollTrigger cargan desde CDN -> animaciones premium
+   - Si la CDN falla -> IntersectionObserver nativo (mismo resultado visual)
+   - Todo respeta prefers-reduced-motion
+   ===================================================================== */
+(function () {
+    'use strict';
+
+    // Flag global de JS para CSS hooks (.reveal, .js, etc.)
+    document.documentElement.classList.add('js');
+
+    var hasGSAP = !!(window.gsap && window.ScrollTrigger);
+
+    // ── Nav: estado scrolled con rAF (siempre, GSAP o no) ────────
+    var nav = document.querySelector('.site-nav');
+    if (nav) {
+        var scrolled = false, ticking = false;
+        function updateNav() {
+            var should = window.scrollY > 24;
+            if (should !== scrolled) {
+                scrolled = should;
+                nav.classList.toggle('is-scrolled', scrolled);
+            }
+            ticking = false;
+        }
+        window.addEventListener('scroll', function () {
+            if (!ticking) { requestAnimationFrame(updateNav); ticking = true; }
+        }, { passive: true });
+        updateNav();
+    }
+
+    // ── Branch: GSAP si está, IO si no ───────────────────────
+    if (hasGSAP) {
+        gsap.registerPlugin(ScrollTrigger);
+        // Marca que GSAP tomó el control: desactiva el reveal CSS nativo
+        // (ver regla `html.js:not(.gsap-ready) .reveal`).
+        document.documentElement.classList.add('gsap-ready');
+
+        var mm = gsap.matchMedia();
+
+        // ── Reduce motion OFF: animaciones completas ─────
+        mm.add('(prefers-reduced-motion: no-preference)', function () {
+            // 1) Hero entrance: timeline en cascada
+            var heroTL = gsap.timeline({ defaults: { ease: 'power3.out' } });
+            heroTL
+                .from('.hero .badge',          { y: 18, opacity: 0, duration: 0.6 })
+                .from('.hero-emoji',           { scale: 0.6, opacity: 0, rotation: -6, duration: 0.9 }, '-=0.4')
+                .from('.hero h1',              { y: 28, opacity: 0, duration: 0.7 }, '-=0.6')
+                .from('.hero .subtitle',       { y: 18, opacity: 0, duration: 0.6 }, '-=0.5')
+                .from('.hero .btn-group .btn', { y: 16, opacity: 0, duration: 0.5, stagger: 0.12 }, '-=0.4');
+
+            // 2) Hero parallax: al desplazar la sección hero, los elementos
+            //    se desplazan a distintas velocidades y se desvanecen.
+            var heroScrubTL = gsap.timeline({
+                scrollTrigger: {
+                    trigger: '.hero',
+                    start: 'top top',
+                    end: 'bottom top',
+                    scrub: 0.6
+                }
+            });
+            heroScrubTL
+                .to('.hero-emoji',     { y: -140, rotation: 6,  ease: 'none' }, 0)
+                .to('.hero h1, .hero .badge', { y: -60, opacity: 0.15, ease: 'none' }, 0)
+                .to('.hero .subtitle', { y: -35,  opacity: 0, ease: 'none' }, 0)
+                .to('.hero .btn-group',{ y: -20,  opacity: 0, ease: 'none' }, 0);
+
+            // 3) Reveal-on-scroll (todos los .reveal, incluido el stats)
+            gsap.utils.toArray('.reveal').forEach(function (el) {
+                gsap.from(el, {
+                    opacity: 0,
+                    y: 30,
+                    duration: 0.8,
+                    ease: 'power2.out',
+                    scrollTrigger: {
+                        trigger: el,
+                        start: 'top 88%',
+                        once: true
+                    }
+                });
+            });
+
+            // 4) Counter-up para .stat-number (lee data-count)
+            gsap.utils.toArray('.stat-number').forEach(function (el) {
+                var target = parseInt(el.dataset.count, 10);
+                if (isNaN(target)) return;
+                ScrollTrigger.create({
+                    trigger: el,
+                    start: 'top 85%',
+                    once: true,
+                    onEnter: function () {
+                        var obj = { val: 0 };
+                        gsap.to(obj, {
+                            val: target,
+                            duration: 1.6,
+                            ease: 'power2.out',
+                            onUpdate: function () {
+                                el.textContent = Math.round(obj.val).toLocaleString('es-ES');
+                            }
+                        });
+                    }
+                });
+            });
+
+            // 5) Demo interactivo: click en prompt → respuesta animada
+            var prompts = document.querySelectorAll('.demo-box .prompt-example');
+            var resp    = document.getElementById('demo-response');
+            if (prompts.length && resp) {
+                var responses = [
+                    '🍂 <strong>Calabaza del huerto, queso de cabra curado</strong><br><em>Historia:</em> un paseo por el bosque en octubre. La calabaza se asa a baja temperatura y el queso se funde sobre ella. Maridaje: <strong>vino dulce de cosecha</strong>.',
+                    '🍫 <strong>Chocolate & AOVE — el clásico revisitado</strong><br><em>Truco:</em> el aceite de oliva virgen extra potencia el amargor del cacao. Termina con <strong>flor de sal y ralladura de naranja</strong>.',
+                    '🥩 <strong>Solomillo en 7 tiempos</strong><br><em>Foco:</em> cada tiempo cuenta un capítulo de la historia: crudo, brasa, reposo, salsa, recuerdo, silencio, servicio.',
+                    '🟤 <strong>Risotto & trufa — la gala hecha tiempo</strong><br><em>Método:</em> risotto de setas de temporada coronado en mesa con láminas de trufa negra. Caldo montado, parmesano fuera de fuego.',
+                    '🌅 <strong>Bocadillo del mediterráneo</strong><br><em>Estilo:</em> tomate del maresme con anchoas en salazón, pan con tomate y AOVE. Cero fuegos, máxima memoria.'
+                ];
+                prompts.forEach(function (p, i) {
+                    p.setAttribute('role', 'button');
+                    p.setAttribute('tabindex', '0');
+                    p.setAttribute('aria-controls', 'demo-response');
+                    function activate() {
+                        prompts.forEach(function (x) { x.classList.remove('is-active'); });
+                        p.classList.add('is-active');
+                        gsap.killTweensOf(resp);
+                        gsap.fromTo(resp,
+                            { opacity: 0, y: 10 },
+                            {
+                                opacity: 1, y: 0, duration: 0.5, ease: 'power2.out',
+                                onStart: function () { resp.innerHTML = responses[i] || ''; }
+                            }
+                        );
+                    }
+                    p.addEventListener('click', activate);
+                    p.addEventListener('keydown', function (e) {
+                        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(); }
+                    });
+                });
+            }
+
+            return function () { /* cleanup si matchMedia revierte */ };
+        });
+
+        // ── Reduce motion ON con GSAP: nada se mueve, todo se ve ─────
+        mm.add('(prefers-reduced-motion: reduce)', function () {
+            document.querySelectorAll('.reveal').forEach(function (el) {
+                el.classList.add('is-visible');
+            });
+            document.querySelectorAll('.stat-number').forEach(function (el) {
+                var target = parseInt(el.dataset.count, 10);
+                if (!isNaN(target)) el.textContent = target.toLocaleString('es-ES');
+            });
+            return function () {};
+        });
+
+    } else {
+        // ── Fallback: IO nativo + valores finales sin animar ──────
+        document.querySelectorAll('.stat-number').forEach(function (el) {
+            var target = parseInt(el.dataset.count, 10);
+            if (!isNaN(target)) el.textContent = target.toLocaleString('es-ES');
+        });
+
+        if ('IntersectionObserver' in window) {
+            var io = new IntersectionObserver(function (entries) {
+                entries.forEach(function (entry) {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-visible');
+                        io.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+            document.querySelectorAll('.reveal').forEach(function (el) { io.observe(el); });
+        } else {
+            document.querySelectorAll('.reveal').forEach(function (el) {
+                el.classList.add('is-visible');
+            });
+        }
+
+        // Demo interactivo sin GSAP: toggle simple
+        var prompts = document.querySelectorAll('.demo-box .prompt-example');
+        var resp = document.getElementById('demo-response');
+        if (prompts.length && resp) {
+            var responses = [
+                '🍂 <strong>Calabaza del huerto, queso de cabra curado</strong>',
+                '🍫 <strong>Chocolate & AOVE — el clásico revisitado</strong>',
+                '🥩 <strong>Solomillo en 7 tiempos</strong>',
+                '🟤 <strong>Risotto & trufa — la gala hecha tiempo</strong>',
+                '🌅 <strong>Bocadillo del mediterráneo</strong>'
+            ];
+            prompts.forEach(function (p, i) {
+                p.setAttribute('role', 'button');
+                p.setAttribute('tabindex', '0');
+                p.addEventListener('click', function () {
+                    prompts.forEach(function (x) { x.classList.remove('is-active'); });
+                    p.classList.add('is-active');
+                    resp.innerHTML = responses[i] || '';
+                });
+            });
+        }
+    }
+
+    /* =====================================================================
+       NIVEL 4 — Wow effects (siempre se ejecutan, independientes de GSAP)
+
+       - VanillaTilt en cards: parallax 3D al pasar el ratón
+       - Canvas partículas (hero): especias que flotan hacia arriba
+       - Custom cursor: dot que crece en elementos interactivos (desktop)
+       - Todo respeta prefers-reduced-motion y pointer: coarse
+       ===================================================================== */
+
+    // ── VanillaTilt: parallax 3D en cards ───────────────────────
+    function initTilt() {
+        if (!window.VanillaTilt) return;
+        var cards = document.querySelectorAll('.feature-card, .step, .fase-card');
+        if (!cards.length) return;
+        // VanillaTilt espera data-tilt; algunos elementos ya lo tendrán,
+        // pero inicializamos por elemento para evitar problemas de selección.
+        window.VanillaTilt.init(cards, {
+            max: 6,
+            speed: 500,
+            glare: true,
+            'max-glare': 0.18,
+            scale: 1.015,
+            perspective: 1200,
+            reset: true,
+            transition: true,
+            easing: 'cubic-bezier(.03,.98,.52,.99)'
+        });
+    }
+
+    // ── Partículas: especias flotando en el hero ────────────────
+    function initParticles() {
+        var hero = document.querySelector('.hero');
+        if (!hero) return;
+        // Skip on coarse pointers (touch) o si el usuario pidió reduced motion
+        var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var coarse  = window.matchMedia('(pointer: coarse)').matches;
+        if (reduced || coarse) return;
+
+        var canvas = document.createElement('canvas');
+        canvas.className = 'hero-canvas';
+        hero.insertBefore(canvas, hero.firstChild);
+        var ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        var particles = [];
+        var dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+        function resize() {
+            var r = hero.getBoundingClientRect();
+            canvas.width  = Math.floor(r.width  * dpr);
+            canvas.height = Math.floor(r.height * dpr);
+            canvas.style.width  = r.width  + 'px';
+            canvas.style.height = r.height + 'px';
+            ctx.scale(dpr, dpr);
+            var count = Math.min(28, Math.floor((r.width * r.height) / 36000));
+            particles = [];
+            for (var i = 0; i < count; i++) {
+                particles.push({
+                    x: Math.random() * r.width,
+                    y: Math.random() * r.height,
+                    r: 1.2 + Math.random() * 2.2,
+                    vy: -(0.15 + Math.random() * 0.35),
+                    vx: (Math.random() - 0.5) * 0.18,
+                    a: 0.18 + Math.random() * 0.32,
+                    hue: Math.random() < 0.7 ? 196 : 25, // terracotta vs warm
+                    sat: 55,
+                    light: 50
+                });
+            }
+        }
+
+        function frame() {
+            var w = canvas.width / dpr;
+            var h = canvas.height / dpr;
+            ctx.clearRect(0, 0, w, h);
+            for (var i = 0; i < particles.length; i++) {
+                var p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                if (p.y < -8 || p.x < -8 || p.x > w + 8) {
+                    p.x = Math.random() * w;
+                    p.y = h + 8;
+                }
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                ctx.fillStyle = 'hsla(' + p.hue + ',' + p.sat + '%,' + p.light + '%,' + p.a + ')';
+                ctx.fill();
+            }
+            requestAnimationFrame(frame);
+        }
+
+        resize();
+        frame();
+        var ro = new ResizeObserver(resize);
+        ro.observe(hero);
+    }
+
+    // ── Custom cursor dot (solo desktop) ─────────────────────
+    function initCursor() {
+        if (window.matchMedia('(pointer: coarse)').matches) return;
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+        var dot = document.createElement('div');
+        dot.className = 'cursor-dot';
+        document.body.appendChild(dot);
+
+        var mx = 0, my = 0, dx = 0, dy = 0, active = false, ticking = false;
+
+        function loop() {
+            dx += (mx - dx) * 0.18;
+            dy += (my - dy) * 0.18;
+            dot.style.transform = 'translate3d(' + dx + 'px,' + dy + 'px,0)';
+            ticking = false;
+        }
+        document.addEventListener('mousemove', function (e) {
+            mx = e.clientX; my = e.clientY;
+            if (!active) { dot.classList.add('is-active'); active = true; }
+            if (!ticking) { requestAnimationFrame(loop); ticking = true; }
+        }, { passive: true });
+        document.addEventListener('mouseover', function (e) {
+            if (e.target.closest('a, button, .btn, [role="button"], .prompt-example'))
+                dot.classList.add('is-hover');
+        });
+        document.addEventListener('mouseout', function (e) {
+            if (e.target.closest('a, button, .btn, [role="button"], .prompt-example'))
+                dot.classList.remove('is-hover');
+        });
+    }
+
+    initTilt();
+    initParticles();
+    initCursor();
+})();
+</script>
 
 </body>
 </html>

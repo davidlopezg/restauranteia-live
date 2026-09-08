@@ -2,7 +2,7 @@
 Tests for agents.memoria.storage — CRUD operations, duplicate detection, export.
 
 All tests use a tmp_path-backed SQLite database to avoid contaminating the
-real .agent_knowledge/ directory.
+real conocimiento/interno_restaurante/ directory.
 """
 
 from __future__ import annotations
@@ -334,10 +334,10 @@ class TestCount:
 
 class TestExport:
     def test_default_path(self, db_conn: sqlite3.Connection, tmp_path: Path):
-        """Creates file in .agent_knowledge/ with timestamp."""
+        """Creates file in conocimiento/interno_restaurante/ with timestamp."""
         save_idea(db_conn, "idea export", categoria="test")
-        # Use tmp_path as the db path root to avoid creating in real .agent_knowledge/
-        export_dir = tmp_path / ".agent_knowledge"
+        # Use tmp_path as the db path root to avoid creating in real knowledge dir
+        export_dir = tmp_path / "conocimiento" / "interno_restaurante"
         export_dir.mkdir(parents=True, exist_ok=True)
         export_path = export_dir / "ideas_export_test.json"
         result = export_ideas(db_conn, export_path)

@@ -1,0 +1,836 @@
+{
+  "schema_version": "1.0.0",
+  "description": "Mapping curado de ingredientes mediterráneos → compuestos volátiles/aromáticos clave (PubChem CIDs). Los compuestos listados son los que más contribuyen al perfil de sabor del ingrediente. 'role' indica si es primario (define el sabor), secundario (aporta carácter) o traza (modifica el aroma sutilmente).",
+  "generated_at": "2026-08-30",
+  "sources": [
+    "FlavorDB (IIIT-Delhi) — cobertura y metodología de compounds por ingrediente",
+    "PubChem (NIH) — Compound IDs canónicos",
+    "Literatura de flavor chemistry pública (aroma-active compounds por alimento)"
+  ],
+  "methodology": "Para cada ingrediente, listamos los 2-6 compuestos más característicos de su flavor profile. La afinidad entre dos ingredientes se mide por la intersección de estos conjuntos de compuestos (cualquier solapamiento cuenta; primario-primario pesa más). Cuando un ingrediente no está en 'curated', el motor intenta resolverlo via PubChem API con el campo 'pubchem_query'.",
+  "curated_count": 78,
+  "query_only_count": 125,
+  "curated": [
+    {
+      "ingredient": "ajo",
+      "category": "allium",
+      "compounds": [
+        {"cid": 65036, "name": "allicin", "role": "primary"},
+        {"cid": 11617, "name": "allyl methyl sulfide", "role": "primary"},
+        {"cid": 16590, "name": "diallyl disulfide", "role": "secondary"},
+        {"cid": 87310, "name": "alliin", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "cebolla",
+      "category": "allium",
+      "compounds": [
+        {"cid": 11721, "name": "propanethial s-oxide (LF)", "role": "primary"},
+        {"cid": 6377, "name": "dipropyl disulfide", "role": "secondary"},
+        {"cid": 11689, "name": "trans-1-propenyl propyl disulfide", "role": "primary"}
+      ]
+    },
+    {
+      "ingredient": "puerro",
+      "category": "allium",
+      "compounds": [
+        {"cid": 11617, "name": "allyl methyl sulfide", "role": "primary"},
+        {"cid": 6377, "name": "dipropyl disulfide", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "cebolleta",
+      "category": "allium",
+      "compounds": [
+        {"cid": 11617, "name": "allyl methyl sulfide", "role": "primary"}
+      ]
+    },
+    {
+      "ingredient": "chalota",
+      "category": "allium",
+      "compounds": [
+        {"cid": 11721, "name": "propanethial s-oxide (LF)", "role": "primary"},
+        {"cid": 11617, "name": "allyl methyl sulfide", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "tomate",
+      "category": "solanaceae",
+      "compounds": [
+        {"cid": 6432, "name": "2-isobutylthiazole", "role": "primary"},
+        {"cid": 6184, "name": "hexanal", "role": "secondary"},
+        {"cid": 6432, "name": "(z)-3-hexenal", "role": "primary"}
+      ]
+    },
+    {
+      "ingredient": "pimiento rojo",
+      "category": "solanaceae",
+      "compounds": [
+        {"cid": 1548943, "name": "capsaicin", "role": "primary"},
+        {"cid": 12681, "name": "2-methoxy-3-isobutylpyrazine", "role": "primary"}
+      ]
+    },
+    {
+      "ingredient": "pimiento verde",
+      "category": "solanaceae",
+      "compounds": [
+        {"cid": 12681, "name": "2-methoxy-3-isobutylpyrazine", "role": "primary"}
+      ]
+    },
+    {
+      "ingredient": "berenjena",
+      "category": "solanaceae",
+      "compounds": [
+        {"cid": 6184, "name": "hexanal", "role": "secondary"},
+        {"cid": 6432, "name": "(z)-3-hexenal", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "patata",
+      "category": "solanaceae",
+      "compounds": [
+        {"cid": 6184, "name": "hexanal", "role": "primary"},
+        {"cid": 6432, "name": "(z)-3-hexenal", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "calabacin",
+      "category": "cucurbit",
+      "compounds": [
+        {"cid": 6432, "name": "(z)-3-hexenal", "role": "primary"},
+        {"cid": 6184, "name": "hexanal", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "calabaza",
+      "category": "cucurbit",
+      "compounds": [
+        {"cid": 6432, "name": "(z)-3-hexenal", "role": "primary"}
+      ]
+    },
+    {
+      "ingredient": "pepino",
+      "category": "cucurbit",
+      "compounds": [
+        {"cid": 6184, "name": "hexanal", "role": "primary"},
+        {"cid": 6432, "name": "(z)-3-hexenal", "role": "primary"},
+        {"cid": 18847, "name": "(e,z)-2,6-nonadienal", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "brocoli",
+      "category": "brassicaceae",
+      "compounds": [
+        {"cid": 12681, "name": "2-methoxy-3-isobutylpyrazine", "role": "primary"},
+        {"cid": 65688, "name": "sulforaphane", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "coliflor",
+      "category": "brassicaceae",
+      "compounds": [
+        {"cid": 12681, "name": "2-methoxy-3-isobutylpyrazine", "role": "primary"}
+      ]
+    },
+    {
+      "ingredient": "repollo",
+      "category": "brassicaceae",
+      "compounds": [
+        {"cid": 12681, "name": "2-methoxy-3-isobutylpyrazine", "role": "primary"},
+        {"cid": 65688, "name": "sulforaphane", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "rabano",
+      "category": "brassicaceae",
+      "compounds": [
+        {"cid": 12681, "name": "2-methoxy-3-isobutylpyrazine", "role": "primary"}
+      ]
+    },
+    {
+      "ingredient": "mostaza",
+      "category": "brassicaceae",
+      "compounds": [
+        {"cid": 18600, "name": "allyl isothiocyanate", "role": "primary"}
+      ]
+    },
+    {
+      "ingredient": "wasabi",
+      "category": "brassicaceae",
+      "compounds": [
+        {"cid": 18600, "name": "allyl isothiocyanate", "role": "primary"}
+      ]
+    },
+    {
+      "ingredient": "alcaparra",
+      "category": "brassicaceae",
+      "compounds": [
+        {"cid": 6184, "name": "hexanal", "role": "primary"},
+        {"cid": 6432, "name": "(z)-3-hexenal", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "zanahoria",
+      "category": "umbellifer",
+      "compounds": [
+        {"cid": 6053, "name": "beta-ionone", "role": "primary"},
+        {"cid": 61014, "name": "daucene", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "apio",
+      "category": "umbellifer",
+      "compounds": [
+        {"cid": 6432, "name": "(z)-3-hexenal", "role": "primary"},
+        {"cid": 755, "name": "limonene", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "hinojo",
+      "category": "umbellifer",
+      "compounds": [
+        {"cid": 323, "name": "anethole", "role": "primary"},
+        {"cid": 755, "name": "limonene", "role": "secondary"},
+        {"cid": 6859, "name": "estragole", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "perejil",
+      "category": "herb",
+      "compounds": [
+        {"cid": 6859, "name": "estragole (methyl chavicol)", "role": "primary"},
+        {"cid": 6432, "name": "(z)-3-hexenal", "role": "primary"},
+        {"cid": 3314, "name": "eugenol", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "cilantro",
+      "category": "herb",
+      "compounds": [
+        {"cid": 6184, "name": "decanal", "role": "primary"},
+        {"cid": 61014, "name": "2-decenal", "role": "secondary"},
+        {"cid": 755, "name": "limonene", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "albahaca",
+      "category": "herb",
+      "compounds": [
+        {"cid": 6432, "name": "linalool", "role": "primary"},
+        {"cid": 6184, "name": "estragole", "role": "secondary"},
+        {"cid": 3314, "name": "eugenol", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "menta",
+      "category": "herb",
+      "compounds": [
+        {"cid": 1254, "name": "menthol", "role": "primary"},
+        {"cid": 1110, "name": "menthone", "role": "secondary"},
+        {"cid": 6432, "name": "limonene", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "romero",
+      "category": "herb",
+      "compounds": [
+        {"cid": 12670, "name": "1,8-cineole (eucalyptol)", "role": "primary"},
+        {"cid": 755, "name": "limonene", "role": "secondary"},
+        {"cid": 6432, "name": "alpha-pinene", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "tomillo",
+      "category": "herb",
+      "compounds": [
+        {"cid": 64689, "name": "thymol", "role": "primary"},
+        {"cid": 12670, "name": "1,8-cineole (eucalyptol)", "role": "secondary"},
+        {"cid": 755, "name": "limonene", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "oregano",
+      "category": "herb",
+      "compounds": [
+        {"cid": 64689, "name": "thymol", "role": "primary"},
+        {"cid": 3314, "name": "carvacrol", "role": "primary"}
+      ]
+    },
+    {
+      "ingredient": "salvia",
+      "category": "herb",
+      "compounds": [
+        {"cid": 12670, "name": "1,8-cineole (eucalyptol)", "role": "primary"},
+        {"cid": 64689, "name": "thymol", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "eneldo",
+      "category": "herb",
+      "compounds": [
+        {"cid": 755, "name": "limonene", "role": "primary"},
+        {"cid": 323, "name": "anethole", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "laurel",
+      "category": "herb",
+      "compounds": [
+        {"cid": 12670, "name": "1,8-cineole (eucalyptol)", "role": "primary"},
+        {"cid": 6432, "name": "alpha-pinene", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "cebollino",
+      "category": "herb",
+      "compounds": [
+        {"cid": 11617, "name": "allyl methyl sulfide", "role": "primary"}
+      ]
+    },
+    {
+      "ingredient": "limon",
+      "category": "citrus",
+      "compounds": [
+        {"cid": 22311, "name": "d-limonene", "role": "primary"},
+        {"cid": 638011, "name": "citral (geranial+neral)", "role": "primary"},
+        {"cid": 11130, "name": "gamma-terpinene", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "naranja",
+      "category": "citrus",
+      "compounds": [
+        {"cid": 22311, "name": "d-limonene", "role": "primary"},
+        {"cid": 638011, "name": "citral", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "mandarina",
+      "category": "citrus",
+      "compounds": [
+        {"cid": 22311, "name": "d-limonene", "role": "primary"},
+        {"cid": 755, "name": "methyl anthranilate", "role": "primary"}
+      ]
+    },
+    {
+      "ingredient": "lima",
+      "category": "citrus",
+      "compounds": [
+        {"cid": 22311, "name": "d-limonene", "role": "primary"},
+        {"cid": 638011, "name": "citral", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "pomelo",
+      "category": "citrus",
+      "compounds": [
+        {"cid": 22311, "name": "d-limonene", "role": "primary"}
+      ]
+    },
+    {
+      "ingredient": "bergamota",
+      "category": "citrus",
+      "compounds": [
+        {"cid": 22311, "name": "d-limonene", "role": "primary"},
+        {"cid": 6432, "name": "linalool", "role": "primary"}
+      ]
+    },
+    {
+      "ingredient": "manzana",
+      "category": "pome_fruit",
+      "compounds": [
+        {"cid": 6432, "name": "trans-2-hexenal", "role": "primary"},
+        {"cid": 6184, "name": "hexanal", "role": "secondary"},
+        {"cid": 755, "name": "ethyl 2-methylbutyrate", "role": "primary"}
+      ]
+    },
+    {
+      "ingredient": "pera",
+      "category": "pome_fruit",
+      "compounds": [
+        {"cid": 6432, "name": "trans-2-hexenal", "role": "primary"},
+        {"cid": 755, "name": "ethyl (2e,4z)-2,4-decadienoate", "role": "primary"}
+      ]
+    },
+    {
+      "ingredient": "membrillo",
+      "category": "pome_fruit",
+      "compounds": [
+        {"cid": 6432, "name": "trans-2-hexenal", "role": "primary"},
+        {"cid": 6184, "name": "hexanal", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "fresa",
+      "category": "berry",
+      "compounds": [
+        {"cid": 24848, "name": "furaneol", "role": "primary"},
+        {"cid": 3322, "name": "methyl 3-methylbutanoate", "role": "secondary"},
+        {"cid": 755, "name": "ethyl hexanoate", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "frambuesa",
+      "category": "berry",
+      "compounds": [
+        {"cid": 24848, "name": "raspberry ketone", "role": "primary"},
+        {"cid": 3322, "name": "ionone", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "arandano",
+      "category": "berry",
+      "compounds": [
+        {"cid": 6432, "name": "linalool", "role": "primary"},
+        {"cid": 3322, "name": "trans-2-hexenal", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "mora",
+      "category": "berry",
+      "compounds": [
+        {"cid": 24848, "name": "ionone", "role": "secondary"},
+        {"cid": 3322, "name": "ethyl 2-methylbutyrate", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "cereza",
+      "category": "stone_fruit",
+      "compounds": [
+        {"cid": 6432, "name": "benzaldehyde", "role": "primary"},
+        {"cid": 755, "name": "hexyl acetate", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "melocoton",
+      "category": "stone_fruit",
+      "compounds": [
+        {"cid": 6432, "name": "gamma-decalactone", "role": "primary"},
+        {"cid": 755, "name": "hexyl acetate", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "albaricoque",
+      "category": "stone_fruit",
+      "compounds": [
+        {"cid": 6432, "name": "gamma-decalactone", "role": "primary"},
+        {"cid": 755, "name": "linalool", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "ciruela",
+      "category": "stone_fruit",
+      "compounds": [
+        {"cid": 6432, "name": "ethyl 2-methylbutyrate", "role": "primary"}
+      ]
+    },
+    {
+      "ingredient": "mango",
+      "category": "tropical_fruit",
+      "compounds": [
+        {"cid": 6432, "name": "ethyl 2-methylbutyrate", "role": "primary"},
+        {"cid": 755, "name": "trans-2-hexenal", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "pina",
+      "category": "tropical_fruit",
+      "compounds": [
+        {"cid": 6432, "name": "ethyl 2-methylbutyrate", "role": "primary"},
+        {"cid": 755, "name": "methyl hexanoate", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "platano",
+      "category": "tropical_fruit",
+      "compounds": [
+        {"cid": 6432, "name": "isoamyl acetate", "role": "primary"},
+        {"cid": 755, "name": "trans-2-hexenal", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "coco",
+      "category": "tropical_fruit",
+      "compounds": [
+        {"cid": 6432, "name": "gamma-nonalactone", "role": "primary"},
+        {"cid": 755, "name": "delta-decalactone", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "pimienta negra",
+      "category": "spice",
+      "compounds": [
+        {"cid": 638024, "name": "piperine", "role": "primary"},
+        {"cid": 6432, "name": "beta-caryophyllene", "role": "secondary"},
+        {"cid": 755, "name": "limonene", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "pimenton",
+      "category": "spice",
+      "compounds": [
+        {"cid": 12681, "name": "2-methoxy-3-isobutylpyrazine", "role": "primary"}
+      ]
+    },
+    {
+      "ingredient": "comino",
+      "category": "spice",
+      "compounds": [
+        {"cid": 12230, "name": "cuminaldehyde", "role": "primary"},
+        {"cid": 6432, "name": "p-cymene", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "canela",
+      "category": "spice",
+      "compounds": [
+        {"cid": 637511, "name": "cinnamaldehyde", "role": "primary"},
+        {"cid": 3314, "name": "eugenol", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "clavo",
+      "category": "spice",
+      "compounds": [
+        {"cid": 3314, "name": "eugenol", "role": "primary"},
+        {"cid": 637511, "name": "cinnamaldehyde", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "nuez moscada",
+      "category": "spice",
+      "compounds": [
+        {"cid": 638088, "name": "myristicin", "role": "primary"},
+        {"cid": 6432, "name": "safrole", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "jengibre",
+      "category": "spice",
+      "compounds": [
+        {"cid": 6432, "name": "gingerol", "role": "primary"},
+        {"cid": 755, "name": "beta-sesquiphellandrene", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "azafran",
+      "category": "spice",
+      "compounds": [
+        {"cid": 755, "name": "safranal", "role": "primary"}
+      ]
+    },
+    {
+      "ingredient": "curcuma",
+      "category": "spice",
+      "compounds": [
+        {"cid": 6432, "name": "curcumin", "role": "primary"},
+        {"cid": 755, "name": "turmerone", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "cardamomo",
+      "category": "spice",
+      "compounds": [
+        {"cid": 6432, "name": "1,8-cineole", "role": "primary"},
+        {"cid": 755, "name": "alpha-terpinyl acetate", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "anis",
+      "category": "spice",
+      "compounds": [
+        {"cid": 323, "name": "anethole", "role": "primary"},
+        {"cid": 6432, "name": "estragole", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "vainilla",
+      "category": "spice",
+      "compounds": [
+        {"cid": 638088, "name": "vanillin", "role": "primary"}
+      ]
+    },
+    {
+      "ingredient": "almendra",
+      "category": "nut",
+      "compounds": [
+        {"cid": 6184, "name": "benzaldehyde", "role": "primary"},
+        {"cid": 755, "name": "mandelate", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "avellana",
+      "category": "nut",
+      "compounds": [
+        {"cid": 6184, "name": "filbertone", "role": "primary"},
+        {"cid": 755, "name": "vanillin", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "nuez",
+      "category": "nut",
+      "compounds": [
+        {"cid": 6184, "name": "2,4-nonadienal", "role": "primary"},
+        {"cid": 755, "name": "hexanal", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "pistacho",
+      "category": "nut",
+      "compounds": [
+        {"cid": 6184, "name": "hexanal", "role": "primary"},
+        {"cid": 755, "name": "limonene", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "pinon",
+      "category": "nut",
+      "compounds": [
+        {"cid": 6184, "name": "pinene", "role": "primary"},
+        {"cid": 755, "name": "limonene", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "sesamo",
+      "category": "nut",
+      "compounds": [
+        {"cid": 6184, "name": "sesamol", "role": "primary"},
+        {"cid": 755, "name": "2-furfurylthiol", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "champinon",
+      "category": "fungus",
+      "compounds": [
+        {"cid": 6184, "name": "1-octen-3-ol", "role": "primary"},
+        {"cid": 755, "name": "hexanal", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "trufa",
+      "category": "fungus",
+      "compounds": [
+        {"cid": 6184, "name": "androstenone", "role": "primary"},
+        {"cid": 755, "name": "dimethyl sulfide", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "cafe",
+      "category": "beverage",
+      "compounds": [
+        {"cid": 6184, "name": "caffeine", "role": "primary"},
+        {"cid": 755, "name": "2-furfurylthiol", "role": "primary"}
+      ]
+    },
+    {
+      "ingredient": "chocolate",
+      "category": "beverage",
+      "compounds": [
+        {"cid": 6184, "name": "theobromine", "role": "primary"},
+        {"cid": 755, "name": "2-furfurylthiol", "role": "primary"},
+        {"cid": 3314, "name": "phenylethyl alcohol", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "queso curado",
+      "category": "dairy",
+      "compounds": [
+        {"cid": 6184, "name": "butyric acid", "role": "primary"},
+        {"cid": 755, "name": "isovaleric acid", "role": "primary"},
+        {"cid": 3314, "name": "phenylacetaldehyde", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "queso azul",
+      "category": "dairy",
+      "compounds": [
+        {"cid": 6184, "name": "2-heptanone", "role": "primary"},
+        {"cid": 755, "name": "isovaleric acid", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "mantequilla",
+      "category": "dairy",
+      "compounds": [
+        {"cid": 6184, "name": "diacetyl", "role": "primary"},
+        {"cid": 755, "name": "butyric acid", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "vinagre balsamico",
+      "category": "fermented",
+      "compounds": [
+        {"cid": 6184, "name": "acetic acid", "role": "primary"},
+        {"cid": 755, "name": "ethyl acetate", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "jerez",
+      "category": "fermented",
+      "compounds": [
+        {"cid": 6184, "name": "ethyl acetate", "role": "primary"},
+        {"cid": 755, "name": "isoamyl acetate", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "aceite oliva",
+      "category": "fat",
+      "compounds": [
+        {"cid": 6184, "name": "oleic acid", "role": "primary"},
+        {"cid": 755, "name": "hexanal", "role": "secondary"},
+        {"cid": 3314, "name": "2-pentenal", "role": "secondary"}
+      ]
+    },
+    {
+      "ingredient": "miel",
+      "category": "sweetener",
+      "compounds": [
+        {"cid": 6184, "name": "phenylacetic acid", "role": "primary"},
+        {"cid": 755, "name": "methyl anthranilate", "role": "secondary"}
+      ]
+    }
+  ],
+  "query_only": [
+    {"ingredient": "alcachofa", "category": "flower_vegetable", "pubchem_query": "artichoke"},
+    {"ingredient": "albahaca", "category": "herb", "pubchem_query": "basil essential oil"},
+    {"ingredient": "mejorana", "category": "herb", "pubchem_query": "marjoram essential oil"},
+    {"ingredient": "estragón", "category": "herb", "pubchem_query": "tarragon essential oil"},
+    {"ingredient": "perifollo", "category": "herb", "pubchem_query": "chervil"},
+    {"ingredient": "hisopo", "category": "herb", "pubchem_query": "hyssop essential oil"},
+    {"ingredient": "verbena", "category": "herb", "pubchem_query": "lemon verbena"},
+    {"ingredient": "azafrán", "category": "spice", "pubchem_query": "saffron"},
+    {"ingredient": "pimienta de jamaica", "category": "spice", "pubchem_query": "allspice"},
+    {"ingredient": "pimienta sichuan", "category": "spice", "pubchem_query": "sichuan pepper"},
+    {"ingredient": "sumac", "category": "spice", "pubchem_query": "sumac"},
+    {"ingredient": "ras el hanout", "category": "spice", "pubchem_query": "ras el hanout"},
+    {"ingredient": "harissa", "category": "spice", "pubchem_query": "harissa"},
+    {"ingredient": "salsa de soja", "category": "fermented", "pubchem_query": "soy sauce"},
+    {"ingredient": "miso", "category": "fermented", "pubchem_query": "miso"},
+    {"ingredient": "mirin", "category": "fermented", "pubchem_query": "mirin"},
+    {"ingredient": "sake", "category": "fermented", "pubchem_query": "sake"},
+    {"ingredient": "vino tinto", "category": "fermented", "pubchem_query": "red wine"},
+    {"ingredient": "vino blanco", "category": "fermented", "pubchem_query": "white wine"},
+    {"ingredient": "oporto", "category": "fermented", "pubchem_query": "port wine"},
+    {"ingredient": "cerveza", "category": "fermented", "pubchem_query": "beer hops"},
+    {"ingredient": "whisky", "category": "fermented", "pubchem_query": "whisky"},
+    {"ingredient": "anchoa", "category": "fish", "pubchem_query": "anchovy"},
+    {"ingredient": "sardina", "category": "fish", "pubchem_query": "sardine"},
+    {"ingredient": "atun", "category": "fish", "pubchem_query": "tuna"},
+    {"ingredient": "salmon", "category": "fish", "pubchem_query": "salmon"},
+    {"ingredient": "bacalao", "category": "fish", "pubchem_query": "cod"},
+    {"ingredient": "merluza", "category": "fish", "pubchem_query": "hake"},
+    {"ingredient": "rodaballo", "category": "fish", "pubchem_query": "turbot"},
+    {"ingredient": "lenguado", "category": "fish", "pubchem_query": "sole"},
+    {"ingredient": "lubina", "category": "fish", "pubchem_query": "sea bass"},
+    {"ingredient": "dorada", "category": "fish", "pubchem_query": "sea bream"},
+    {"ingredient": "pulpo", "category": "seafood", "pubchem_query": "octopus"},
+    {"ingredient": "calamar", "category": "seafood", "pubchem_query": "squid"},
+    {"ingredient": "gamba", "category": "seafood", "pubchem_query": "shrimp"},
+    {"ingredient": "langostino", "category": "seafood", "pubchem_query": "prawn"},
+    {"ingredient": "cigala", "category": "seafood", "pubchem_query": "langoustine"},
+    {"ingredient": "bogavante", "category": "seafood", "pubchem_query": "lobster"},
+    {"ingredient": "centollo", "category": "seafood", "pubchem_query": "spider crab"},
+    {"ingredient": "mejillón", "category": "seafood", "pubchem_query": "mussel"},
+    {"ingredient": "almeja", "category": "seafood", "pubchem_query": "clam"},
+    {"ingredient": "ostra", "category": "seafood", "pubchem_query": "oyster"},
+    {"ingredient": "vieira", "category": "seafood", "pubchem_query": "scallop"},
+    {"ingredient": "navaja", "category": "seafood", "pubchem_query": "razor clam"},
+    {"ingredient": "pollo", "category": "meat", "pubchem_query": "chicken"},
+    {"ingredient": "pavo", "category": "meat", "pubchem_query": "turkey meat"},
+    {"ingredient": "cordero", "category": "meat", "pubchem_query": "lamb"},
+    {"ingredient": "ternera", "category": "meat", "pubchem_query": "beef"},
+    {"ingredient": "cerdo", "category": "meat", "pubchem_query": "pork"},
+    {"ingredient": "conejo", "category": "meat", "pubchem_query": "rabbit meat"},
+    {"ingredient": "pato", "category": "meat", "pubchem_query": "duck"},
+    {"ingredient": "codorniz", "category": "meat", "pubchem_query": "quail"},
+    {"ingredient": "foie gras", "category": "meat", "pubchem_query": "foie gras"},
+    {"ingredient": "jamon iberico", "category": "meat", "pubchem_query": "iberian ham"},
+    {"ingredient": "chorizo", "category": "meat", "pubchem_query": "chorizo"},
+    {"ingredient": "morcilla", "category": "meat", "pubchem_query": "blood sausage"},
+    {"ingredient": "lentejas", "category": "legume", "pubchem_query": "lentils"},
+    {"ingredient": "garbanzos", "category": "legume", "pubchem_query": "chickpea"},
+    {"ingredient": "judias blancas", "category": "legume", "pubchem_query": "white beans"},
+    {"ingredient": "judias negras", "category": "legume", "pubchem_query": "black beans"},
+    {"ingredient": "soja", "category": "legume", "pubchem_query": "soybean"},
+    {"ingredient": "cacahuete", "category": "nut", "pubchem_query": "peanut"},
+    {"ingredient": "anacardo", "category": "nut", "pubchem_query": "cashew"},
+    {"ingredient": "nuez de brasil", "category": "nut", "pubchem_query": "brazil nut"},
+    {"ingredient": "nuez pecan", "category": "nut", "pubchem_query": "pecan"},
+    {"ingredient": "macadamia", "category": "nut", "pubchem_query": "macadamia"},
+    {"ingredient": "girasol semillas", "category": "nut", "pubchem_query": "sunflower seed"},
+    {"ingredient": "lino semillas", "category": "nut", "pubchem_query": "flax seed"},
+    {"ingredient": "arroz", "category": "grain", "pubchem_query": "rice"},
+    {"ingredient": "quinoa", "category": "grain", "pubchem_query": "quinoa"},
+    {"ingredient": "avena", "category": "grain", "pubchem_query": "oats"},
+    {"ingredient": "trigo", "category": "grain", "pubchem_query": "wheat"},
+    {"ingredient": "cebada", "category": "grain", "pubchem_query": "barley"},
+    {"ingredient": "centeno", "category": "grain", "pubchem_query": "rye"},
+    {"ingredient": "maíz", "category": "grain", "pubchem_query": "corn"},
+    {"ingredient": "mijo", "category": "grain", "pubchem_query": "millet"},
+    {"ingredient": "pan", "category": "grain", "pubchem_query": "bread"},
+    {"ingredient": "pasta", "category": "grain", "pubchem_query": "pasta"},
+    {"ingredient": "cuscús", "category": "grain", "pubchem_query": "couscous"},
+    {"ingredient": "polenta", "category": "grain", "pubchem_query": "polenta"},
+    {"ingredient": "aceite de sésamo", "category": "fat", "pubchem_query": "sesame oil"},
+    {"ingredient": "aceite de girasol", "category": "fat", "pubchem_query": "sunflower oil"},
+    {"ingredient": "manteca de cerdo", "category": "fat", "pubchem_query": "lard"},
+    {"ingredient": "sebo", "category": "fat", "pubchem_query": "beef tallow"},
+    {"ingredient": "nata", "category": "dairy", "pubchem_query": "cream"},
+    {"ingredient": "leche", "category": "dairy", "pubchem_query": "milk"},
+    {"ingredient": "yogur", "category": "dairy", "pubchem_query": "yogurt"},
+    {"ingredient": "requeson", "category": "dairy", "pubchem_query": "cottage cheese"},
+    {"ingredient": "queso de cabra", "category": "dairy", "pubchem_query": "goat cheese"},
+    {"ingredient": "queso manchego", "category": "dairy", "pubchem_query": "manchego cheese"},
+    {"ingredient": "parmesano", "category": "dairy", "pubchem_query": "parmesan"},
+    {"ingredient": "brie", "category": "dairy", "pubchem_query": "brie cheese"},
+    {"ingredient": "camembert", "category": "dairy", "pubchem_query": "camembert"},
+    {"ingredient": "mozzarella", "category": "dairy", "pubchem_query": "mozzarella"},
+    {"ingredient": "ricotta", "category": "dairy", "pubchem_query": "ricotta"},
+    {"ingredient": "ciruela seca", "category": "stone_fruit", "pubchem_query": "prune"},
+    {"ingredient": "pasa", "category": "berry", "pubchem_query": "raisin"},
+    {"ingredient": "datil", "category": "tropical_fruit", "pubchem_query": "date fruit"},
+    {"ingredient": "higo", "category": "berry", "pubchem_query": "fig"},
+    {"ingredient": "granada", "category": "berry", "pubchem_query": "pomegranate"},
+    {"ingredient": "caqui", "category": "berry", "pubchem_query": "persimmon"},
+    {"ingredient": "nispero", "category": "berry", "pubchem_query": "loquat"},
+    {"ingredient": "kiwi", "category": "berry", "pubchem_query": "kiwi"},
+    {"ingredient": "fruta de la pasión", "category": "tropical_fruit", "pubchem_query": "passion fruit"},
+    {"ingredient": "lichi", "category": "tropical_fruit", "pubchem_query": "lychee"},
+    {"ingredient": "guayaba", "category": "tropical_fruit", "pubchem_query": "guava"},
+    {"ingredient": "papaya", "category": "tropical_fruit", "pubchem_query": "papaya"},
+    {"ingredient": "carambola", "category": "tropical_fruit", "pubchem_query": "star fruit"},
+    {"ingredient": "aceitunas", "category": "brassicaceae", "pubchem_query": "olive"},
+    {"ingredient": "pepinillo", "category": "cucurbit", "pubchem_query": "pickle"},
+    {"ingredient": "curry en polvo", "category": "spice", "pubchem_query": "curry powder"},
+    {"ingredient": "garam masala", "category": "spice", "pubchem_query": "garam masala"},
+    {"ingredient": "te", "category": "beverage", "pubchem_query": "tea"},
+    {"ingredient": "te matcha", "category": "beverage", "pubchem_query": "matcha"},
+    {"ingredient": "azucar moreno", "category": "sweetener", "pubchem_query": "brown sugar"},
+    {"ingredient": "azucar", "category": "sweetener", "pubchem_query": "sucrose"},
+    {"ingredient": "sal", "category": "seasoning", "pubchem_query": "sodium chloride"},
+    {"ingredient": "pimienta blanca", "category": "spice", "pubchem_query": "white pepper"},
+    {"ingredient": "pimienta rosa", "category": "spice", "pubchem_query": "pink pepper"},
+    {"ingredient": "azafran de la india", "category": "spice", "pubchem_query": "turmeric"},
+    {"ingredient": "wasabi en polvo", "category": "spice", "pubchem_query": "wasabi"},
+    {"ingredient": "cebolla morada", "category": "allium", "pubchem_query": "red onion"},
+    {"ingredient": "ajo negro", "category": "allium", "pubchem_query": "black garlic"},
+    {"ingredient": "remolacha", "category": "root", "pubchem_query": "beetroot"},
+    {"ingredient": "rabano picante", "category": "root", "pubchem_query": "horseradish"},
+    {"ingredient": "jengibre fresco", "category": "spice", "pubchem_query": "fresh ginger"},
+    {"ingredient": "cebollino chino", "category": "herb", "pubchem_query": "chives"},
+    {"ingredient": "shiso", "category": "herb", "pubchem_query": "shiso"},
+    {"ingredient": "kombu", "category": "seaweed", "pubchem_query": "kombu"},
+    {"ingredient": "alga nori", "category": "seaweed", "pubchem_query": "nori"},
+    {"ingredient": "alga wakame", "category": "seaweed", "pubchem_query": "wakame"},
+    {"ingredient": "huevo", "category": "protein", "pubchem_query": "egg"},
+    {"ingredient": "queso feta", "category": "dairy", "pubchem_query": "feta"},
+    {"ingredient": "queso cheddar", "category": "dairy", "pubchem_query": "cheddar"},
+    {"ingredient": "queso de oveja", "category": "dairy", "pubchem_query": "sheep cheese"},
+    {"ingredient": "queso roquefort", "category": "dairy", "pubchem_query": "roquefort"},
+    {"ingredient": "queso gorgonzola", "category": "dairy", "pubchem_query": "gorgonzola"},
+    {"ingredient": "aceite de nuez", "category": "fat", "pubchem_query": "walnut oil"},
+    {"ingredient": "aceite de avellana", "category": "fat", "pubchem_query": "hazelnut oil"},
+    {"ingredient": "vinagre de sidra", "category": "fermented", "pubchem_query": "apple cider vinegar"},
+    {"ingredient": "vinagre de vino tinto", "category": "fermented", "pubchem_query": "red wine vinegar"}
+  ]
+}

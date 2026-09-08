@@ -261,12 +261,12 @@ class TestEditar:
         assert "no existe" in result["content"]
 
     def test_editar_sin_texto(self, db_conn: sqlite3.Connection):
-        """/editar 1 (no text) → handled correctly: regex won't match."""
+        """/editar 1 (no text) → regex no matchea → None (transversal: no es del archivo de ideas)."""
         result = handle_command("/editar 1", conn=db_conn)
-        assert result is not None
-        # Since /editar N alone doesn't match r"^/editar\s+(\d+)\s+(.+)$",
-        # it falls through to unknown command
-        assert "Comando no reconocido" in result["content"] or "⚠️" in result["content"]
+        # El archivo de ideas solo intercepta SUS comandos. /editar 1 sin texto
+        # no matchea _RE_EDITAR, así que devuelve None para que el dispatcher
+        # principal decida.
+        assert result is None
 
 
 # ── /ideas ─────────────────────────────────────────────────────────────────
@@ -274,10 +274,10 @@ class TestEditar:
 
 class TestIdeas:
     def test_ideas_con_ideas(self, db_conn: sqlite3.Connection):
-        """/ideas with ideas stored → formatted list."""
+        """/lista-ideas with ideas stored → formatted list."""
         save_idea(db_conn, "primera idea", categoria="concepto")
         save_idea(db_conn, "segunda idea", categoria="plato")
-        result = handle_command("/ideas", conn=db_conn)
+        result = handle_command("/lista-ideas", conn=db_conn)
         assert result is not None
         content = result["content"]
         assert "#1" in content or "#2" in content
@@ -285,24 +285,24 @@ class TestIdeas:
         assert "concepto" in content or "plato" in content
 
     def test_ideas_vacio(self, db_conn: sqlite3.Connection):
-        """/ideas on empty DB → 'No tenés ideas'."""
-        result = handle_command("/ideas", conn=db_conn)
+        """/lista-ideas on empty DB → 'No tenés ideas'."""
+        result = handle_command("/lista-ideas", conn=db_conn)
         assert result is not None
         assert "No tenés ideas" in result["content"]
 
     def test_ideas_con_filtro(self, db_conn: sqlite3.Connection):
-        """/ideas concepto → filtered list."""
+        """/lista-ideas técnica → filtered list."""
         save_idea(db_conn, "plato con setas", categoria="plato")
         save_idea(db_conn, "técnica de fermentación", categoria="técnica")
-        result = handle_command("/ideas técnica", conn=db_conn)
+        result = handle_command("/lista-ideas técnica", conn=db_conn)
         assert result is not None
         assert "fermentación" in result["content"]
         assert "setas" not in result["content"]
 
     def test_ideas_filtro_sin_match(self, db_conn: sqlite3.Connection):
-        """/ideas xyz with no matches → empty list message."""
+        """/lista-ideas xyz with no matches → empty list message."""
         save_idea(db_conn, "alguna idea")
-        result = handle_command("/ideas xyz", conn=db_conn)
+        result = handle_command("/lista-ideas xyz", conn=db_conn)
         assert result is not None
         assert "No tenés ideas" in result["content"]
 
@@ -353,7 +353,7 @@ class TestExport:
         """/export-ideas → confirmation with path."""
         save_idea(db_conn, "idea exportable 1")
         save_idea(db_conn, "idea exportable 2")
-        # The export will try to write to .agent_knowledge/ — make it writable
+        # The export will try to write to conocimiento/interno_restaurante/ — make it writable
         # by setting CWD to tmp_path
         result = handle_command("/export-ideas", conn=db_conn)
         assert result is not None
@@ -366,17 +366,15 @@ class TestExport:
 
 class TestAyuda:
     def test_ayuda(self):
-        """/ayuda lists all commands."""
+        """/ayuda → None (lo maneja el dispatcher principal del chat).
+
+        Comportamiento nuevo (post-Bloque 3): el archivo de ideas solo
+        intercepta SUS comandos. `/ayuda` muestra TODOS los comandos
+        del chat (incluyendo los del archivo de ideas), manejado por
+        ``app._texto_ayuda``.
+        """
         result = handle_command("/ayuda")
-        assert result is not None
-        content = result["content"]
-        assert "Comandos disponibles" in content
-        assert "/guardar" in content
-        assert "/editar" in content
-        assert "/ideas" in content
-        assert "/olvidar" in content
-        assert "/export-ideas" in content
-        assert "/silenciar-contador" in content
+        assert result is None
 
 
 # ── /silenciar-contador ────────────────────────────────────────────────────
@@ -397,10 +395,14 @@ class TestSilenciarContador:
 
 class TestComandoDesconocido:
     def test_comando_desconocido(self):
-        """/xyz → 'Comando no reconocido'."""
+        """/xyz → None (transversal: el archivo de ideas no lo intercepta).
+
+        Comportamiento nuevo (post-Bloque 3): el archivo de ideas solo
+        intercepta SUS comandos. Los demás pasan al dispatcher principal
+        del chat, que decide qué hacer.
+        """
         result = handle_command("/xyz")
-        assert result is not None
-        assert "Comando no reconocido" in result["content"]
+        assert result is None
 
 
 # ── Non-command ────────────────────────────────────────────────────────────

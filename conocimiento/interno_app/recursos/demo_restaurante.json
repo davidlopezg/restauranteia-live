@@ -1,0 +1,19 @@
+{
+  "demo": true,
+  "nombre": "Restaurante de demostración",
+  "precio_target_min": 25,
+  "precio_target_max": 60,
+  "precio_target_moda": 40,
+  "sofisticacion": "media",
+  "productos_dominantes": ["vegetales", "pescado", "mariscos", "fruta"],
+  "tecnicas_dominantes": ["plancha", "brasas", "vapor", "fermentacion"],
+  "tipo_servicio": ["servicio_tradicional", "picoteo_terraza"],
+  "grupos": "con_grupos_pequenos",
+  "clases_comedores": ["sociales_familia", "mixto", "turistas"],
+  "origen_inspiracion": "mediterraneo",
+  "orientacion_nutricional": ["temporada", "km0"],
+  "localizacion": "litoral_mar",
+  "religion": ["ninguna"],
+  "tiempo_preparacion": "medio",
+  "epoca_estilo": ["mediterranea_moderna", "casual_mediterraneo"]
+}

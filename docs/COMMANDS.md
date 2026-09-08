@@ -8,13 +8,16 @@
 
 ### `python -m agents.creativo.agent` — Chef Creativo
 
+> 💡 El modo por defecto es `chat` (no hay selector al inicio). Dentro del chat, dispatchás a las otras skills con `/ficha`, `/proceso` o `/ideas`.
+
 | Comando | Qué hace |
 |---|---|
-| `python -m agents.creativo.agent` | Modo interactivo. Te pregunta qué skill usar (ficha o proceso creativo) y entra al loop. |
-| `python -m agents.creativo.agent "petición"` | Genera UNA ficha técnica con la skill `ficha` (default). |
+| `python -m agents.creativo.agent` | Modo interactivo (REPL). Arranca en la skill `chat` (default) y entra al loop. |
+| `python -m agents.creativo.agent "petición"` | One-shot: genera UNA ficha técnica con la skill `ficha` y sale. |
 | `python -m agents.creativo.agent pc "petición"` | Arranca el proceso creativo con la petición inicial y entra al loop. |
 | `python -m agents.creativo.agent pc --reanudar ID` | Reanuda una sesión guardada por su ID. |
 | `python -m agents.creativo.agent pc` | Modo proceso creativo sin args: te pide la petición en el primer input. |
+| `python -m agents.creativo.agent ideas "petición"` | Loop directo de ideas creativas (genera 10 ideas + iteración). |
 
 ### `python -m agents.init_phase` — Inicialización
 
@@ -32,13 +35,46 @@
 
 ## 💬 Comandos in-session (modo interactivo CLI)
 
-Disponibles dentro de `python -m agents.creativo.agent` (en cualquier skill):
+Disponibles dentro de `python -m agents.creativo.agent` (en cualquier skill; `chat` es default):
+
+### Dispatch entre skills
 
 | Comando | Qué hace |
 |---|---|
-| `/skill` | Cambiar de skill (te muestra el menú). |
+| `/skill` | Cambiar de skill (te muestra el menú numerado). |
 | `/skills` | Listar skills disponibles con descripción. |
-| `salir` / `exit` / `quit` | Terminar el modo interactivo. |
+| `/ficha <texto>` | Cambiar a ficha técnica y generarla con ese texto. |
+| `/proceso [texto]` | Arrancar (o continuar) el Proceso Creativo de 7 fases. |
+| `/ideas <texto>` | Cambiar a ideas creativas y generar 10 ideas. |
+
+### Archivo de Ideas (transversal, funciona en cualquier skill)
+
+| Comando | Qué hace |
+|---|---|
+| `/guardar [texto]` | Guarda una idea nueva. |
+| `/guardar` (sin args) | Guarda el último mensaje del chef como idea. |
+| `/guardar N` | Guarda la idea N de una lista numerada. |
+| `/guardar igual` | Fuerza guardado tras advertencia de duplicado. |
+| `/editar N [texto]` | Edita una idea guardada. |
+| `/lista-ideas [filtro]` | Lista ideas guardadas (filtro opcional por texto). |
+| `/lista-auto [filtro]` | **(v4.1)** Lista solo las ideas auto-guardadas por el chat. |
+| `/olvidar N` | Borra idea N (requiere confirmación en 2 turnos). |
+| `/olvidar todo` | Borra todas las ideas (requiere confirmación). |
+| `/olvidar auto` | **(v4.1)** Borra solo las ideas auto-guardadas (con confirmación). |
+| `/export-ideas` | Exporta todas las ideas a JSON. |
+| `/silenciar-contador` | Muestra/oculta el contador `📁 N guardadas`. |
+| `/memoria on\|off` | **(v4.1)** Activa/desactiva la detección automática. |
+| `/memoria alta\|sugerir` | **(v4.1)** Modo auto-guardar o sugerir antes de guardar. |
+| `/memoria-status` | **(v4.1)** Ver estado actual de la memoria automática + estadísticas. |
+
+### Meta
+
+| Comando | Qué hace |
+|---|---|
+| `/ayuda` | Lista todos los comandos disponibles. |
+| `salir` / `exit` / `quit` / `Ctrl+C` | Terminar el modo interactivo. |
+
+> Cualquier mensaje **sin prefijo** se trata como chat libre con el chef.
 
 ---
 
@@ -80,8 +116,18 @@ Cargadas dinámicamente de `agents/creativo/skills.py`. Cada skill tiene su prop
 
 | Key | Nombre | Descripción |
 |---|---|---|
+| `chat` | Chat con el chef (default) | Conversación libre con el chef usando todo el contexto del restaurante. |
 | `ficha` | Ficha técnica | Genera la ficha estructurada del plato (nombre, historia, ficha técnica, maridaje, prompt para imagen). |
 | `proceso_creativo` | Proceso creativo | Muestra paso a paso cómo piensa el chef, fase por fase, y luego la ficha final. |
+| `ideas_creativas` | Ideas creativas | Genera 10 ideas variadas para explorar la carta, con refinamiento vía métodos ElBulli. |
+
+### Cómo elegir skill
+
+**En la UI web (Gradio)**: el chat es único — no hay Radio ni selector. Las skills se invocan con comandos al inicio del mensaje (`/ficha`, `/proceso`, `/ideas`). Mensaje sin prefijo = chat libre.
+
+**En CLI**: el `modo_interactivo` arranca directamente en `chat` (no pregunta skill). Dentro del chat dispatchás a las otras con `/ficha`, `/proceso`, `/ideas` o usás el cambio legacy `/skill` + menú numerado.
+
+**Entry points directos** (sin pasar por el chat): `python -m agents.creativo.agent "..."` (ficha), `pc "..."`, `ideas "..."`.
 
 ### Cómo agregar una skill nueva
 

@@ -1,7 +1,7 @@
 """
 sessions.py — Persistencia de sesiones del proceso creativo.
 
-Cada sesión es un JSON en `.agent_knowledge/sessions/<sesion_id>.json`.
+Cada sesión es un JSON en `conocimiento/interno_restaurante/sessions/<sesion_id>.json`.
 El directorio está en .gitignore: las sesiones NO se commitean.
 
 Una sesión representa UN proceso creativo en curso para una petición concreta.
@@ -19,7 +19,7 @@ from typing import Optional
 
 # Paths
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-SESSIONS_DIR = PROJECT_ROOT / ".agent_knowledge" / "sessions"
+SESSIONS_DIR = PROJECT_ROOT / "conocimiento" / "interno_restaurante" / "sessions"
 
 
 def _ensure_dir() -> Path:
