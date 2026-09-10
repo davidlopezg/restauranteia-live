@@ -473,3 +473,162 @@ La skill `ideas_creativas` (en `agents/creativo/skills.py:54-66`, con handler en
 - **D5.2**: Cuando hay empate de keywords, prioridad: `receta > producto > herramienta > tecnica > elaboracion > evento > proveedor > cliente > restriccion > concepto`.
 - **D5.3**: Word boundary siempre para single-word keywords (evita "menta" en "fermentación"). JSON incluye plurales explícitos.
 - **D5.4**: Detección conservadora — prefiere no detectar a guardar ruido.
+
+---
+
+## Brief estratégico de carta — Sol de Nit (2026-09-04)
+
+**Contexto:** David dio directrices claras para la estrategia de carta de la pizzería (subir ticket medio 17-20€ → 20-25€ sin tocar precio/tamaño de pizzas). Antes de esta sesión no existía ningún documento que condensara estas restricciones para uso del Chef Creativo.
+
+**Decisión:** Creado `conocimiento/interno_app/recursos/brief_sol_de_nit_carta.md` como brief autoritativo que el Chef Creativo debe asumir como restricciones implícitas al generar ideas/fichas para Sol de Nit.
+
+**Restricciones duras (invariantes operativas) que el brief codifica:**
+
+1. **Estrategia**: añadir platos pequeños para compartir + postres de calidad. NO subir precio pizzas, NO reducir tamaño pizzas.
+2. **Cadencia**: solo se abre viernes+sábado. Toda elaboración hecha el lunes debe aguantar hasta viernes/sábado o ser congelable.
+3. **Tiempo de servicio**: ≤ 5-6 min desde pedido a mesa.
+4. **Operativa**: fácil de emplatar + fácil de servir.
+5. **Coherencia**: platos deben tener relación conceptual y gustativa con pizza (no sushi, no curry random).
+6. **Ficha técnica obligatoria**: incluir SIEMPRE sección "Conservación y servicio" (vida útil, congelación, regeneración, tiempo, notas).
+
+**Implicaciones para el Chef Creativo (lo que tiene que aplicar sin que se lo pidan):**
+
+- Filtrar cualquier idea que rompa alguna restricción → avisar y proponer alternativa.
+- Priorizar métodos creativos ElBulli que producen elaboraciones sencillas: minimalismo, lo autóctono, deconstrucción, simbiosis dulce/salado, adaptación, nueva manera de servir.
+- Generar primero platos compartidos (mayor impacto en ticket) y después postres.
+- Universo creativo permitido: mediterráneo/italiano/pizza-compatible (tomate, mozzarella, burrata, embutidos curados, hierbas frescas, AOVE, anchoas, alcaparras, aceitunas, prosciutto, rúcula, higos, miel, frutos secos, ricotta).
+- Universo prohibido: cocinas lejanas sin puente conceptual, pastelería clásica compleja, raciones individuales grandes.
+
+**Pendientes operativos (bloqueados hasta que David valide pruebas reales en cocina):**
+
+- Catálogo concreto 3-5 platos compartidos candidatos.
+- Catálogo concreto 3-5 postres candidatos.
+- Pruebas de congelación/descongelación reales.
+- PVP objetivo por categoría.
+- Formato de servicio: centro de mesa vs individual.
+
+**Referencias cruzadas que el brief enlaza:**
+
+- `AGENTS.md` (objetivo ticket Sol de Nit)
+- `conocimiento/interno_app/recursos/combinaciones_clasicas.csv`
+- `conocimiento/interno_app/recursos/estacionalidad.json`
+- `conocimiento/fuentes_externas/metodos-creativos.md` (ElBulli)
+- `conocimiento/fuentes_externas/flavor_data/flavor_mapping.json` (flavor engine)
+- `agents/creativo/skills.py` (`ideas_creativas`, `idea_cientifica`)
+
+**Estado:** ✅ Brief guardado. Próxima acción cuando David lo pida: ejecutar lluvia de ideas de platos compartidos para Sol de Nit respetando TODAS las invariantes del brief.
+
+### 2026-09-04 — Decisión de proceso: sistema de brainstorming para creatividad de Sol de Nit
+
+**Contexto:** En la primera sesión tras crear el brief, David me pidió una pizza premium y un postre. Salté directo a fichas técnicas (2 recetas completas). Su feedback inmediato fue claro: **"deberíamos crear un sistema de brainstorming porque ya me has creado 2 recetas directamente, y antes me gustaría muchas ideas y ver por dónde tiramos"**.
+
+**Lección (importante):** aunque el brief está guardado, **yo como agente tengo tendencia natural a converger rápido** (ir directo a la receta). Necesito un sistema explícito que fuerce la divergencia ANTES de la convergencia.
+
+**Sistema acordado (provisional, a refinar con uso):**
+
+```
+Fase 1 - DIVERGENCIA
+  → Generar 15-20 ideas breves por categoría (pizza / plato compartido / postre)
+  → SIN restricciones aplicadas, solo creatividad cruda (métodos ElBulli como lente)
+  → Formato: nombre + 2-3 líneas (qué es, qué ingredientes principales, qué la hace interesante)
+
+Fase 2 - TRIAGE AUTOMÁTICO
+  → Aplicar filtros del brief (universo pizza, aguanta lunes→viernes, ≤6 min servicio, congelable)
+  → Etiquetar cada idea:
+    ✅ VIABLE — pasa todos los filtros, se puede producir sin más
+    ⚠️ CAVEAT — viable con condiciones (ej: ingrediente caro, temporada corta, requiere prueba de congelación)
+    ❌ RUPTURA — rompe una invariante, se descarta
+  → Presentar shortlist filtrada a David
+
+Fase 3 - FILTRADO COLABORATIVO
+  → David marca favoritos, pide variantes, descarta categorías
+  → Iteración abierta: "más como X", "ninguna con Y", "intenta con Z"
+
+Fase 4 - REFINAMIENTO
+  → Generar 5-8 variantes/derivaciones de las ideas favoritas
+
+Fase 5 - SHORTLIST
+  → David elige 1-2 finalistas
+
+Fase 6 - FICHA TÉCNICA (SOLO AQUÍ)
+  → Generar ficha técnica completa con sección de conservación obligatoria
+
+Fase 7 - MEMORIA
+  → Guardar en brief las ideas DESCARTADAS con motivo (para no repetir) y RESERVADAS (para futuro)
+```
+
+**Categorías a explorar por separado** (mezclar rompe la coherencia del brainstorm):
+- **Pizza premium** — eje de la conversación actual.
+- **Platos pequeños para compartir** — núcleo estratégico del brief (mayor impacto en ticket).
+- **Postres** — con restricción adicional: NO fórmula cremoso + coulis (ya hay cheesecake con coulis en carta, redundancia confirmada por David 2026-09-04).
+
+**Acciones:**
+- [ ] Extender la skill `ideas_creativas` para soportar el flujo divergencia → shortlist → ficha (workaround manual mientras tanto).
+- [ ] Crear skill nueva `brainstorm_carta` con categorías separadas y filtros automáticos. (Pendiente de decisión de David: ¿skill nueva vs extensión de `ideas_creativas`?)
+- [ ] Banco de ideas en reserva en el brief (ya empezado: pizza Burrata&Prosciutto pendiente, panna cotta con AOVE reservada).
+
+**Insight de producto guardado:** la panna cotta con frutos rojos NO se descarta por mala idea, se desactiva por **redundancia con cheesecake con coulis**. Guardar como idea "reservada" en el brief para reactivar si cambia el menú.
+
+**Próxima acción inmediata:** ejecutar primera ronda de brainstorming de pizza premium (15 ideas con triage).
+
+### 2026-09-04 — Brainstorming pizza premium ejecutado (F1-F3) + estructura de persistencia
+
+**Sesión de brainstorming pizza premium ejecutada con éxito.** David seleccionó 6 de 20 ideas tras el triage. Decisión clave para mantener el sistema:
+
+**Estructura de persistencia acordada:**
+
+- Nueva carpeta: `conocimiento/interno_app/recursos/brainstormings/`
+- `README.md` en la carpeta = índice de todas las sesiones + convenciones
+- `YYYY-MM-DD-<categoría>.md` por sesión, conteniendo: contexto, restricciones activas, ideas generadas, triage, selección de David, descartadas, pendientes, notas operativas
+- Brief actualizado con sección "Registro de brainstormings" que apunta a la carpeta
+- Memory.md (este) lleva el índice de alto nivel
+
+**Resultado de la sesión pizza premium (2026-09-04):**
+- F1 divergencia: 20 ideas generadas (familias: curadas, mar, vegetales, dulce-salado, premium)
+- F2 triage: 15 ✅, 5 ⚠️, 0 ❌
+- F3 selección David: 6 finalistas (#1, #5, #16, #17, #18, #20)
+- Cobertura de ejes: clásico italien (#1, #5), vegetariana romana (#16), dulce-salado de temporada (#17, #18), premium máxima (#20)
+- Pendiente: F4 refinamiento (variantes) → F5 shortlist (1-2) → F6 ficha → F7 memoria
+
+**Plan de sesiones siguientes:**
+- ⏳ Platos pequeños para compartir (núcleo estratégico del brief)
+- ⏳ Postres (David dijo "después haremos lo mismo con los postres", restricción NO cremoso+coulis activa)
+
+**Decisión de diseño operativa para el agente:**
+
+- NUNCA saltar de F1/F2 directamente a F6 (ficha técnica) sin pasar por F3-F5 con confirmación explícita de David.
+- Si David pide una receta directamente, primero preguntar si quiere brainstorm o ya viene con la decisión tomada (respetar su tiempo sin forzar el sistema cuando no aplica).
+- Si David pide brainstorm, ejecutar F1-F2 en un solo turno (como se hizo aquí) y esperar F3 en el siguiente turno.
+
+### 2026-09-04 — Brainstorming pizza premium cerrado F1-F6 (con divergencia del sistema en F5)
+
+**Resumen de cierre de la sesión pizza premium:**
+
+- F1 divergencia: 20 ideas (5 familias).
+- F2 triage: 15 ✅, 5 ⚠️, 0 ❌.
+- F3 selección David: 6 finalistas (#1, #5, #16, #17, #18, #20).
+- F4 refinamiento: 12 variantes generadas (2 por idea).
+- F5 shortlist: **divergencia del sistema** — el sistema preveía 1-2 finalistas, David eligió 5. Se interpreta como **portfolio de rotación** (no selección única), lo que tiene sentido para una pizzería. Sistema se adapta: F5 = N finalistas que rotan.
+- F6 ficha técnica: generada para la **elegida para validación = 18.2 Manzana Cremosa**. Archivo: `conocimiento/interno_app/recursos/fichas/2026-09-04-pizza-18-2-manzana-cremosa.md`.
+
+**Decisión sobre las finalistas no elegidas:**
+- 1.1, 5.2, 16.2, 17.1 → pasan a "banco de candidatas" en el brief (no fichas todavía, pero accesibles para iterar).
+- #20 (todas las variantes) → **reservada** (no cerrada). Motivo: dudas PVP/vida útil trufa fresca. Puede volver si el negocio pide premium máxima.
+
+**Decisión clave del agente: validar antes de comprometerse a producción.**
+
+David eligió 18.2 para **validar en casa** antes de comprometer producción en Sol de Nit. Razón: duda sobre ingredientes en super (especialmente stracciatella). La ficha incluye una **"versión prueba en casa"** específica con sustituciones validadas (burrata por stracciatella, nueces normales por pecanas, etc.).
+
+**Estructura de persistencia ampliada (nueva):**
+
+- Nueva carpeta: `conocimiento/interno_app/recursos/fichas/`
+- `README.md` en la carpeta = índice de fichas + convención de archivos
+- `YYYY-MM-DD-<categoría>-<slug>.md` por ficha completa
+- Cada ficha incluye OBLIGATORIAMENTE: concepto + métodos creativos + ingredientes producción + versión prueba casera (cuando aplica) + sección conservación y servicio + PVP sugerido + maridaje + notas chef
+- Sesión de brainstorming referencia la ficha generada (no la duplica)
+
+**Pendiente inmediato:**
+- [ ] David hace prueba casera de 18.2 → feedback.
+- [ ] Si validación positiva: ficha pasa a "validada" + banco del brief.
+- [ ] Si validación negativa: iterar la ficha (no es cierre, es ajuste).
+- [ ] Después: brainstorming de platos para compartir + brainstorming de postres.
