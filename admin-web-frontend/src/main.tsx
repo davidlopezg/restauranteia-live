@@ -1,23 +1,19 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter, Route, Routes } from "react-router";
-import { HomeScreen } from "@/pages/home-screen";
-import { NotFound } from "@/pages/not-found";
-import { RouteProvider } from "@/providers/router-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
+import { QueryProvider } from "@/app/query-provider";
+import { AppRouter } from "@/app/router";
 import "@/styles/globals.css";
 
-createRoot(document.getElementById("root")!).render(
+const rootEl = document.getElementById("root");
+if (!rootEl) throw new Error("Missing #root");
+
+createRoot(rootEl).render(
     <StrictMode>
         <ThemeProvider>
-            <BrowserRouter>
-                <RouteProvider>
-                    <Routes>
-                        <Route path="/" element={<HomeScreen />} />
-                        <Route path="*" element={<NotFound />} />
-                    </Routes>
-                </RouteProvider>
-            </BrowserRouter>
+            <QueryProvider>
+                <AppRouter />
+            </QueryProvider>
         </ThemeProvider>
     </StrictMode>,
 );

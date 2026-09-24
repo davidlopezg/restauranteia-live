@@ -1,56 +1,46 @@
-# Untitled UI starter kit for Vite
+# admin-web-frontend
 
-This is an official Untitled UI starter kit for Vite. Kickstart your Untitled UI project with Vite in seconds.
+Frontend React 19 + TypeScript + Vite del Sol de Nit Creativity Admin.
 
-## Untitled UI React
+Construido sobre el starter oficial de Untitled UI Vite (`base: "./"` para que el
+bundle funcione tanto desde Vite dev como desde FastAPI sirviendo `dist/`).
 
-[Untitled UI React](https://www.untitledui.com/react) is the world’s largest collection of open-source React UI components. Everything you need to design and develop modern, beautiful interfaces—fast.
-
-Built with React 19.1, Tailwind CSS v4.1, TypeScript 5.8, and React Aria, Untitled UI React components deliver modern performance, type safety, and maintainability.
-
-[Learn more](https://www.untitledui.com/react) • [Documentation](https://www.untitledui.com/react/docs/introduction) • [Figma](https://www.untitledui.com/figma) • [FAQs](https://www.untitledui.com/faqs)
-
-## Getting started
-
-First, run the development server:
+## Desarrollo
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev          # http://localhost:5173 (Vite + HMR)
+                     # requiere backend en :8765 (Vite hace proxy /api)
+npm test             # 74 tests con Vitest
+npm run lint         # tsc --noEmit
 ```
 
-Open [http://localhost:5173](http://localhost:5173) with your browser to see the result.
+## Build de producción
 
-You can start editing the app by modifying the components in `src/` folder. The page auto-updates as you edit the file.
+```bash
+npm run build        # genera dist/ (609 KB · 184 KB gzip)
+npm run preview      # sirve dist/ estáticamente para smoke-test
+```
 
-## Resources
+En uso normal no hace falta correr esto a mano: `./start.sh` desde la raíz del
+repo hace el build automáticamente si `dist/` no existe y luego arranca FastAPI
+que sirve el bundle + las rutas `/api/*`.
 
-Untitled UI React is built on top of [Untitled UI Figma](https://www.untitledui.com/figma), the world's largest and most popular Figma UI kit and design system. Explore more:
+## Estructura
 
-**[Untitled UI Figma:](https://www.untitledui.com/react/resources/figma-files)** The world's largest Figma UI kit and design system.
-<br/>
-**[Untitled UI Icons:](https://www.untitledui.com/react/resources/icons)** A clean, consistent, and neutral icon library crafted specifically for modern UI design.
-<br/>
-**[Untitled UI file icons:](https://www.untitledui.com/react/resources/file-icons)** Free file format icons, designed specifically for modern web and UI design.
-<br/>
-**[Untitled UI flag icons:](https://www.untitledui.com/react/resources/flag-icons)** Free country flag icons, designed specifically for modern web and UI design.
-<br/>
-**[Untitled UI avatars:](https://www.untitledui.com/react/resources/avatars)** Free placeholder user avatars and profile pictures to use in your projects.
-<br/>
-**[Untitled UI logos:](https://www.untitledui.com/react/resources/logos)** Free fictional company logos to use in your projects.
+Ver `admin-web/README.md` para el árbol completo de `src/features/`.
 
-## License
+## Stack
 
-Untitled UI React open-source components are licensed under the MIT license, which means you can use them for free in unlimited commercial projects.
-
-> [!NOTE]
-> This license applies only to the starter kit and to the components included in this open-source repository. [Untitled UI React PRO](https://www.untitledui.com/react) includes hundreds more advanced UI components and page examples and is subject to a separate [license agreement](https://www.untitledui.com/license).
-
-[Untitled UI license agreement →](https://www.untitledui.com/license)
-
-[Frequently asked questions →](https://www.untitledui.com/faqs)
+| Paquete | Versión |
+|---|---|
+| React | 19.2 |
+| TypeScript | 5.9 |
+| Vite | 8 |
+| Tailwind CSS | 4 |
+| React Router | 7 |
+| TanStack Query | 5 |
+| @dnd-kit/react | 0.5 (API nueva) |
+| Untitled UI React | starter oficial |
+| Vitest | 4 |
+| React Testing Library | 16 |

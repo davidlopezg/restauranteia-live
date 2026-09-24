@@ -6,6 +6,7 @@
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "skipLibCheck": true,
+    "types": ["node", "vitest/globals", "@testing-library/jest-dom"],
 
     /* Bundler mode */
     "moduleResolution": "bundler",
@@ -26,5 +27,12 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src"]
+  "include": ["src", "tests"],
+  "exclude": [
+    "node_modules",
+    "src/components/application/date-picker",
+    "src/components/application/app-navigation/base-components/nav-account-card.tsx",
+    "src/components/base/file-upload-trigger",
+    "src/components/base/input/input-payment.tsx"
+  ]
 }

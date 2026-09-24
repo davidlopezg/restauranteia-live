@@ -36,3 +36,8 @@ output/
 
 # Conocimiento específico del restaurante (generado en fase init, NO commitear)
 .agent_knowledge/
+
+# Node / Frontend
+node_modules/
+dist/
+*.local
