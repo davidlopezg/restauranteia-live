@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sol de Nit — Administración</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="app">
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="sidebar__brand">
+                <h1>Sol de Nit</h1>
+                <p class="sidebar__sub">Administración</p>
+            </div>
+            <nav class="sidebar__nav">
+
+                <a href="#/cadencia" class="nav-item" data-route="cadencia">
+                    <span class="nav-item__label">Dashboard</span>
+                </a>
+
+                <a href="#/ideas" class="nav-item" data-route="ideas">
+                    <span class="nav-item__label">Ideas</span>
+                    <span class="nav-item__count" id="count-ideas">—</span>
+                </a>
+
+                <details class="nav-group" open>
+                    <summary class="nav-group__title">Pruebas</summary>
+                    <a href="#/agendas" class="nav-item nav-item--sub" data-route="agendas">
+                        <span class="nav-item__label">Pruebas</span>
+                        <span class="nav-item__count" id="count-agendas">—</span>
+                    </a>
+                    <a href="#/desarrollo" class="nav-item nav-item--sub" data-route="desarrollo">
+                        <span class="nav-item__label">Pipeline</span>
+                    </a>
+                    <a href="#/pendientes" class="nav-item nav-item--sub" data-route="pendientes">
+                        <span class="nav-item__label">Pendientes</span>
+                        <span class="nav-item__count" id="count-pendientes">—</span>
+                    </a>
+                </details>
+
+                <a href="#/catalogos" class="nav-item" data-route="catalogos">
+                    <span class="nav-item__label">Catálogo</span>
+                    <span class="nav-item__count" id="count-catalogos">—</span>
+                </a>
+
+                <details class="nav-group" open>
+                    <summary class="nav-group__title">Análisis</summary>
+                    <a href="#/evaluaciones" class="nav-item nav-item--sub" data-route="evaluaciones">
+                        <span class="nav-item__label">Evaluaciones</span>
+                    </a>
+                    <a href="#/emplatado" class="nav-item nav-item--sub" data-route="emplatado">
+                        <span class="nav-item__label">Emplatado</span>
+                    </a>
+                    <a href="#/vajilla" class="nav-item nav-item--sub" data-route="vajilla">
+                        <span class="nav-item__label">Vajilla</span>
+                    </a>
+                </details>
+
+                <details class="nav-group" open>
+                    <summary class="nav-group__title">IA Creativa</summary>
+                    <a href="#/ideas-creativas" class="nav-item nav-item--sub" data-route="ideas-creativas">
+                        <span class="nav-item__label">Ideas creativas</span>
+                    </a>
+                    <a href="#/ideas-cientificas" class="nav-item nav-item--sub" data-route="ideas-cientificas">
+                        <span class="nav-item__label">Ideas científicas</span>
+                    </a>
+                </details>
+
+                <details class="nav-group" open>
+                    <summary class="nav-group__title">Documentación</summary>
+                    <a href="#/documentacion" class="nav-item nav-item--sub" data-route="documentacion">
+                        <span class="nav-item__label">Cómo funciona</span>
+                    </a>
+                    <a href="#/settings" class="nav-item nav-item--sub" data-route="settings">
+                        <span class="nav-item__label">Configuración</span>
+                    </a>
+                </details>
+
+            </nav>
+            <div class="sidebar__footer">
+                <button id="btn-new" class="btn btn--primary btn--block">+ Nuevo</button>
+                <div class="status-dot" id="status">
+                    <span class="dot dot--idle"></span>
+                    <span class="status-dot__text">Cargando…</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN -->
+        <main class="main">
+            <header class="topbar">
+                <h2 id="topbar-title">—</h2>
+                <div class="topbar__actions">
+                    <button id="btn-back" class="btn btn--ghost" hidden>← Volver</button>
+                </div>
+            </header>
+            <section class="content" id="content">
+                <!-- render dinámico -->
+            </section>
+        </main>
+    </div>
+
+    <!-- MODAL IMAGEN -->
+    <div class="modal" id="image-modal" hidden>
+        <div class="modal__backdrop" data-close></div>
+        <div class="modal__panel modal__panel--image">
+            <button class="modal__close" data-close>×</button>
+            <img id="modal-img" src="" alt="">
+        </div>
+    </div>
+
+    <!-- MODAL CONFIRM -->
+    <div class="modal" id="confirm-modal" hidden>
+        <div class="modal__backdrop" data-close></div>
+        <div class="modal__panel modal__panel--confirm">
+            <h3 id="confirm-title">¿Confirmar?</h3>
+            <p id="confirm-message">…</p>
+            <div class="modal__actions">
+                <button class="btn btn--ghost" id="confirm-cancel">Cancelar</button>
+                <button class="btn btn--danger" id="confirm-ok">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script type="module" src="/static/js/app.js?v=20260923-1"></script>
+</body>
+</html>

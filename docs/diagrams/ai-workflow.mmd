@@ -1,0 +1,41 @@
+%% Flujo IA — Emplatado y Vajilla
+%% Generado desde docs/AI_WORKFLOW.md
+
+flowchart LR
+    R["📋 Receta definitiva"]
+    CTX["🎯 Contexto"]
+    P["🤖 MiniMax-M3"]
+    E1["💡 Propuesta 1"]
+    E2["💡 Propuesta 2"]
+    E3["💡 Propuesta 3"]
+    CH["⭐ Propuesta elegida"]
+    W1["🍶 Vajilla propuesta 1"]
+    W2["🍶 Vajilla propuesta 2"]
+    W3["🍶 Vajilla propuesta 3"]
+    FIN["✅ Solución final"]
+
+    R --> CTX
+    CTX -->|emplatado| P
+    P --> E1
+    P --> E2
+    P --> E3
+    E1 --> CH
+    E2 --> CH
+    E3 --> CH
+    CH --> CTX
+    CTX -->|vajilla| P
+    P --> W1
+    P --> W2
+    P --> W3
+    W1 --> FIN
+    W2 --> FIN
+    W3 --> FIN
+
+    classDef ia fill:#ede9fe,stroke:#5b21b6,color:#1f2937
+    classDef input fill:#fef3c7,stroke:#92400e,color:#1f2937
+    classDef output fill:#d1fae5,stroke:#065f46,color:#1f2937
+
+    class R,CTX input
+    class P ia
+    class E1,E2,E3,W1,W2,W3,CH output
+    class FIN output

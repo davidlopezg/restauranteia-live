@@ -1,0 +1,104 @@
+%% Modelo de datos — Sol de Nit Creativity Admin
+%% Generado desde docs/DATA_MODEL.md
+
+erDiagram
+    %% Entidades base (existentes)
+    IDEAS ||--o{ AGENDA : "desarrolla"
+    AGENDA ||--o{ CATALOGO : "produce"
+    IDEAS }o--o{ CATALOGO : "referencia"
+    IDEAS }o--o{ AGENDA : "referencia"
+    AGENDA }o--o{ CATALOGO : "referencia"
+
+    %% Bloques (1:N por entidad)
+    IDEAS ||--o{ IDEA_BLOCKS : "tiene"
+    AGENDA ||--o{ AGENDA_BLOCKS : "tiene"
+    CATALOGO ||--o{ CATALGO_BLOCKS : "tiene"
+
+    %% Imagenes (1:N por entidad)
+    IDEAS ||--o{ IDEA_IMAGES : "tiene"
+    AGENDA ||--o{ AGENDA_IMAGES : "tiene"
+    CATALOGO ||--o{ CATALGO_IMAGES : "tiene"
+
+    %% Tablas nuevas (propuestas)
+    AGENDA ||--o{ DEVELOPMENT_TESTS : "contiene"
+    DEVELOPMENT_TESTS ||--o{ TEST_FEEDBACK : "recibe"
+
+    CATALOGO ||--o{ PLATING_PROPOSALS : "genera"
+    CATALOGO }o--o{ WARE : "utiliza"
+
+    %% Tablas existentes con campos nuevos
+    IDEAS {
+        uuid id PK
+        text notion_id UK
+        text titulo
+        text descripcion
+        text_array categorias
+        text estado_idea
+        timestamptz fecha_creacion
+    }
+
+    AGENDA {
+        uuid id PK
+        text notion_id UK
+        text titulo
+        date fecha
+        text estado_desarrollo "NEW"
+        text objetivo "NEW"
+        jsonb receta_final "NEW"
+        jsonb timeline "NEW"
+    }
+
+    CATALOGO {
+        uuid id PK
+        text notion_id UK
+        text titulo
+        int orden
+        numeric precio
+        text estado
+        text_array categorias
+        jsonb receta_estructurada "NEW"
+    }
+
+    DEVELOPMENT_TESTS {
+        uuid id PK
+        uuid agenda_id FK
+        smallint numero
+        date fecha
+        text objetivo
+        text estado
+        text resultado
+        text observaciones
+    }
+
+    TEST_FEEDBACK {
+        uuid id PK
+        uuid test_id FK
+        text mesa
+        smallint num_personas
+        smallint valoracion
+        text observaciones
+        date fecha
+    }
+
+    PLATING_PROPOSALS {
+        uuid id PK
+        uuid catalogo_id FK
+        text descripcion
+        jsonb contexto_usado
+        text imagen_url
+        text estado
+        smallint orden
+    }
+
+    WARE {
+        uuid id PK
+        text nombre
+        text tipo
+        text marca
+        text modelo
+        text material
+        text color
+        text forma
+        text tamano
+        bool disponibilidad
+    }

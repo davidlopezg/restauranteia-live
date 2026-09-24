@@ -1,0 +1,35 @@
+%% Flujo de desarrollo de productos Sol de Nit
+%% Generado desde docs/PRODUCT_WORKFLOW.md
+
+flowchart LR
+    A["📋 Archivo de Ideas"]
+    B["🧪 CONCEPTO"]
+    C["🍳 PRUEBA 1"]
+    D["⭐ EVALUACIÓN 1"]
+    E["✏️ MODIFICACIÓN"]
+    F["🍳 PRUEBA 2"]
+    G["✅ VALIDACIÓN"]
+    H["🍽️ PRODUCTO"]
+    I["🎨 EMPLATADO IA"]
+    J["🍶 VAJILLA IA"]
+
+    A -->|promover| B
+    B -->|crear prueba| C
+    C -->|registrar resultado| D
+    D -->|OK directo| F
+    D -->|modificar| E
+    E -->|crear prueba 2| F
+    F -->|validar| G
+    G -->|checklist OK| H
+    H -->|IA propone| I
+    I -->|elegir propuesta + IA| J
+
+    classDef estado fill:#fef3c7,stroke:#92400e,color:#1f2937
+    classDef evaluacion fill:#dbeafe,stroke:#1e40af,color:#1f2937
+    classDef producto fill:#d1fae5,stroke:#065f46,color:#1f2937
+    classDef ia fill:#ede9fe,stroke:#5b21b6,color:#1f2937
+
+    class B,C,E,F,G estado
+    class D evaluacion
+    class H producto
+    class I,J ia
