@@ -24,6 +24,16 @@ Desde la **raíz del repo**:
 ./start.sh
 ```
 
+Si `./start.sh` da `Permission denied` (pasa tras `git clone` en algunos sistemas
+que no preservan el bit de ejecución), hay 3 alternativas:
+
+```bash
+chmod +x start.sh && ./start.sh   # arregla los permisos una vez
+bash start.sh                      # funciona siempre sin tocar permisos
+```
+
+La primera vez tarda más (instala deps del frontend). Las siguientes, segundos.
+
 Esto:
 1. Si no existe `admin-web-frontend/dist/`, hace `npm install` + `npm run build`.
 2. Arranca FastAPI en **http://127.0.0.1:8765**.

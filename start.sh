@@ -3,12 +3,19 @@
 # 1. Si no existe admin-web-frontend/dist/index.html → hace npm install + build.
 # 2. Levanta FastAPI que sirve dist/ + /api/* + /docs/*.
 #
-# Uso: ./start.sh
+# Uso:
+#   ./start.sh                  (si tiene permisos de ejecución)
+#   bash start.sh               (alternativa universal)
+#   chmod +x start.sh && ./start.sh   (si quieres usar ./ directo)
+#
 # Abre la app en: http://127.0.0.1:8765
 #
 # Para desarrollo con HMR: cd admin-web-frontend && npm run dev (en otra terminal)
 # y deja este script corriendo para el backend.
 
+# Auto-detección: si no tiene permisos de ejecución pero el usuario intenta
+# ./start.sh, le decimos qué hacer. Si llega aquí, ya se está ejecutando con
+# bash, así que no hay problema.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"
