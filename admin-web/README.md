@@ -20,17 +20,21 @@ restauranteia-live/
 
 Desde la **raíz del repo**:
 
+**Linux / Mac / WSL:**
 ```bash
-./start.sh
+./start.sh                  # si tiene permisos
+bash start.sh               # alternativa universal si ./ falla
+chmod +x start.sh && ./start.sh   # arregla permisos una vez
 ```
 
-Si `./start.sh` da `Permission denied` (pasa tras `git clone` en algunos sistemas
-que no preservan el bit de ejecución), hay 3 alternativas:
-
-```bash
-chmod +x start.sh && ./start.sh   # arregla los permisos una vez
-bash start.sh                      # funciona siempre sin tocar permisos
+**Windows nativo (cmd / PowerShell):**
+```bat
+start.bat
 ```
+
+Si da error `CreateProcessCommon:640` o similar: usa `bash start.sh` desde Git
+Bash / WSL en vez de `./start.sh`. Es un problema de Windows intentando ejecutar
+un script Unix directamente.
 
 La primera vez tarda más (instala deps del frontend). Las siguientes, segundos.
 
