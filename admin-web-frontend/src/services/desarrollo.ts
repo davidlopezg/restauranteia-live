@@ -1,9 +1,9 @@
 /**
  * Servicio de desarrollo — fachada unificada Supabase / Legacy.
  *
- * Lecturas: pipeline (RPC) y pendientes (RPC) via Supabase.
- * Estados: hardcoded, sin backend.
- * Escrituras (cambiarEstado, agregarEvento): quedan en FASE 4 (requieren RPC atómico).
+ * - pipeline (RPC) y pendientes (RPC): Supabase
+ * - cambiarEstado, agregarEvento: Supabase via RPC (FASE 4)
+ * - estados: hardcoded
  */
 
 import { env } from "@/config/env";
@@ -11,7 +11,6 @@ import { desarrolloSupabase, estadosSupabaseService, desarrolloLegacy } from "@/
 import type { EstadoDesarrollo, AgendaPipeline } from "@/types/pipeline";
 import { httpClient } from "@/services/http-client";
 
-// Tipos exportados para uso externo
 export type { EstadoDesarrollo, AgendaPipeline };
 
 export interface EstadosDesarrolloResponse {
@@ -53,15 +52,26 @@ export const desarrolloService = {
         if (env.isSupabaseConfigured) return desarrolloSupabase.pipeline();
         return desarrolloLegacy.pipeline();
     },
+
     estados: (): Promise<EstadosDesarrolloResponse> =>
         Promise.resolve(estadosSupabaseService.get()),
+
     pendientes: (): Promise<PendienteItem[]> => {
         if (env.isSupabaseConfigured) return desarrolloSupabase.pendientes();
         return desarrolloLegacy.pendientes();
     },
-    // Escrituras — quedan con httpClient hasta FASE 4
-    cambiarEstado: (agendaId: string, body: CambiarEstadoRequest) =>
-        httpClient.patch<AgendaPipeline>(`/api/agendas/${agendaId}/estado`, body),
-    agregarEvento: (agendaId: string, body: AgregarEventoRequest) =>
-        httpClient.post<AgendaPipeline>(`/api/agendas/${agendaId}/evento`, body),
+
+    cambiarEstado: (agendaId: string, body: CambiarEstadoRequest): Promise<AgendaPipeline> => {
+        if (env.isSupabaseConfigured) {
+            return desarrolloSupabase.cambiarEstado(agendaId, body.estado_desarrollo, body.descripcion) as Promise<AgendaPipeline>;
+        }
+        return httpClient.patch<AgendaPipeline>(`/api/agendas/${agendaId}/estado`, body);
+    },
+
+    agregarEvento: (agendaId: string, body: AgregarEventoRequest): Promise<AgendaPipeline> => {
+        if (env.isSupabaseConfigured) {
+            return desarrolloSupabase.agregarEvento(agendaId, body.tipo, body.descripcion ?? "", body.extra) as Promise<AgendaPipeline>;
+        }
+        return httpClient.post<AgendaPipeline>(`/api/agendas/${agendaId}/evento`, body);
+    },
 };

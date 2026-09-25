@@ -1,18 +1,32 @@
-import { httpClient } from "@/services/http-client";
-import type { TestFeedback, FeedbackCreate, FeedbackUpdate } from "@/types/feedback";
+/**
+ * Fachada unificada feedback — Supabase / Legacy.
+ */
 
-// Servicios de Feedback de mesa. Coincide con admin-web/backend/routers/desarrollo.py.
+import { env } from "@/config/env";
+import {
+    feedbackSupabase,
+    feedbackLegacy,
+    type TestFeedback, type FeedbackCreate, type FeedbackUpdate,
+    feedbackKeys,
+} from "@/services/tests.supabase";
 
-export const feedbackKeys = {
-    byTest: (testId: string) => ["feedback", "test", testId] as const,
-};
+export type { TestFeedback, FeedbackCreate, FeedbackUpdate };
+export { feedbackKeys };
 
 export const feedbackService = {
-    listByTest: (testId: string) => httpClient.get<TestFeedback[]>(`/api/tests/${testId}/feedback`),
-    create: (testId: string, body: FeedbackCreate) =>
-        httpClient.post<TestFeedback>(`/api/tests/${testId}/feedback`, body),
-    update: (feedbackId: string, body: FeedbackUpdate) =>
-        httpClient.patch<TestFeedback>(`/api/feedback/${feedbackId}`, body),
-    delete: (feedbackId: string) =>
-        httpClient.delete<{ deleted: boolean; id: string }>(`/api/feedback/${feedbackId}`),
+    list: (testId?: string): Promise<TestFeedback[]> =>
+        env.isSupabaseConfigured ? feedbackSupabase.list(testId) : feedbackLegacy.list(testId),
+
+    // Alias para componentes que usan listByTest
+    listByTest: (testId: string): Promise<TestFeedback[]> =>
+        env.isSupabaseConfigured ? feedbackSupabase.list(testId) : feedbackLegacy.list(testId),
+
+    create: (testId: string, body: FeedbackCreate): Promise<TestFeedback> =>
+        env.isSupabaseConfigured ? feedbackSupabase.create(testId, body) : feedbackLegacy.create(testId, body),
+
+    update: (feedbackId: string, body: FeedbackUpdate): Promise<TestFeedback> =>
+        env.isSupabaseConfigured ? feedbackSupabase.update(feedbackId, body) : feedbackLegacy.update(feedbackId, body),
+
+    delete: (feedbackId: string): Promise<{ deleted: boolean; id: string }> =>
+        env.isSupabaseConfigured ? feedbackSupabase.delete(feedbackId) : feedbackLegacy.delete(feedbackId),
 };

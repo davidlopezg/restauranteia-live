@@ -28,6 +28,24 @@ export const desarrolloSupabase = {
     pipeline: pipelineSupabase,
     pendientes: pendientesSupabase,
     isAvailable: () => Boolean(callRpc),
+
+    // === Escrituras ===
+    async cambiarEstado(agendaId: string, nuevoEstado: string, descripcion?: string) {
+        return callRpc<unknown>("cambiar_estado_desarrollo", {
+            p_agenda_id: agendaId,
+            p_nuevo_estado: nuevoEstado,
+            p_descripcion: descripcion ?? "",
+        });
+    },
+
+    async agregarEvento(agendaId: string, tipo: string, descripcion: string, extra?: unknown) {
+        return callRpc<unknown>("append_event", {
+            p_agenda_id: agendaId,
+            p_tipo: tipo,
+            p_descripcion: descripcion,
+            p_extra: extra ?? null,
+        });
+    },
 };
 
 // Estados hardcoded — no necesita backend (ya viene del types/pipeline.ts).

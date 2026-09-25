@@ -34,9 +34,9 @@ const EVAL_QUESTIONS = [
 
 export const TestsSection = ({ agendaId, onChange }: TestsSectionProps) => {
     const qc = useQueryClient();
-    const { data: tests, isLoading, error } = useQuery({
+    const { data: tests, isLoading, error } = useQuery<DevTest[]>({
         queryKey: ["tests", "agenda", agendaId, "all"],
-        queryFn: () => testsService.listByAgenda(agendaId),
+        queryFn: () => testsService.listByAgenda(agendaId) as Promise<DevTest[]>,
     });
 
     const create = useMutation({
@@ -122,9 +122,9 @@ const TestItem = ({ test, onDelete, onChange }: { test: DevTest; onDelete: () =>
         },
     });
 
-    const { data: feedbacks } = useQuery({
+    const { data: feedbacks } = useQuery<TestFeedback[]>({
         queryKey: ["feedback", "test", test.id],
-        queryFn: () => feedbackService.listByTest(test.id),
+        queryFn: () => feedbackService.listByTest(test.id) as Promise<TestFeedback[]>,
     });
 
     const fichaTexto = test.ficha_generada
