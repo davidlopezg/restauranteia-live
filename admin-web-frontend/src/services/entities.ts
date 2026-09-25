@@ -1,12 +1,24 @@
-import { httpClient } from "@/services/http-client";
-import type { Idea, IdeaCreate, IdeaDetail, IdeaUpdate } from "@/types/idea";
-import type { Agenda, AgendaCreate, AgendaDetail, AgendaUpdate } from "@/types/agenda";
-import type { Catalogo, CatalogoCreate, CatalogoDetail, CatalogoGrupo, CatalogoUpdate } from "@/types/catalogo";
-import type { ListResponse } from "@/types/entity";
-import type { ConvertirIdeaResponse } from "@/types/convertir";
+/**
+ * Servicios de entidades — fachada unificada.
+ *
+ * Usa Supabase directo si está configurado (PostgREST + RPCs).
+ * Si no, fallback al backend FastAPI legacy (httpClient a /api/...).
+ *
+ * Esto permite migración gradual: cada componente ya consume este módulo
+ * sin saber qué backend está detrás.
+ */
 
-// Servicios CRUD para las 3 entidades. Cada uno es solo funciones, sin clase.
-// Las keys de query se centralizan aquí para que sea fácil invalidarlas.
+import { env } from "@/config/env";
+import {
+    ideasSupabase, agendasSupabase, catalogosSupabase,
+    ideasLegacy, agendasLegacy, catalogosLegacy,
+    type IdeasListParams, type AgendasListParams, type CatalogosListParams,
+} from "@/services/entities.supabase";
+import { httpClient } from "@/services/http-client";
+import type { ListResponse } from "@/types/entity";
+import type { Idea, IdeaDetail } from "@/types/idea";
+import type { Agenda, AgendaDetail } from "@/types/agenda";
+import type { Catalogo, CatalogoDetail, CatalogoGrupo } from "@/types/catalogo";
 
 // === IDEAS ===
 
@@ -17,30 +29,22 @@ export const ideasKeys = {
     filters: () => ["ideas", "filters"] as const,
 };
 
-export interface IdeasListParams {
-    search?: string;
-    categoria?: string;
-    estado?: string;
-    cursor?: string;
-    limit?: number;
-    order?: string;
-    ascending?: boolean;
-}
-
 export const ideasService = {
-    list: (params: IdeasListParams = {}) => {
-        const qs = new URLSearchParams();
-        for (const [k, v] of Object.entries(params)) {
-            if (v !== undefined && v !== null && v !== "") qs.set(k, String(v));
-        }
-        const suffix = qs.toString() ? `?${qs}` : "";
-        return httpClient.get<ListResponse<Idea>>(`/api/ideas${suffix}`);
+    list: (params: IdeasListParams = {}): Promise<ListResponse<Idea>> => {
+        if (env.isSupabaseConfigured) return ideasSupabase.list(params);
+        return ideasLegacy.list(params);
     },
-    detail: (id: string) => httpClient.get<IdeaDetail>(`/api/ideas/${id}`),
-    create: (body: IdeaCreate) => httpClient.post<Idea>("/api/ideas", body),
-    update: (id: string, body: IdeaUpdate) => httpClient.patch<Idea>(`/api/ideas/${id}`, body),
-    delete: (id: string) => httpClient.delete<{ deleted: boolean; id: string }>(`/api/ideas/${id}`),
-    convertir: (id: string) => httpClient.post<ConvertirIdeaResponse>(`/api/ideas/${id}/convertir`),
+    detail: (id: string): Promise<IdeaDetail> => {
+        if (env.isSupabaseConfigured) return ideasSupabase.detail(id);
+        return ideasLegacy.detail(id);
+    },
+    // CRUD se mantiene en httpClient por ahora (FASE 3)
+    create: (body: unknown) => httpClient.post<Idea>("/api/ideas", body),
+    update: (id: string, body: unknown) => httpClient.patch<Idea>(`/api/ideas/${id}`, body),
+    delete: (id: string) =>
+        httpClient.delete<{ deleted: boolean; id: string }>(`/api/ideas/${id}`),
+    convertir: (id: string) =>
+        httpClient.post<{ already_exists: boolean; agenda_id: string; agenda_titulo: string }>(`/api/ideas/${id}/convertir`),
 };
 
 // === AGENDAS ===
@@ -52,28 +56,19 @@ export const agendasKeys = {
     filters: () => ["agendas", "filters"] as const,
 };
 
-export interface AgendasListParams {
-    search?: string;
-    etiqueta?: string;
-    cursor?: string;
-    limit?: number;
-    order?: string;
-    ascending?: boolean;
-}
-
 export const agendasService = {
-    list: (params: AgendasListParams = {}) => {
-        const qs = new URLSearchParams();
-        for (const [k, v] of Object.entries(params)) {
-            if (v !== undefined && v !== null && v !== "") qs.set(k, String(v));
-        }
-        const suffix = qs.toString() ? `?${qs}` : "";
-        return httpClient.get<ListResponse<Agenda>>(`/api/agendas${suffix}`);
+    list: (params: AgendasListParams = {}): Promise<ListResponse<Agenda>> => {
+        if (env.isSupabaseConfigured) return agendasSupabase.list(params);
+        return agendasLegacy.list(params);
     },
-    detail: (id: string) => httpClient.get<AgendaDetail>(`/api/agendas/${id}`),
-    create: (body: AgendaCreate) => httpClient.post<Agenda>("/api/agendas", body),
-    update: (id: string, body: AgendaUpdate) => httpClient.patch<Agenda>(`/api/agendas/${id}`, body),
-    delete: (id: string) => httpClient.delete<{ deleted: boolean; id: string }>(`/api/agendas/${id}`),
+    detail: (id: string): Promise<AgendaDetail> => {
+        if (env.isSupabaseConfigured) return agendasSupabase.detail(id);
+        return agendasLegacy.detail(id);
+    },
+    create: (body: unknown) => httpClient.post<Agenda>("/api/agendas", body),
+    update: (id: string, body: unknown) => httpClient.patch<Agenda>(`/api/agendas/${id}`, body),
+    delete: (id: string) =>
+        httpClient.delete<{ deleted: boolean; id: string }>(`/api/agendas/${id}`),
 };
 
 // === CATALOGOS ===
@@ -86,28 +81,24 @@ export const catalogosKeys = {
     grupos: () => ["catalogos", "grupos"] as const,
 };
 
-export interface CatalogosListParams {
-    search?: string;
-    categoria?: string;
-    estado?: string;
-    cursor?: string;
-    limit?: number;
-    order?: string;
-    ascending?: boolean;
-}
-
 export const catalogosService = {
-    list: (params: CatalogosListParams = {}) => {
-        const qs = new URLSearchParams();
-        for (const [k, v] of Object.entries(params)) {
-            if (v !== undefined && v !== null && v !== "") qs.set(k, String(v));
-        }
-        const suffix = qs.toString() ? `?${qs}` : "";
-        return httpClient.get<ListResponse<Catalogo>>(`/api/catalogos${suffix}`);
+    list: (params: CatalogosListParams = {}): Promise<ListResponse<Catalogo>> => {
+        if (env.isSupabaseConfigured) return catalogosSupabase.list(params);
+        return catalogosLegacy.list(params);
     },
-    detail: (id: string) => httpClient.get<CatalogoDetail>(`/api/catalogos/${id}`),
-    create: (body: CatalogoCreate) => httpClient.post<Catalogo>("/api/catalogos", body),
-    update: (id: string, body: CatalogoUpdate) => httpClient.patch<Catalogo>(`/api/catalogos/${id}`, body),
-    delete: (id: string) => httpClient.delete<{ deleted: boolean; id: string }>(`/api/catalogos/${id}`),
-    grupos: () => httpClient.get<CatalogoGrupo[]>("/api/catalogos/grupos"),
+    detail: (id: string): Promise<CatalogoDetail> => {
+        if (env.isSupabaseConfigured) return catalogosSupabase.detail(id);
+        return catalogosLegacy.detail(id);
+    },
+    grupos: (): Promise<CatalogoGrupo[]> => {
+        if (env.isSupabaseConfigured) return catalogosSupabase.grupos();
+        return catalogosLegacy.grupos();
+    },
+    create: (body: unknown) => httpClient.post<Catalogo>("/api/catalogos", body),
+    update: (id: string, body: unknown) => httpClient.patch<Catalogo>(`/api/catalogos/${id}`, body),
+    delete: (id: string) =>
+        httpClient.delete<{ deleted: boolean; id: string }>(`/api/catalogos/${id}`),
 };
+
+// Re-exports de tipos para imports existentes
+export type { IdeasListParams, AgendasListParams, CatalogosListParams };

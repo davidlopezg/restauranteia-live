@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { QueryProvider } from "@/app/query-provider";
 import { AppRouter } from "@/app/router";
+import { AuthProvider } from "@/lib/auth";
 import "@/styles/globals.css";
 
 const rootEl = document.getElementById("root");
@@ -12,7 +13,9 @@ createRoot(rootEl).render(
     <StrictMode>
         <ThemeProvider>
             <QueryProvider>
-                <AppRouter />
+                <AuthProvider>
+                    <AppRouter />
+                </AuthProvider>
             </QueryProvider>
         </ThemeProvider>
     </StrictMode>,

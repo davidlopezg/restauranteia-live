@@ -1,12 +1,19 @@
-import { httpClient } from "@/services/http-client";
+/**
+ * Servicio de cadencia — fachada unificada Supabase / Legacy.
+ *
+ * FASE 2: lecturas via Supabase (RPC + PostgREST).
+ * FASE 3+: escrituras (PATCH /api/cadencia/{id}) — quedan con httpClient.
+ */
+
+import { env } from "@/config/env";
+import { cadenciaSupabaseService, cadenciaLegacy } from "@/services/cadencia.supabase";
 import type {
     CadenciaAplazarRequest,
     CadenciaSemana,
     CadenciaSemanaActualResponse,
     CadenciaUpdate,
 } from "@/types/cadencia";
-
-// Servicios de cadencia semanal. Coincide con admin-web/backend/routers/settings.py.
+import { httpClient } from "@/services/http-client";
 
 export const cadenciaKeys = {
     semanaActual: () => ["cadencia", "semana-actual"] as const,
@@ -14,8 +21,14 @@ export const cadenciaKeys = {
 };
 
 export const cadenciaService = {
-    semanaActual: () => httpClient.get<CadenciaSemanaActualResponse>("/api/cadencia/semana-actual"),
-    historial: (limit = 8) => httpClient.get<CadenciaSemana[]>(`/api/cadencia/historial?limit=${limit}`),
+    semanaActual: (): Promise<CadenciaSemanaActualResponse> => {
+        if (env.isSupabaseConfigured) return cadenciaSupabaseService.semanaActual();
+        return cadenciaLegacy.semanaActual();
+    },
+    historial: (limit = 12): Promise<CadenciaSemana[]> => {
+        if (env.isSupabaseConfigured) return cadenciaSupabaseService.historial(limit);
+        return cadenciaLegacy.historial(limit);
+    },
     update: (weekId: string, body: CadenciaUpdate) =>
         httpClient.patch<CadenciaSemana>(`/api/cadencia/${weekId}`, body),
     aplazar: (weekId: string, body: CadenciaAplazarRequest) =>

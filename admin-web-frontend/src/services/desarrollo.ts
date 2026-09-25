@@ -1,14 +1,18 @@
+/**
+ * Servicio de desarrollo — fachada unificada Supabase / Legacy.
+ *
+ * Lecturas: pipeline (RPC) y pendientes (RPC) via Supabase.
+ * Estados: hardcoded, sin backend.
+ * Escrituras (cambiarEstado, agregarEvento): quedan en FASE 4 (requieren RPC atómico).
+ */
+
+import { env } from "@/config/env";
+import { desarrolloSupabase, estadosSupabaseService, desarrolloLegacy } from "@/services/desarrollo.supabase";
+import type { EstadoDesarrollo, AgendaPipeline } from "@/types/pipeline";
 import { httpClient } from "@/services/http-client";
-import type { EstadoDesarrollo, PipelinePorEstado, AgendaPipeline } from "@/types/pipeline";
 
-// Servicios de desarrollo: pipeline, pendientes, estados, eventos.
-// Coincide con admin-web/backend/routers/desarrollo.py.
-
-export const desarrolloKeys = {
-    pipeline: () => ["desarrollo", "pipeline"] as const,
-    estados: () => ["desarrollo", "estados"] as const,
-    pendientes: () => ["desarrollo", "pendientes"] as const,
-};
+// Tipos exportados para uso externo
+export type { EstadoDesarrollo, AgendaPipeline };
 
 export interface EstadosDesarrolloResponse {
     estados: EstadoDesarrollo[];
@@ -38,20 +42,24 @@ export interface AgregarEventoRequest {
     extra?: unknown;
 }
 
+export const desarrolloKeys = {
+    pipeline: () => ["desarrollo", "pipeline"] as const,
+    estados: () => ["desarrollo", "estados"] as const,
+    pendientes: () => ["desarrollo", "pendientes"] as const,
+};
+
 export const desarrolloService = {
-    pipeline: () =>
-        httpClient
-            .get<PipelinePorEstado>("/api/desarrollo/pipeline")
-            .then((data): Record<EstadoDesarrollo, AgendaPipeline[]> => {
-                // Backend devuelve objeto plano; nos aseguramos de tiparlo correctamente.
-                const out = {} as Record<EstadoDesarrollo, AgendaPipeline[]>;
-                for (const [k, v] of Object.entries(data ?? {})) {
-                    out[k as EstadoDesarrollo] = v as AgendaPipeline[];
-                }
-                return out;
-            }),
-    estados: () => httpClient.get<EstadosDesarrolloResponse>("/api/desarrollo/estados"),
-    pendientes: () => httpClient.get<PendienteItem[]>("/api/pendientes"),
+    pipeline: (): Promise<Record<EstadoDesarrollo, AgendaPipeline[]>> => {
+        if (env.isSupabaseConfigured) return desarrolloSupabase.pipeline();
+        return desarrolloLegacy.pipeline();
+    },
+    estados: (): Promise<EstadosDesarrolloResponse> =>
+        Promise.resolve(estadosSupabaseService.get()),
+    pendientes: (): Promise<PendienteItem[]> => {
+        if (env.isSupabaseConfigured) return desarrolloSupabase.pendientes();
+        return desarrolloLegacy.pendientes();
+    },
+    // Escrituras — quedan con httpClient hasta FASE 4
     cambiarEstado: (agendaId: string, body: CambiarEstadoRequest) =>
         httpClient.patch<AgendaPipeline>(`/api/agendas/${agendaId}/estado`, body),
     agregarEvento: (agendaId: string, body: AgregarEventoRequest) =>

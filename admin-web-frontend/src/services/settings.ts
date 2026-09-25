@@ -1,14 +1,14 @@
-import { httpClient } from "@/services/http-client";
-import type {
-    KeyStatusResponse,
-    SettingsResponse,
-    SettingsUpdate,
-    TestProvidersResponse,
-} from "@/types/filters";
+/**
+ * Servicio de settings — fachada unificada Supabase / Legacy.
+ *
+ * FASE 2: lectura via PostgREST + RLS filtra secretos.
+ * FASE 6: escritura (PATCH /api/settings) sigue con httpClient hasta migrar a Edge Function.
+ */
 
-// Servicios de Settings. Coincide con admin-web/backend/routers/settings.py.
-// IMPORTANTE: nunca se envían/leen API keys desde el cliente; el backend las
-// almacena y solo expone flags de configuración (configured, key_source).
+import { env } from "@/config/env";
+import { settingsSupabaseService, settingsLegacy } from "@/services/settings.supabase";
+import type { SettingsResponse, KeyStatusResponse, TestProvidersResponse } from "@/types/filters";
+import { httpClient } from "@/services/http-client";
 
 export const settingsKeys = {
     all: () => ["settings"] as const,
@@ -16,8 +16,16 @@ export const settingsKeys = {
 };
 
 export const settingsService = {
-    get: () => httpClient.get<SettingsResponse>("/api/settings"),
-    update: (body: SettingsUpdate) => httpClient.patch<SettingsResponse>("/api/settings", body),
-    keyStatus: () => httpClient.get<KeyStatusResponse>("/api/settings/key-status"),
+    get: (): Promise<SettingsResponse> => {
+        if (env.isSupabaseConfigured) return settingsSupabaseService.get();
+        return settingsLegacy.get();
+    },
+    update: (body: Record<string, unknown> | object) =>
+        httpClient.patch<SettingsResponse>("/api/settings", body),
+    keyStatus: (): Promise<KeyStatusResponse> => {
+        if (env.isSupabaseConfigured) return settingsSupabaseService.keyStatus();
+        return settingsLegacy.keyStatus();
+    },
+    // testProviders hace requests HTTP reales con keys — queda en Edge Function (FASE 6)
     testProviders: () => httpClient.get<TestProvidersResponse>("/api/settings/test-providers"),
 };
