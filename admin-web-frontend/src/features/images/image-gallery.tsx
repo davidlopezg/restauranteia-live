@@ -112,7 +112,7 @@ const ImageThumb = ({
                 {error ? (
                     <span className="flex h-full items-center justify-center text-xs text-error-primary">⚠</span>
                 ) : data ? (
-                    <img src={data.url} alt={img.original_filename ?? "imagen"} className="size-full object-cover" loading="lazy" />
+                    <img src={data} alt={img.original_filename ?? "imagen"} className="size-full object-cover" loading="lazy" />
                 ) : (
                     <span className="flex h-full items-center justify-center text-xs text-tertiary">…</span>
                 )}
@@ -158,7 +158,7 @@ const ZoomModal = ({ img, onClose }: { img: EntityImage; onClose: () => void }) 
                 <span className="text-white">Cargando…</span>
             ) : (
                 <img
-                    src={data.url}
+                    src={data}
                     alt={img.original_filename ?? "imagen"}
                     className="max-h-full max-w-full object-contain"
                     onClick={e => e.stopPropagation()}
@@ -188,8 +188,20 @@ const UploadModal = ({
         setErr(null);
         setSubmitting(true);
         const fd = new FormData(ev.currentTarget);
+        const file = fd.get("file");
+        if (!(file instanceof File)) {
+            setErr("Archivo requerido");
+            setSubmitting(false);
+            return;
+        }
+        const meta = {
+            source_type: (fd.get("source_type") as string) || undefined,
+            notion_block_id: (fd.get("notion_block_id") as string) || undefined,
+            notion_property: (fd.get("notion_property") as string) || undefined,
+            position: fd.get("position") ? Number(fd.get("position")) : undefined,
+        };
         try {
-            const result = (await imagesService.upload(entidad, entityId, fd)) as { deduplicated?: boolean };
+            const result = await imagesService.upload(entidad, entityId, file, meta);
             if (result?.deduplicated) setDedup(true);
             onUploaded();
         } catch (e) {

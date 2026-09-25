@@ -152,7 +152,7 @@ const SignedImage = ({ bucket, path, alt }: { bucket: string; path: string; alt:
                 onClick={() => setZoomed(true)}
                 className="block max-w-md overflow-hidden rounded-md border border-secondary"
             >
-                <img src={data.url} alt={alt} className="block w-full" loading="lazy" />
+                <img src={data} alt={alt} className="block w-full" loading="lazy" />
             </button>
             {zoomed && (
                 <div
@@ -160,7 +160,7 @@ const SignedImage = ({ bucket, path, alt }: { bucket: string; path: string; alt:
                     onClick={() => setZoomed(false)}
                     role="dialog"
                 >
-                    <img src={data.url} alt={alt} className="max-h-full max-w-full object-contain" />
+                    <img src={data} alt={alt} className="max-h-full max-w-full object-contain" />
                 </div>
             )}
         </>
