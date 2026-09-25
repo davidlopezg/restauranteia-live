@@ -1,16 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
-import { httpClient } from "@/services/http-client";
+import { healthcheckSupabase, type HealthResult } from "@/lib/healthcheck";
 import { cx } from "@/utils/cx";
 
-type Health = { status: string; schema?: string };
-
 // Status pill del sidebar — healthcheck con polling cada 30s.
-// Coincide con el frontend actual (status-dot del sidebar).
+// Reemplaza /api/healthz por query directo a Supabase.
 
 export const StatusPill = () => {
-    const { data, error, isLoading } = useQuery({
+    const { data, error, isLoading } = useQuery<HealthResult>({
         queryKey: ["health"],
-        queryFn: () => httpClient.get<Health>("/api/healthz"),
+        queryFn: () => healthcheckSupabase(),
         refetchInterval: 30_000,
         retry: false,
     });
@@ -20,7 +18,7 @@ export const StatusPill = () => {
     if (isLoading) {
         label = "Conectando…";
         dotClass = "bg-fg-quaternary";
-    } else if (error) {
+    } else if (error || (data && !data.ok)) {
         label = "Sin conexión";
         dotClass = "bg-error-primary";
     } else {
