@@ -1,0 +1,278 @@
+{
+  "version": "0.1.0",
+  "region_referencia": "España / Cataluña — normativa UE y nacional",
+  "idioma": "es",
+  "notas_generales": [
+    "Las cifras de vida útil son orientativas para producto fresco, bien manipulado y en envase adecuado.",
+    "La seguridad alimentaria es lo primero: ante la duda, primar pH/aw/temperatura sobre 'tradición'.",
+    "Caducidad = seguridad (no consumir después). Consumo preferente = calidad (puede consumirse después si el producto está bien)."
+  ],
+  "normativa": {
+    "appcc": "Sistema de Análisis de Peligros y Puntos de Control Crítico (APPCC/HACCP) obligatorio en cualquier establecimiento que manipule alimentos. Foco en los 4 pilares: peligros biológicos, químicos, físicos y alergenos.",
+    "registro_sanitario_generalitat": "En Cataluña, cualquier elaborador que ponga alimentos en el mercado (incluye conservas, embutidos, ahumados si se venden al público) necesita estar dado de alta en el Registro Sanitario de Industrias y Productos Alimentarios de Cataluña (RSA) — RGSEAA en ámbito estatal — y cumplir los requisitos del RD 1086/2020 y RG 852/2004.",
+    "etiquetado": "RG 1169/2011: denominación, lista de ingredientes (alérgenos destacados), fecha de caducidad o consumo preferente, condiciones de conservación, lote, nombre/domicilio del elaborador.",
+    "caducidad_vs_consumo_preferente": "Fecha de caducidad (DAY/MONTH) = alimentos microbiológicamente perecederos (carne fresca, pescado, listos para consumo, leche). Fecha de consumo preferente (mes/año) = alimentos menos perecederos (secos, en conserva, congelados, ultracongelados).",
+    "temperaturas_legales": "Productos refrigerados ≤4°C en punto más frío del refrigerador (RD 1376/2003 y modificaciones). Congelación ≤-18°C. Carne fresca 0-4°C. Pescado fresco 0-2°C (con hielo).",
+    "alergenos_top14": "Cereales con gluten, crustáceos, huevos, pescado, cacahuetes, soja, leche, frutos de cáscara, apio, mostaza, sésamo, sulfitos >10ppm, altramuces, moluscos."
+  },
+  "metodos": [
+    {
+      "id": "refrigeracion",
+      "nombre": "Refrigeración",
+      "categoria": "por_temperatura",
+      "descripcion_corta": "Enfriamiento a 0–4 °C con HR controlada. Conserva producto fresco en su estado natural durante días o semanas.",
+      "temp_objetivo_c": "0 a 4",
+      "humedad_relativa_pct": "85–95 (verduras) / 60–75 (carnes maduradas)",
+      "vida_util_dias": "2–14 según producto",
+      "productos_tipicos": ["verduras frescas", "frutas frescas", "carne fresca", "pescado fresco", "lácteos", "huevos", "salsas frescas", "masas madre"],
+      "riesgos_principales": ["Listeria monocytogenes (crece a 4°C)", "Salmonella", "Mohos y levaduras en fruta/queso"],
+      "puede_compartir_camara_con": "Separar crudos de cocinados. Pescado separado de carne. Frutas separadas de verduras etilénicas.",
+      "punto_critico": "Nunca romper la cadena de frío. Controlar temperatura con sonda calibrada, no solo display.",
+      "notas": "Una nevera doméstica suele estar a 6-8°C: insuficiente para pescado fresco. En restaurante, nevera profesional con registro de temperatura."
+    },
+    {
+      "id": "congelacion",
+      "nombre": "Congelación",
+      "categoria": "por_temperatura",
+      "descripcion_corta": "Almacenamiento a ≤-18°C. Detiene la actividad microbiológica pero no mata patógenos.",
+      "temp_objetivo_c": "-18 a -22",
+      "humedad_relativa_pct": "n/a (producto envasado)",
+      "vida_util_dias": "90–365 según producto",
+      "productos_tipicos": ["cortes de carne", "filetes de pescado", "marisco", "verduras blanqueadas", "setas", "masa de hojaldre", "salsas en porciones", "caldos concentrados"],
+      "riesgos_principales": ["Quemaduras por frío (deshidratación superficial)", "Rancidez oxidativa en productos grasos", "Pérdida de textura tras descongelación", "Contaminación cruzada por recongelar descongelado"],
+      "punto_critico": "Congelar rápido (túnel IQF o blast chiller) para cristales pequeños. Descongelar en cámara 0-4°C, nunca a temperatura ambiente.",
+      "notas": "RD 1376/2003: congelados para venta directa deben etiquetar 'ultracongelado' si se ultracongelan a ≤-18°C en menos de 2h."
+    },
+    {
+      "id": "salazon_curado",
+      "nombre": "Salazón y curado",
+      "categoria": "por_actividad_agua",
+      "descripcion_corta": "Reducción de aw mediante sal (NaCl) y, opcionalmente, nitratos/nitritos. Base de embutidos, bacalao, jamones.",
+      "temp_objetivo_c": "2 a 6 (maduración) / 0 a 2 (salazón)",
+      "humedad_relativa_pct": "70–85 (depende de la etapa)",
+      "vida_util_dias": "30–365+",
+      "productos_tipicos": ["jamón curado", "chorizo", "salchichón", "lomo embuchado", "bacalao salado", "anchoas en salazón", "cecina", "pastrami"],
+      "riesgos_principales": ["Clostridium botulinum (anaerobio, baja aw)", "Staphylococcus aureus si NaCl <6%", "Nitratos/nitritos: usar solo en cantidades reguladas (RD 1333/2008 y RD 1466/2009)"],
+      "punto_critico": "Curado lento en cámara con T y HR controladas. Bacalao salado: lavar y desalar bajo agua fría 24-48h. Salazón de pescado: sal gruesa + control de ph.",
+      "notas": "Niveles legales: nitratos <150 mg/kg, nitritos <150 mg/kg en productos cárnicos curados (RD 1333/2008). Embutidos artesanales requieren registro sanitario específico."
+    },
+    {
+      "id": "ahumado",
+      "nombre": "Ahumado",
+      "categoria": "combinado",
+      "descripcion_corta": "Exposición al humo de maderas nobles. Aporta sabor,色泽 y conservantes naturales (fenoles, formaldehído).",
+      "temp_objetivo_c": "12–25 (frío) / 60–80 (caliente)",
+      "humedad_relativa_pct": "60–75",
+      "vida_util_dias": "30–120 según curado previo",
+      "productos_tipicos": ["salmón ahumado", "trucha ahumada", "bacalao ahumado", "panceta", "queso ahumado", "pollo ahumado", "costilla BBQ"],
+      "riesgos_principales": ["HAP — hidrocarburos aromáticos policíclicos cancerígenos si ahumado directo a alta T", "Listeria si no se sala antes", "Anisakis si se ahuma salmón sin congelar previamente (-20°C 24h o -35°C 15h)"],
+      "punto_critico": "Ahumado en frío: previa salazón + secado superficial. Ahumado en caliente: el propio calor cocina. Usar maderas duras (encina, haya, manzano), nunca resinosas (pino genera HAP).",
+      "notas": "RD 868/2014 limita HAP (benzo[a]pireno <2 μg/kg) en alimentos ahumados. Reglamento UE 835/2011 y 1127/2014."
+    },
+    {
+      "id": "aceite_confit",
+      "nombre": "Aceite y confitado",
+      "categoria": "por_medio_graso",
+      "descripcion_corta": "Conservación en aceite de oliva o girasol. El aceite desplaza el oxígeno y crea ambiente anaerobio estable.",
+      "temp_objetivo_c": "Ambiente (18-22) en envase cerrado, o refrigeración tras apertura",
+      "humedad_relativa_pct": "n/a",
+      "vida_util_dias": "60–365 en aceite virgen sin abrir",
+      "productos_tipicos": ["tomate semiseco en aceite", "pimientos del piquillo en aceite", "alcachofas en aceite", "ajo confitado", "atún en aceite", "anchoas en aceite", "queso en aceite (no aplicable a frescos)"],
+      "riesgos_principales": ["Clostridium botulinum si el producto es baja acidez y baja sal (caso clásico de conservas caseras)", "Rancidez oxidativa si aceite expuesto a luz/T", "Mohos si entrada de agua"],
+      "punto_critico": "Para conservas caseras en aceite: BLANCHEAR el producto, secar bien, aceite de oliva virgen extra, cubrir totalmente (sin aire), guardar en frigorífico. Nunca con ajo crudo fresco, hierbas frescas o verduras crudas sin acidificar.",
+      "notas": "Botulismo en aceite es el caso de intoxicación casera más documentado en España en los últimos 30 años. Acidificar (vinagre o limón) los productos de baja acidez antes de cubrir con aceite si no se autoclava."
+    },
+    {
+      "id": "vinagre_escabeche",
+      "nombre": "Vinagre y escabeche",
+      "categoria": "por_pH",
+      "descripcion_corta": "Acidificación con vinagre (5-8% acidez acética). pH <4.5 inhibe C. botulinum y la mayoría de patógenos.",
+      "temp_objetivo_c": "Ambiente o refrigerado según producto",
+      "humedad_relativa_pct": "n/a",
+      "vida_util_dias": "180–365 en envase cerrado",
+      "productos_tipicos": ["cebollas encurtidas", "pepinillos", "encurtidos variados", "escabeche de pollo/caza", "sardinas en escabeche", "alcaparras", "guindillas en vinagre"],
+      "riesgos_principales": ["Mohos si el vinagre es demasiado diluido (<4%)", "Fermentación no controlada si no se pasteuriza"],
+      "punto_critico": "Verificar pH <4.2 con tira o pH-metro. Si el producto es baja acidez, acidificar con vinagre fuerte o añadir ácido cítrico. Para 'conservas de larga duración', pasteurizar el bote 30 min a 75°C.",
+      "notas": "Tradicionalmente los encurtidos se fermentan por lácticas (sin vinagre añadido) — son más sanos pero requieren control de pH durante la fermentación."
+    },
+    {
+      "id": "azucar_almibar",
+      "nombre": "Azúcar y almíbar",
+      "categoria": "por_aw",
+      "descripcion_corta": "Conservación por alta concentración de azúcar. Reduce aw a <0.86, inhibe bacterias.",
+      "temp_objetivo_c": "Ambiente una vez estabilizado",
+      "humedad_relativa_pct": "n/a",
+      "vida_util_dias": "365+",
+      "productos_tipicos": ["mermeladas (50% fruta/50% azúcar)", "confituras", "frutas en almíbar", "frutas confitadas", "caramelos", "turrones"],
+      "riesgos_principales": ["Mohos si concentración de azúcar <60%", "Cristalización si sobresaturado"],
+      "punto_critico": "Mermelada 'clásica': 50% fruta / 50% azúcar, cocinar hasta 65% sólidos solubles (refractómetro). 'Mermelada artesanal' (RG 2018/775) admite menos azúcar pero exige control de pH (<3.8) o Bx.",
+      "notas": "Si se reduce el azúcar por debajo del 60% del producto final, pasa de mermelada a 'preparado de frutas' con vida útil más corta (semanas, refrigerado)."
+    },
+    {
+      "id": "fermentacion_lactica",
+      "nombre": "Fermentación láctica",
+      "categoria": "biologico",
+      "descripcion_corta": "Transformación por bacterias lácticas (Lactobacillus, Leuconostoc). Genera ácido láctico que reduce pH.",
+      "temp_objetivo_c": "18–25 (vegetales) / 30–40 (koji)",
+      "humedad_relativa_pct": "n/a (sumergido en salmuera o en su propio jugo)",
+      "vida_util_dias": "60–365 en refrigeración tras fermentar",
+      "productos_tipicos": ["chucrut", "kimchi", "encurtidos fermentados", "pepinillos lacto-fermentados", "salsa de soja (1-2 años)", "pasta miso (1-3 años)", "vinagre de manzana natural"],
+      "riesgos_principales": ["Si fermenta por encima de 25°C en anaerobio: riesgo de C. botulinum", "Moho superficial (Skim, descartar capa)", "Exceso de CO2 en envases cerrados"],
+      "punto_critico": "Salmuera al 2-5% para vegetales. Mantener pH <4.0. NO llenar el bote al 100% (el CO2 genera presión). Abrir cada 24-48h las primeras 72h para liberar gas.",
+      "notas": "Fermentación láctica es lo que da sabor umami profundo y probióticos vivos. Es una de las técnicas más antiguas (10.000+ años) y más sostenibles: cero energía para conservar."
+    },
+    {
+      "id": "secado_deshidratacion",
+      "nombre": "Secado y deshidratación",
+      "categoria": "por_aw",
+      "descripcion_corta": "Eliminación de humedad hasta aw <0.60 (carne) o <0.70 (vegetales). Inhibe todo crecimiento bacteriano.",
+      "temp_objetivo_c": "50–70 (deshidratador) / ambiente (secado solar) / liofilización al vacío",
+      "humedad_relativa_pct": "n/a (ventilación)",
+      "vida_util_dias": "180–730",
+      "productos_tipicos": ["tomate semiseco", "orégano, romero, tomillo", "pasas", "orejones", "cecina", "mojama", "bacalao seco (klippfisk)", "setas deshidratadas", "polvos de verduras/frutas"],
+      "riesgos_principales": ["Si aw >0.85: Staphylococcus aureus", "Mohos (Aspergillus) si secado lento y húmedo", "Anisakis en pescado seco si no se sala previamente"],
+      "punto_critico": "Secar rápido los primeros días (menos de 24h) para evitar fase de putrefacción. Usar deshidratador industrial (50-70°C, ventilador potente). Carne: salar y salar antes de secar.",
+      "notas": "Liofilización (freeze-drying) es el secado más noble: conserva sabor, color, vitaminas. Pero requiere equipo caro. Útil para polvo de aceitunas, piel de pollo crocante, frutas liofilizadas."
+    },
+    {
+      "id": "al_vacio_pasteurizacion",
+      "nombre": "Al vacío y pasteurización (sous-vide)",
+      "categoria": "por_emperatura_y_envase",
+      "descripcion_corta": "Cocción al vacío a baja temperatura seguida de enfriamiento rápido. Pasteuriza el producto sin perder jugosidad.",
+      "temp_objetivo_c": "55–95 según producto (carnes 55-65, pescado 50-60, verduras 85-95)",
+      "humedad_relativa_pct": "n/a",
+      "vida_util_dias": "7–90 refrigerado tras pasteurizar",
+      "productos_tipicos": ["costilla de ternera 72h", "rabo de toro 48h", "pato confitado al vacío", "verduras al vacío", "huevos pasteurizados a baja T", "frutas al vacío para cócteles"],
+      "riesgos_principales": ["Si T <55°C: supervivencia de patógenos", "Si vacío mal hecho: anaerobiosis favorece C. botulinum", "Clostridium perfringens en enfriamiento lento"],
+      "punto_critico": "Cocinar a T exacta con termocirculador (Henny Penny, Polyscience). Enfriar RÁPIDO (abatidor) tras cocción. Mantener en frío <4°C. Consumir en 5-7 días refrigerado.",
+      "notas": "Sous-vide NO es conserva de larga duración. Es pasteurización con vida útil refrigerada. Para hacerla 'conserva' de verdad, habría que esterilizar (autoclave)."
+    },
+    {
+      "id": "conserva_autoclave",
+      "nombre": "Conserva (autoclave)",
+      "categoria": "por_esterilizacion",
+      "descripcion_corta": "Esterilización comercial en autoclave. Destruye TODOS los patógenos y esporas (incluido C. botulinum). Vida útil 1-5 años.",
+      "temp_objetivo_c": "115–121 en autoclave, 20-90 min según tamaño",
+      "humedad_relativa_pct": "n/a",
+      "vida_util_dias": "365–1825",
+      "productos_tipicos": ["mermeladas industriales", "espárragos en conserva", "atún en conserva", "alubias en conserva", "salsas de tomate", "paté en conserva", "carpaccio de ternera (post-pasteurización)"],
+      "riesgos_principales": ["Botulismo si autoclave no llega a 121°C y tiempo correcto", "Crecimiento de mohos si el cierre (vacío) falla"],
+      "punto_critico": "pH <4.5 = pasteurización 100°C suficiente (mermeladas, tomate). pH >4.5 = OBLIGATORIO autoclave 121°C. Sin autoclave, NO se puede vender conserva de baja acidez.",
+      "notas": "En España, vender conserva casera de baja acidez (verduras, carne, pescado) sin autoclave y registro sanitario es ilegal y peligroso. Las conserveras artesanales autorizadas son la única vía legal."
+    },
+    {
+      "id": "atmosfera_modificada",
+      "nombre": "Atmósfera modificada (MAP)",
+      "categoria": "por_envase_y_gases",
+      "descripcion_corta": "Envasado con mezcla de gases (N2, CO2, O2 reducido) que alargan vida útil de frescos.",
+      "temp_objetivo_c": "0–4",
+      "humedad_relativa_pct": "controlada dentro del envase",
+      "vida_util_dias": "5–21 vs 2–7 en aire",
+      "productos_tipicos": ["carne fresca en bandeja MAP", "queso en porciones", "verduras cortadas listas", "pasta fresca", "bollería industrial"],
+      "riesgos_principales": ["Crecimiento de patógenos anaerobios si O2 se agota completamente y pH >4.5", "Falsas expectativas del consumidor sobre caducidad"],
+      "punto_critico": "Equipo específico (envasadora MAP con mezclador de gases). No improvisable en cocina pequeña.",
+      "notas": "El símbolo 'envasado en atmósfera protectora' debe aparecer en etiqueta (RG 1169/2011)."
+    },
+    {
+      "id": "almacenamiento_seco",
+      "nombre": "Almacenamiento en seco",
+      "categoria": "por_aw",
+      "descripcion_corta": "Conservación de productos con aw <0.60 en ambiente fresco, seco y oscuro.",
+      "temp_objetivo_c": "12–18",
+      "humedad_relativa_pct": "<60",
+      "vida_util_dias": "180–1825",
+      "productos_tipicos": ["arroz", "pasta seca", "legumbres", "harinas", "azúcar", "sal", "especias", "frutos secos", "aceites"],
+      "riesgos_principales": ["Infestación por insectos (gorgojos, polillas)", "Rancidez en frutos secos y harinas si se rompe la cadena de frío", "Hongos si humedad >70%"],
+      "punto_critico": "Almacén con T <18°C y HR <65%. Bidones cerrados. Rotación PEPS (primero en entrar, primero en salir).",
+      "notas": "Arroz y legumbres viejos (>2 años) pierden textura de cocción. Especias enteras mantienen sabor 2-3 años; molidas 6-12 meses."
+    }
+  ],
+  "familias_productos": [
+    {
+      "id": "verduras_frescas",
+      "conservacion_principal": "refrigeracion",
+      "vida_util_dias": "3–14",
+      "notas": "Hojas verdes (lechuga, espinacas): 3-5 días envueltas en papel. De raíz (zanahoria, remolacha): 2-3 semanas en arena o en frigo. Tomate: NUNCA en nevera (pierde aroma)."
+    },
+    {
+      "id": "frutas_frescas",
+      "conservacion_principal": "refrigeracion",
+      "vida_util_dias": "3–30",
+      "notas": "Manzana, pera: frigo 1-3 meses. Frutos rojos: 2-4 días. Cítricos: ambiente 1-2 semanas. Plátano: nunca en frigo (ennegrece). Aguacate: madura a temperatura ambiente, luego frigo."
+    },
+    {
+      "id": "carne_fresca",
+      "conservacion_principal": "refrigeracion",
+      "vida_util_dias": "2–7 refrigerado / 90–365 congelado",
+      "notas": "Vacuno madurado en seco: 28-60 días en cámara controlada (0-2°C, HR 75-85%). Cerdo: 3-5 días frigo. Pollo: 1-2 días frigo. Cordero: 3-5 días frigo."
+    },
+    {
+      "id": "pescado_fresco",
+      "conservacion_principal": "refrigeracion_hielo",
+      "vida_util_dias": "1–4",
+      "notas": "Pescado azul (sardina, anchoa): 1-2 días. Pescado blanco (merluza, rape): 3-4 días. Marisco vivo: 1-2 días. Pescado entero se conserva mejor que fileteado."
+    },
+    {
+      "id": "lacteos",
+      "conservacion_principal": "refrigeracion",
+      "vida_util_dias": "5–45",
+      "notas": "Leche UHT: ambiente 6 meses. Yogur: 15-30 días frigo. Queso fresco: 5-10 días. Queso curado: 30-90 días (refrigerado o ambiente según tipo)."
+    },
+    {
+      "id": "huevos",
+      "conservacion_principal": "refrigeracion",
+      "vida_util_dias": "21–28 desde puesta",
+      "notas": "Conservar en nevera, no en puerta (oscilación T). Lavarlos solo antes de usar (el lavado rompe la cutícula). En España, sin necesidad de lavar en producción."
+    },
+    {
+      "id": "pan_masas",
+      "conservacion_principal": "refrigeracion_o_congelacion",
+      "vida_util_dias": "2–5 ambiente / 30–90 congelado",
+      "notas": "Pan de payés: ambiente 2-3 días (seco se mantiene más). Masas madre refrigeradas: cambiar harina cada 7-10 días. Hojaldre crudo: congelar y hornear directo."
+    }
+  ],
+  "alertas_microbiologicas": [
+    {
+      "agente": "Clostridium botulinum",
+      "peligro": "Toxina mortal. Produce toxina en anaerobiosis, baja acidez (pH>4.5), baja sal, aw>0.94.",
+      "metodos_inhiben": ["autoclave 121°C", "pH<4.2", "aw<0.94", "alta concentración de sal o azúcar"],
+      "metodos_NO_inhiben_si_solo": ["refrigeracion (es anaerobio)", "ahumado", "al vacío si pH y aw no controlados"],
+      "casos_tipicos": "conservas caseras de baja acidez en aceite, embutidos mal curados, ajo en aceite sin acidificar"
+    },
+    {
+      "agente": "Listeria monocytogenes",
+      "peligro": "Meningitis en embarazadas, ancianos, inmunodeprimidos. CRECE a 4°C.",
+      "metodos_inhiben": ["cocción >70°C", "autoclave", "aw<0.92", "pH<4.5"],
+      "metodos_NO_inhiben_si_solo": ["refrigeracion (sola)", "salazón ligera", "ahumado en frío"],
+      "casos_tipicos": "patés, quesos blandos, pescado ahumado en frío, ensaladas listas"
+    },
+    {
+      "agente": "Salmonella spp.",
+      "peligro": "Gastroenteritis severa. Destruida por cocción >70°C.",
+      "metodos_inhiben": ["cocción", "autoclave", "pH<4.0", "aw<0.94"],
+      "metodos_NO_inhiben_si_solo": ["refrigeracion", "salazón", "ahumado"],
+      "casos_tipicos": "huevos y derivados, pollo poco cocinado, salsas con huevo crudo"
+    },
+    {
+      "agente": "Anisakis simplex",
+      "peligro": "Anisakiasis: dolor abdominal, alergias severas. Parásito del pescado.",
+      "metodos_inhiben": ["cocción >60°C en todo el producto", "congelación a -20°C durante 24h (o -35°C 15h)", "ahumado en caliente >60°C"],
+      "metodos_NO_inhiben_si_solo": ["salazón si grosor >2cm y tiempo corto", "marinado con ácido si no penetra", "ahumado en frío", "sushi"],
+      "casos_tipicos": "boquerones en vinagre caseros, anchoas marinadas, salmón ahumado en frío sin congelar"
+    },
+    {
+      "agente": "Staphylococcus aureus",
+      "peligro": "Toxina termoestable. Intoxicación rápida (1-6h).",
+      "metodos_inhiben": ["refrigeracion <4°C", "cocción", "pH<5.0", "NaCl >10%"],
+      "metodos_NO_inhiben_si_solo": ["temperatura ambiente", "salazón leve"],
+      "casos_tipicos": "cremas pasteleras, salsas con huevo o mayonesa, jamón curado con poca sal"
+    },
+    {
+      "agente": "Escherichia coli O157:H7",
+      "peligro": "Síndrome urémico hemolítico en niños. Pocos organismos suficientes.",
+      "metodos_inhiben": ["cocción >70°C", "autoclave", "pH<4.5"],
+      "metodos_NO_inhiben_si_solo": ["refrigeracion", "salazón", "ahumado en frío"],
+      "casos_tipicos": "carne de ternera poco hecha, zumos no pasteurizados, germinados crudos"
+    }
+  ]
+}

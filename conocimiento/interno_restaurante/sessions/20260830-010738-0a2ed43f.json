@@ -1,0 +1,48 @@
+{
+  "sesion_id": "20260830-010738-0a2ed43f",
+  "peticion_inicial": "Sesión de prueba",
+  "skill": "proceso_creativo",
+  "created_at": "2026-08-30T01:07:38+02:00",
+  "updated_at": "2026-08-30T01:07:38+02:00",
+  "fase_actual": "alma",
+  "fases": {
+    "alma": {
+      "completa": false,
+      "contenido": null,
+      "intentos": 0
+    },
+    "metodos": {
+      "completa": false,
+      "contenido": null,
+      "intentos": 0
+    },
+    "equilibrio": {
+      "completa": false,
+      "contenido": null,
+      "intentos": 0
+    },
+    "tecnica": {
+      "completa": false,
+      "contenido": null,
+      "intentos": 0
+    },
+    "storytelling": {
+      "completa": false,
+      "contenido": null,
+      "intentos": 0
+    },
+    "descartadas": {
+      "completa": false,
+      "contenido": null,
+      "intentos": 0
+    },
+    "preguntas": {
+      "completa": false,
+      "contenido": null,
+      "intentos": 0
+    }
+  },
+  "ficha_final": null,
+  "completa": false,
+  "historial": []
+}

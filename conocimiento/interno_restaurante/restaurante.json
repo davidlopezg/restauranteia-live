@@ -1,0 +1,33 @@
+{
+  "precio_target_min": 20.0,
+  "precio_target_max": 22.0,
+  "precio_target_moda": 18.0,
+  "sofisticacion": "muy_baja",
+  "productos_dominantes": [
+    "pizzas"
+  ],
+  "tecnicas_dominantes": [
+    "horno_piedra"
+  ],
+  "tipo_servicio": [
+    "1",
+    "4"
+  ],
+  "grupos": "con_grupos_pequenos",
+  "clases_comedores": [
+    "turistas"
+  ],
+  "origen_inspiracion": "italiano",
+  "orientacion_nutricional": [
+    "ninguna"
+  ],
+  "localizacion": "litoral_mar",
+  "religion": [
+    "ninguna"
+  ],
+  "tiempo_preparacion": "comida_rapida",
+  "epoca_estilo": [
+    "10",
+    "11"
+  ]
+}
