@@ -11,6 +11,7 @@
 import { getSupabase } from "@/lib/supabase";
 import { deepFix, type IdeaRow, type AgendaRow, type CatalogoRow, type BlockRow, type EntityImageRow } from "@/lib/database";
 import { callRpc } from "@/lib/rpc";
+import { whitelist, newUuid } from "@/lib/whitelist";
 import { httpClient } from "@/services/http-client";
 import type { ListResponse } from "@/types/entity";
 import type { Idea, IdeaDetail } from "@/types/idea";
@@ -158,6 +159,53 @@ export const ideasSupabase = {
     list: listIdeasSupabase,
     detail: detailIdeaSupabase,
     isAvailable: () => Boolean(getSupabase()),
+
+    // === CRUD ===
+    async create(body: Record<string, unknown>): Promise<Idea> {
+        const supabase = getSupabase();
+        if (!supabase) throw new Error("Supabase no configurado");
+        const safe = whitelist("ideas", body);
+        const payload = {
+            ...safe,
+            notion_id: newUuid(),
+            migration_run_id: "manual_create",
+        };
+        const { data, error } = await supabase.from("ideas").insert(payload).select("*").maybeSingle();
+        if (error) throw new Error(error.message);
+        return data as Idea;
+    },
+
+    async update(id: string, body: Record<string, unknown>): Promise<Idea> {
+        const supabase = getSupabase();
+        if (!supabase) throw new Error("Supabase no configurado");
+        const safe = whitelist("ideas", body);
+        if (Object.keys(safe).length === 0) throw new Error("Sin cambios permitidos");
+        const { data, error } = await supabase
+            .from("ideas")
+            .update(safe)
+            .eq("id", id)
+            .select("*")
+            .maybeSingle();
+        if (error) throw new Error(error.message);
+        if (!data) throw new Error("Idea no encontrada");
+        return data as Idea;
+    },
+
+    async delete(id: string): Promise<{ deleted: boolean; id: string }> {
+        const supabase = getSupabase();
+        if (!supabase) throw new Error("Supabase no configurado");
+        const { error } = await supabase.from("ideas").delete().eq("id", id);
+        if (error) throw new Error(error.message);
+        return { deleted: true, id };
+    },
+
+    async convertir(id: string): Promise<{
+        already_exists: boolean;
+        agenda_id: string;
+        agenda_titulo: string;
+    }> {
+        return callRpc("convertir_idea_a_agenda", { p_idea_id: id });
+    },
 };
 
 // === AGENDAS ===
@@ -221,6 +269,45 @@ export const agendasSupabase = {
     list: listAgendasSupabase,
     detail: detailAgendaSupabase,
     isAvailable: () => Boolean(getSupabase()),
+
+    // === CRUD ===
+    async create(body: Record<string, unknown>): Promise<Agenda> {
+        const supabase = getSupabase();
+        if (!supabase) throw new Error("Supabase no configurado");
+        const safe = whitelist("agendas", body);
+        const payload = {
+            ...safe,
+            notion_id: newUuid(),
+            migration_run_id: "manual_create",
+        };
+        const { data, error } = await supabase.from("agendas").insert(payload).select("*").maybeSingle();
+        if (error) throw new Error(error.message);
+        return data as Agenda;
+    },
+
+    async update(id: string, body: Record<string, unknown>): Promise<Agenda> {
+        const supabase = getSupabase();
+        if (!supabase) throw new Error("Supabase no configurado");
+        const safe = whitelist("agendas", body);
+        if (Object.keys(safe).length === 0) throw new Error("Sin cambios permitidos");
+        const { data, error } = await supabase
+            .from("agendas")
+            .update(safe)
+            .eq("id", id)
+            .select("*")
+            .maybeSingle();
+        if (error) throw new Error(error.message);
+        if (!data) throw new Error("Agenda no encontrada");
+        return data as Agenda;
+    },
+
+    async delete(id: string): Promise<{ deleted: boolean; id: string }> {
+        const supabase = getSupabase();
+        if (!supabase) throw new Error("Supabase no configurado");
+        const { error } = await supabase.from("agendas").delete().eq("id", id);
+        if (error) throw new Error(error.message);
+        return { deleted: true, id };
+    },
 };
 
 // === CATALOGOS ===
@@ -291,6 +378,86 @@ export const catalogosSupabase = {
     detail: detailCatalogoSupabase,
     grupos: catalogosGruposSupabase,
     isAvailable: () => Boolean(getSupabase()),
+
+    // === CRUD ===
+    async create(body: Record<string, unknown>): Promise<Catalogo> {
+        const supabase = getSupabase();
+        if (!supabase) throw new Error("Supabase no configurado");
+        const safe = whitelist("catalogos", body);
+        const payload = {
+            ...safe,
+            notion_id: newUuid(),
+            migration_run_id: "manual_create",
+        };
+        const { data, error } = await supabase.from("catalogos").insert(payload).select("*").maybeSingle();
+        if (error) throw new Error(error.message);
+        return data as Catalogo;
+    },
+
+    async update(id: string, body: Record<string, unknown>): Promise<Catalogo> {
+        const supabase = getSupabase();
+        if (!supabase) throw new Error("Supabase no configurado");
+        const safe = whitelist("catalogos", body);
+        if (Object.keys(safe).length === 0) throw new Error("Sin cambios permitidos");
+        const { data, error } = await supabase
+            .from("catalogos")
+            .update(safe)
+            .eq("id", id)
+            .select("*")
+            .maybeSingle();
+        if (error) throw new Error(error.message);
+        if (!data) throw new Error("Catalogo no encontrado");
+        return data as Catalogo;
+    },
+
+    async delete(id: string): Promise<{ deleted: boolean; id: string }> {
+        const supabase = getSupabase();
+        if (!supabase) throw new Error("Supabase no configurado");
+        const { error } = await supabase.from("catalogos").delete().eq("id", id);
+        if (error) throw new Error(error.message);
+        return { deleted: true, id };
+    },
+};
+
+// === RELACIONES N:M ===
+// Tabla + columnas FK segun el tipo de relacion.
+// Equivalente a routers/entities.py:_REL
+
+const RELATION_TABLE = {
+    "idea_agenda": { table: "idea_agenda", aCol: "idea_id", bCol: "agenda_id" },
+    "idea_catalogo": { table: "idea_catalogo", aCol: "idea_id", bCol: "catalogo_id" },
+    "agenda_catalogo": { table: "agenda_catalogo", aCol: "agenda_id", bCol: "catalogo_id" },
+} as const;
+
+export type RelationKind = keyof typeof RELATION_TABLE;
+
+export const relationsSupabase = {
+    async add(rel: RelationKind, aId: string, bId: string): Promise<{ created: boolean }> {
+        const supabase = getSupabase();
+        if (!supabase) throw new Error("Supabase no configurado");
+        const r = RELATION_TABLE[rel];
+        // upsert con ignoreDuplicates replica ON CONFLICT DO NOTHING
+        const { error } = await supabase
+            .from(r.table)
+            .upsert(
+                { [r.aCol]: aId, [r.bCol]: bId, migration_run_id: "manual_link" },
+                { onConflict: `${r.aCol},${r.bCol}`, ignoreDuplicates: true },
+            );
+        if (error) throw new Error(error.message);
+        return { created: true };
+    },
+
+    async remove(rel: RelationKind, aId: string, bId: string): Promise<{ deleted: boolean }> {
+        const supabase = getSupabase();
+        if (!supabase) throw new Error("Supabase no configurado");
+        const r = RELATION_TABLE[rel];
+        const { error } = await supabase
+            .from(r.table)
+            .delete()
+            .match({ [r.aCol]: aId, [r.bCol]: bId });
+        if (error) throw new Error(error.message);
+        return { deleted: true };
+    },
 };
 
 // === Fallback wrappers (para tests, debug o cuando Supabase no está) ===
@@ -328,4 +495,35 @@ export const catalogosLegacy = {
     },
     detail: (id: string) => httpClient.get<CatalogoDetail>(`/api/catalogos/${id}`),
     grupos: () => httpClient.get<CatalogoGrupo[]>("/api/catalogos/grupos"),
+    create: (body: unknown) => httpClient.post<Catalogo>("/api/catalogos", body),
+    update: (id: string, body: unknown) => httpClient.patch<Catalogo>(`/api/catalogos/${id}`, body),
+    delete: (id: string) =>
+        httpClient.delete<{ deleted: boolean; id: string }>(`/api/catalogos/${id}`),
+};
+
+export const ideasLegacyFull = {
+    create: (body: unknown) => httpClient.post<Idea>("/api/ideas", body),
+    update: (id: string, body: unknown) => httpClient.patch<Idea>(`/api/ideas/${id}`, body),
+    delete: (id: string) =>
+        httpClient.delete<{ deleted: boolean; id: string }>(`/api/ideas/${id}`),
+    convertir: (id: string) =>
+        httpClient.post<{ already_exists: boolean; agenda_id: string; agenda_titulo: string }>(
+            `/api/ideas/${id}/convertir`,
+        ),
+};
+
+export const agendasLegacyFull = {
+    create: (body: unknown) => httpClient.post<Agenda>("/api/agendas", body),
+    update: (id: string, body: unknown) => httpClient.patch<Agenda>(`/api/agendas/${id}`, body),
+    delete: (id: string) =>
+        httpClient.delete<{ deleted: boolean; id: string }>(`/api/agendas/${id}`),
+};
+
+export const relationsLegacy = {
+    add: (rel: string, aId: string, bId: string) =>
+        httpClient.post<{ created: boolean }>(`/api/relations/${rel}`, { a_id: aId, b_id: bId }),
+    remove: (rel: string, aId: string, bId: string) =>
+        httpClient.delete<{ deleted: boolean }>(
+            `/api/relations/${rel}?a_id=${aId}&b_id=${bId}`,
+        ),
 };

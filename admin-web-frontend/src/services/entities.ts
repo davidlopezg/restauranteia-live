@@ -1,20 +1,18 @@
 /**
- * Servicios de entidades — fachada unificada.
+ * Servicios de entidades — fachada unificada Supabase / Legacy.
  *
- * Usa Supabase directo si está configurado (PostgREST + RPCs).
- * Si no, fallback al backend FastAPI legacy (httpClient a /api/...).
- *
- * Esto permite migración gradual: cada componente ya consume este módulo
- * sin saber qué backend está detrás.
+ * Supabase si está configurado, fallback a FastAPI legacy si no.
  */
 
 import { env } from "@/config/env";
 import {
-    ideasSupabase, agendasSupabase, catalogosSupabase,
+    ideasSupabase, agendasSupabase, catalogosSupabase, relationsSupabase,
     ideasLegacy, agendasLegacy, catalogosLegacy,
+    ideasLegacyFull, agendasLegacyFull,
+    relationsLegacy,
     type IdeasListParams, type AgendasListParams, type CatalogosListParams,
+    type RelationKind,
 } from "@/services/entities.supabase";
-import { httpClient } from "@/services/http-client";
 import type { ListResponse } from "@/types/entity";
 import type { Idea, IdeaDetail } from "@/types/idea";
 import type { Agenda, AgendaDetail } from "@/types/agenda";
@@ -30,21 +28,23 @@ export const ideasKeys = {
 };
 
 export const ideasService = {
-    list: (params: IdeasListParams = {}): Promise<ListResponse<Idea>> => {
-        if (env.isSupabaseConfigured) return ideasSupabase.list(params);
-        return ideasLegacy.list(params);
-    },
-    detail: (id: string): Promise<IdeaDetail> => {
-        if (env.isSupabaseConfigured) return ideasSupabase.detail(id);
-        return ideasLegacy.detail(id);
-    },
-    // CRUD se mantiene en httpClient por ahora (FASE 3)
-    create: (body: unknown) => httpClient.post<Idea>("/api/ideas", body),
-    update: (id: string, body: unknown) => httpClient.patch<Idea>(`/api/ideas/${id}`, body),
-    delete: (id: string) =>
-        httpClient.delete<{ deleted: boolean; id: string }>(`/api/ideas/${id}`),
-    convertir: (id: string) =>
-        httpClient.post<{ already_exists: boolean; agenda_id: string; agenda_titulo: string }>(`/api/ideas/${id}/convertir`),
+    list: (params: IdeasListParams = {}): Promise<ListResponse<Idea>> =>
+        env.isSupabaseConfigured ? ideasSupabase.list(params) : ideasLegacy.list(params),
+
+    detail: (id: string): Promise<IdeaDetail> =>
+        env.isSupabaseConfigured ? ideasSupabase.detail(id) : ideasLegacy.detail(id),
+
+    create: (body: Record<string, unknown>): Promise<Idea> =>
+        env.isSupabaseConfigured ? ideasSupabase.create(body) : ideasLegacyFull.create(body),
+
+    update: (id: string, body: Record<string, unknown>): Promise<Idea> =>
+        env.isSupabaseConfigured ? ideasSupabase.update(id, body) : ideasLegacyFull.update(id, body),
+
+    delete: (id: string): Promise<{ deleted: boolean; id: string }> =>
+        env.isSupabaseConfigured ? ideasSupabase.delete(id) : ideasLegacyFull.delete(id),
+
+    convertir: (id: string): Promise<{ already_exists: boolean; agenda_id: string; agenda_titulo: string }> =>
+        env.isSupabaseConfigured ? ideasSupabase.convertir(id) : ideasLegacyFull.convertir(id),
 };
 
 // === AGENDAS ===
@@ -57,18 +57,20 @@ export const agendasKeys = {
 };
 
 export const agendasService = {
-    list: (params: AgendasListParams = {}): Promise<ListResponse<Agenda>> => {
-        if (env.isSupabaseConfigured) return agendasSupabase.list(params);
-        return agendasLegacy.list(params);
-    },
-    detail: (id: string): Promise<AgendaDetail> => {
-        if (env.isSupabaseConfigured) return agendasSupabase.detail(id);
-        return agendasLegacy.detail(id);
-    },
-    create: (body: unknown) => httpClient.post<Agenda>("/api/agendas", body),
-    update: (id: string, body: unknown) => httpClient.patch<Agenda>(`/api/agendas/${id}`, body),
-    delete: (id: string) =>
-        httpClient.delete<{ deleted: boolean; id: string }>(`/api/agendas/${id}`),
+    list: (params: AgendasListParams = {}): Promise<ListResponse<Agenda>> =>
+        env.isSupabaseConfigured ? agendasSupabase.list(params) : agendasLegacy.list(params),
+
+    detail: (id: string): Promise<AgendaDetail> =>
+        env.isSupabaseConfigured ? agendasSupabase.detail(id) : agendasLegacy.detail(id),
+
+    create: (body: Record<string, unknown>): Promise<Agenda> =>
+        env.isSupabaseConfigured ? agendasSupabase.create(body) : agendasLegacyFull.create(body),
+
+    update: (id: string, body: Record<string, unknown>): Promise<Agenda> =>
+        env.isSupabaseConfigured ? agendasSupabase.update(id, body) : agendasLegacyFull.update(id, body),
+
+    delete: (id: string): Promise<{ deleted: boolean; id: string }> =>
+        env.isSupabaseConfigured ? agendasSupabase.delete(id) : agendasLegacyFull.delete(id),
 };
 
 // === CATALOGOS ===
@@ -82,23 +84,38 @@ export const catalogosKeys = {
 };
 
 export const catalogosService = {
-    list: (params: CatalogosListParams = {}): Promise<ListResponse<Catalogo>> => {
-        if (env.isSupabaseConfigured) return catalogosSupabase.list(params);
-        return catalogosLegacy.list(params);
-    },
-    detail: (id: string): Promise<CatalogoDetail> => {
-        if (env.isSupabaseConfigured) return catalogosSupabase.detail(id);
-        return catalogosLegacy.detail(id);
-    },
-    grupos: (): Promise<CatalogoGrupo[]> => {
-        if (env.isSupabaseConfigured) return catalogosSupabase.grupos();
-        return catalogosLegacy.grupos();
-    },
-    create: (body: unknown) => httpClient.post<Catalogo>("/api/catalogos", body),
-    update: (id: string, body: unknown) => httpClient.patch<Catalogo>(`/api/catalogos/${id}`, body),
-    delete: (id: string) =>
-        httpClient.delete<{ deleted: boolean; id: string }>(`/api/catalogos/${id}`),
+    list: (params: CatalogosListParams = {}): Promise<ListResponse<Catalogo>> =>
+        env.isSupabaseConfigured ? catalogosSupabase.list(params) : catalogosLegacy.list(params),
+
+    detail: (id: string): Promise<CatalogoDetail> =>
+        env.isSupabaseConfigured ? catalogosSupabase.detail(id) : catalogosLegacy.detail(id),
+
+    grupos: (): Promise<CatalogoGrupo[]> =>
+        env.isSupabaseConfigured ? catalogosSupabase.grupos() : catalogosLegacy.grupos(),
+
+    create: (body: Record<string, unknown>): Promise<Catalogo> =>
+        env.isSupabaseConfigured ? catalogosSupabase.create(body) : catalogosLegacy.create(body),
+
+    update: (id: string, body: Record<string, unknown>): Promise<Catalogo> =>
+        env.isSupabaseConfigured ? catalogosSupabase.update(id, body) : catalogosLegacy.update(id, body),
+
+    delete: (id: string): Promise<{ deleted: boolean; id: string }> =>
+        env.isSupabaseConfigured ? catalogosSupabase.delete(id) : catalogosLegacy.delete(id),
 };
 
-// Re-exports de tipos para imports existentes
-export type { IdeasListParams, AgendasListParams, CatalogosListParams };
+// === RELACIONES N:M ===
+
+export const relationsService = {
+    add: (rel: RelationKind, aId: string, bId: string) =>
+        env.isSupabaseConfigured
+            ? relationsSupabase.add(rel, aId, bId)
+            : relationsLegacy.add(rel, aId, bId),
+
+    remove: (rel: RelationKind, aId: string, bId: string) =>
+        env.isSupabaseConfigured
+            ? relationsSupabase.remove(rel, aId, bId)
+            : relationsLegacy.remove(rel, aId, bId),
+};
+
+// Re-exports
+export type { IdeasListParams, AgendasListParams, CatalogosListParams, RelationKind };
