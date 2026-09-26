@@ -19,7 +19,7 @@
  *   - delete: PostgREST
  */
 
-import { getDbClient } from "@/lib/supabase";
+import { getSupabase } from "@/lib/supabase";
 import { callRpc } from "@/lib/rpc";
 import { httpClient } from "@/services/http-client";
 
@@ -83,7 +83,7 @@ export const testsKeys = {
 
 export const testsSupabase = {
     async list(agendaId: string, estado?: string): Promise<DevelopmentTest[]> {
-        const supabase = getDbClient();
+        const supabase = getSupabase();
         if (!supabase) throw new Error("Supabase no configurado");
         let q = supabase.from("development_tests").select("*").eq("agenda_id", agendaId);
         if (estado) q = q.eq("estado", estado);
@@ -94,7 +94,7 @@ export const testsSupabase = {
     },
 
     async count(agendaId: string, estado?: string): Promise<number> {
-        const supabase = getDbClient();
+        const supabase = getSupabase();
         if (!supabase) throw new Error("Supabase no configurado");
         let q = supabase.from("development_tests").select("id", { count: "exact", head: true }).eq("agenda_id", agendaId);
         if (estado) q = q.eq("estado", estado);
@@ -112,7 +112,7 @@ export const testsSupabase = {
     },
 
     async update(testId: string, body: TestUpdate): Promise<DevelopmentTest> {
-        const supabase = getDbClient();
+        const supabase = getSupabase();
         if (!supabase) throw new Error("Supabase no configurado");
         const { data, error } = await supabase
             .from("development_tests")
@@ -126,7 +126,7 @@ export const testsSupabase = {
     },
 
     async delete(testId: string): Promise<{ deleted: boolean; id: string }> {
-        const supabase = getDbClient();
+        const supabase = getSupabase();
         if (!supabase) throw new Error("Supabase no configurado");
         const { error } = await supabase.from("development_tests").delete().eq("id", testId);
         if (error) throw new Error(error.message);
@@ -143,7 +143,7 @@ export const feedbackKeys = {
 
 export const feedbackSupabase = {
     async list(testId?: string): Promise<TestFeedback[]> {
-        const supabase = getDbClient();
+        const supabase = getSupabase();
         if (!supabase) throw new Error("Supabase no configurado");
         let q = supabase.from("test_feedback").select("*");
         if (testId) q = q.eq("test_id", testId);
@@ -162,7 +162,7 @@ export const feedbackSupabase = {
     },
 
     async update(feedbackId: string, body: FeedbackUpdate): Promise<TestFeedback> {
-        const supabase = getDbClient();
+        const supabase = getSupabase();
         if (!supabase) throw new Error("Supabase no configurado");
         const { data, error } = await supabase
             .from("test_feedback")
@@ -176,7 +176,7 @@ export const feedbackSupabase = {
     },
 
     async delete(feedbackId: string): Promise<{ deleted: boolean; id: string }> {
-        const supabase = getDbClient();
+        const supabase = getSupabase();
         if (!supabase) throw new Error("Supabase no configurado");
         const { error } = await supabase.from("test_feedback").delete().eq("id", feedbackId);
         if (error) throw new Error(error.message);

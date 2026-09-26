@@ -8,7 +8,7 @@
  * del backend Python.
  */
 
-import { getDbClient } from "@/lib/supabase";
+import { getSupabase } from "@/lib/supabase";
 import { deepFix, type IdeaRow, type AgendaRow, type CatalogoRow, type BlockRow, type EntityImageRow } from "@/lib/database";
 import { callRpc } from "@/lib/rpc";
 import { whitelist, newUuid } from "@/lib/whitelist";
@@ -69,7 +69,7 @@ async function postgrestList<T>(
     params: ListParams,
     extraFilters?: (q: QueryBuilder) => QueryBuilder,
 ): Promise<ListResponse<T>> {
-    const supabase = getDbClient();
+    const supabase = getSupabase();
     if (!supabase) throw new Error("Supabase no configurado");
 
     const limit = Math.min(Math.max(params.limit ?? 30, 1), 200);
@@ -114,7 +114,7 @@ async function listIdeasSupabase(params: IdeasListParams): Promise<ListResponse<
 }
 
 async function detailIdeaSupabase(id: string): Promise<IdeaDetail> {
-    const supabase = getDbClient();
+    const supabase = getSupabase();
     if (!supabase) throw new Error("Supabase no configurado");
 
     // 5 queries en paralelo: item + images + blocks + 2 relations
@@ -158,11 +158,11 @@ async function detailIdeaSupabase(id: string): Promise<IdeaDetail> {
 export const ideasSupabase = {
     list: listIdeasSupabase,
     detail: detailIdeaSupabase,
-    isAvailable: () => Boolean(getDbClient()),
+    isAvailable: () => Boolean(getSupabase()),
 
     // === CRUD ===
     async create(body: Record<string, unknown>): Promise<Idea> {
-        const supabase = getDbClient();
+        const supabase = getSupabase();
         if (!supabase) throw new Error("Supabase no configurado");
         const safe = whitelist("ideas", body);
         const payload = {
@@ -176,7 +176,7 @@ export const ideasSupabase = {
     },
 
     async update(id: string, body: Record<string, unknown>): Promise<Idea> {
-        const supabase = getDbClient();
+        const supabase = getSupabase();
         if (!supabase) throw new Error("Supabase no configurado");
         const safe = whitelist("ideas", body);
         if (Object.keys(safe).length === 0) throw new Error("Sin cambios permitidos");
@@ -192,7 +192,7 @@ export const ideasSupabase = {
     },
 
     async delete(id: string): Promise<{ deleted: boolean; id: string }> {
-        const supabase = getDbClient();
+        const supabase = getSupabase();
         if (!supabase) throw new Error("Supabase no configurado");
         const { error } = await supabase.from("ideas").delete().eq("id", id);
         if (error) throw new Error(error.message);
@@ -225,7 +225,7 @@ async function listAgendasSupabase(params: AgendasListParams): Promise<ListRespo
 }
 
 async function detailAgendaSupabase(id: string): Promise<AgendaDetail> {
-    const supabase = getDbClient();
+    const supabase = getSupabase();
     if (!supabase) throw new Error("Supabase no configurado");
 
     const [itemRes, imagesRes, blocksRes, ideaRelRes, catRelRes] = await Promise.all([
@@ -268,11 +268,11 @@ async function detailAgendaSupabase(id: string): Promise<AgendaDetail> {
 export const agendasSupabase = {
     list: listAgendasSupabase,
     detail: detailAgendaSupabase,
-    isAvailable: () => Boolean(getDbClient()),
+    isAvailable: () => Boolean(getSupabase()),
 
     // === CRUD ===
     async create(body: Record<string, unknown>): Promise<Agenda> {
-        const supabase = getDbClient();
+        const supabase = getSupabase();
         if (!supabase) throw new Error("Supabase no configurado");
         const safe = whitelist("agendas", body);
         const payload = {
@@ -286,7 +286,7 @@ export const agendasSupabase = {
     },
 
     async update(id: string, body: Record<string, unknown>): Promise<Agenda> {
-        const supabase = getDbClient();
+        const supabase = getSupabase();
         if (!supabase) throw new Error("Supabase no configurado");
         const safe = whitelist("agendas", body);
         if (Object.keys(safe).length === 0) throw new Error("Sin cambios permitidos");
@@ -302,7 +302,7 @@ export const agendasSupabase = {
     },
 
     async delete(id: string): Promise<{ deleted: boolean; id: string }> {
-        const supabase = getDbClient();
+        const supabase = getSupabase();
         if (!supabase) throw new Error("Supabase no configurado");
         const { error } = await supabase.from("agendas").delete().eq("id", id);
         if (error) throw new Error(error.message);
@@ -328,7 +328,7 @@ async function listCatalogosSupabase(params: CatalogosListParams): Promise<ListR
 }
 
 async function detailCatalogoSupabase(id: string): Promise<CatalogoDetail> {
-    const supabase = getDbClient();
+    const supabase = getSupabase();
     if (!supabase) throw new Error("Supabase no configurado");
 
     const [itemRes, imagesRes, blocksRes, ideaRelRes, agRelRes] = await Promise.all([
@@ -377,11 +377,11 @@ export const catalogosSupabase = {
     list: listCatalogosSupabase,
     detail: detailCatalogoSupabase,
     grupos: catalogosGruposSupabase,
-    isAvailable: () => Boolean(getDbClient()),
+    isAvailable: () => Boolean(getSupabase()),
 
     // === CRUD ===
     async create(body: Record<string, unknown>): Promise<Catalogo> {
-        const supabase = getDbClient();
+        const supabase = getSupabase();
         if (!supabase) throw new Error("Supabase no configurado");
         const safe = whitelist("catalogos", body);
         const payload = {
@@ -395,7 +395,7 @@ export const catalogosSupabase = {
     },
 
     async update(id: string, body: Record<string, unknown>): Promise<Catalogo> {
-        const supabase = getDbClient();
+        const supabase = getSupabase();
         if (!supabase) throw new Error("Supabase no configurado");
         const safe = whitelist("catalogos", body);
         if (Object.keys(safe).length === 0) throw new Error("Sin cambios permitidos");
@@ -411,7 +411,7 @@ export const catalogosSupabase = {
     },
 
     async delete(id: string): Promise<{ deleted: boolean; id: string }> {
-        const supabase = getDbClient();
+        const supabase = getSupabase();
         if (!supabase) throw new Error("Supabase no configurado");
         const { error } = await supabase.from("catalogos").delete().eq("id", id);
         if (error) throw new Error(error.message);
@@ -433,7 +433,7 @@ export type RelationKind = keyof typeof RELATION_TABLE;
 
 export const relationsSupabase = {
     async add(rel: RelationKind, aId: string, bId: string): Promise<{ created: boolean }> {
-        const supabase = getDbClient();
+        const supabase = getSupabase();
         if (!supabase) throw new Error("Supabase no configurado");
         const r = RELATION_TABLE[rel];
         // upsert con ignoreDuplicates replica ON CONFLICT DO NOTHING
@@ -448,7 +448,7 @@ export const relationsSupabase = {
     },
 
     async remove(rel: RelationKind, aId: string, bId: string): Promise<{ deleted: boolean }> {
-        const supabase = getDbClient();
+        const supabase = getSupabase();
         if (!supabase) throw new Error("Supabase no configurado");
         const r = RELATION_TABLE[rel];
         const { error } = await supabase

@@ -12,13 +12,13 @@
  * usamos rpc o select con filtro; el resultado es el mismo set deduplicado.
  */
 
-import { getDbClient } from "@/lib/supabase";
+import { getSupabase } from "@/lib/supabase";
 import type { FiltersResponse } from "@/types/filters";
 import type { EntityKind } from "@/types/entity";
 import { httpClient } from "@/services/http-client";
 
 async function distinctArray(table: string, column: string): Promise<string[]> {
-    const supabase = getDbClient();
+    const supabase = getSupabase();
     if (!supabase) throw new Error("Supabase no configurado");
     // DISTINCT sobre un array column. PostgREST no soporta DISTINCT en arrays,
     // así que seleccionamos valores únicos del lado cliente (es lo que hacía
@@ -36,7 +36,7 @@ async function distinctArray(table: string, column: string): Promise<string[]> {
 }
 
 async function distinctScalar(table: string, column: string): Promise<string[]> {
-    const supabase = getDbClient();
+    const supabase = getSupabase();
     if (!supabase) throw new Error("Supabase no configurado");
     const { data, error } = await supabase.from(table).select(column).not(column, "is", null);
     if (error) throw new Error(error.message);
@@ -76,7 +76,7 @@ export const filtersKeys = {
 
 export const filtersSupabaseService = {
     get: filtersSupabase,
-    isAvailable: () => Boolean(getDbClient()),
+    isAvailable: () => Boolean(getSupabase()),
 };
 
 export const filtersLegacy = {
