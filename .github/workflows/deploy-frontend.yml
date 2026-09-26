@@ -50,7 +50,7 @@ jobs:
               uses: actions/setup-node@v4
               with:
                   node-version: "20"
-                  cache: "admin-web-frontend/node_modules"
+                  cache: "npm"
                   cache-dependency-path: "admin-web-frontend/package-lock.json"
 
             - name: Setup Pages
