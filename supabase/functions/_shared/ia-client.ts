@@ -38,7 +38,7 @@ export function getConfig(): IAConfig {
 
 async function loadApiKeyFromDb(supabaseUrl: string, supabaseKey: string): Promise<string> {
     try {
-        const supabaseAdmin = createClient(supabaseUrl, supabaseKey);
+        const supabaseAdmin = createClient(supabaseUrl, supabaseKey, { db: { schema: "notion_migration" } });
         const { data, error } = await supabaseAdmin
             .from("app_settings")
             .select("value")
@@ -207,7 +207,7 @@ export async function callOpenRouter(
     temperature = 0.7,
 ): Promise<string> {
     // Read OpenRouter config from app_settings
-    const admin = createClient(supabaseUrl, supabaseKey);
+    const admin = createClient(supabaseUrl, supabaseKey, { db: { schema: "notion_migration" } });
     const { data: settings } = await admin
         .from("app_settings")
         .select("key, value")

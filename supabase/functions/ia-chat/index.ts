@@ -34,7 +34,7 @@ Deno.serve(async (req: Request) => {
 
         // Try to load saved ideas from the ideas database
         try {
-            const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+            const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, { db: { schema: "notion_migration" } });
             const { data: ideas } = await admin
                 .from("ideas")
                 .select("id, titulo, descripcion, estado_idea")

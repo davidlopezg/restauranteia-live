@@ -259,7 +259,7 @@ export async function loadRestaurante(
 ): Promise<Restaurante | null> {
     try {
         const { createClient } = await import("jsr:@supabase/supabase-js@2");
-        const admin = createClient(supabaseUrl, supabaseKey);
+        const admin = createClient(supabaseUrl, supabaseKey, { db: { schema: "notion_migration" } });
         const { data } = await admin.from("app_settings").select("value").eq("key", "restaurante_context").limit(1).single();
         if (data?.value) {
             try {
@@ -283,7 +283,7 @@ export async function loadCatalogo(
 ): Promise<CatalogoPlate[]> {
     try {
         const { createClient } = await import("jsr:@supabase/supabase-js@2");
-        const admin = createClient(supabaseUrl, supabaseKey);
+        const admin = createClient(supabaseUrl, supabaseKey, { db: { schema: "notion_migration" } });
         const { data } = await admin
             .from("catalogos")
             .select("id, titulo, descripcion, precio, categoria")

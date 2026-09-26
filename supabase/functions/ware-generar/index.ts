@@ -32,7 +32,7 @@ Deno.serve(async (req: Request) => {
             return errorResponse("catalogo_id y plating_proposal_id son obligatorios", 400);
         }
 
-        const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+        const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, { db: { schema: "notion_migration" } });
 
         // Load product
         const { data: catalogo } = await admin

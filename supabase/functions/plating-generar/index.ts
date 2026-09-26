@@ -19,7 +19,7 @@ Deno.serve(async (req: Request) => {
         const catalogoId = url.searchParams.get("catalogo_id") || url.pathname.split("/").filter(Boolean).pop() || "";
         if (!catalogoId) return errorResponse("catalogo_id es obligatorio", 400);
 
-        const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+        const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, { db: { schema: "notion_migration" } });
 
         // Load product
         const { data: catalogo } = await admin

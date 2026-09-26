@@ -27,6 +27,7 @@ export function getSupabase(): SupabaseClient | null {
                 detectSessionInUrl: true,
                 storageKey: "restauranteia-auth",
             },
+            db: { schema: "notion_migration" },
         });
     }
     return _client;

@@ -19,7 +19,7 @@ Deno.serve(async (req: Request) => {
         const testId = body.test_id || "";
         if (!testId) return errorResponse("test_id es obligatorio", 400);
 
-        const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+        const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, { db: { schema: "notion_migration" } });
 
         // Read OpenRouter settings
         const { data: settings } = await admin
