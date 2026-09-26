@@ -8,12 +8,12 @@
  * y exponemos el mismo shape que tenía el backend.
  */
 
-import { getSupabase } from "@/lib/supabase";
+import { getDbClient } from "@/lib/supabase";
 import type { SettingsResponse, KeyStatusResponse } from "@/types/filters";
 import { httpClient } from "@/services/http-client";
 
 async function getSupabaseSettings(): Promise<SettingsResponse> {
-    const supabase = getSupabase();
+    const supabase = getDbClient();
     if (!supabase) throw new Error("Supabase no configurado");
     const { data, error } = await supabase.from("app_settings").select("key, value");
     if (error) throw new Error(error.message);
@@ -32,7 +32,7 @@ async function getSupabaseSettings(): Promise<SettingsResponse> {
 }
 
 async function keyStatusSupabase(): Promise<KeyStatusResponse> {
-    const supabase = getSupabase();
+    const supabase = getDbClient();
     if (!supabase) throw new Error("Supabase no configurado");
     const { data, error } = await supabase
         .from("app_settings")
@@ -60,7 +60,7 @@ export const settingsKeys = {
 export const settingsSupabaseService = {
     get: getSupabaseSettings,
     keyStatus: keyStatusSupabase,
-    isAvailable: () => Boolean(getSupabase()),
+    isAvailable: () => Boolean(getDbClient()),
 };
 
 export const settingsLegacy = {

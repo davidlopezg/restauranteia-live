@@ -12,7 +12,7 @@
  *   - Todo PostgREST (sin logica especial)
  */
 
-import { getSupabase } from "@/lib/supabase";
+import { getDbClient } from "@/lib/supabase";
 import { callRpc } from "@/lib/rpc";
 import { httpClient } from "@/services/http-client";
 
@@ -83,7 +83,7 @@ export const platingKeys = {
 
 export const platingSupabase = {
     async list(catalogoId: string, estado?: string): Promise<PlatingProposal[]> {
-        const supabase = getSupabase();
+        const supabase = getDbClient();
         if (!supabase) throw new Error("Supabase no configurado");
         let q = supabase.from("plating_proposals").select("*").eq("catalogo_id", catalogoId);
         if (estado) q = q.eq("estado", estado);
@@ -94,7 +94,7 @@ export const platingSupabase = {
     },
 
     async get(platingId: string): Promise<PlatingProposal> {
-        const supabase = getSupabase();
+        const supabase = getDbClient();
         if (!supabase) throw new Error("Supabase no configurado");
         const { data, error } = await supabase
             .from("plating_proposals")
@@ -112,7 +112,7 @@ export const platingSupabase = {
     },
 
     async update(platingId: string, body: PlatingUpdate): Promise<PlatingProposal> {
-        const supabase = getSupabase();
+        const supabase = getDbClient();
         if (!supabase) throw new Error("Supabase no configurado");
         const { data, error } = await supabase
             .from("plating_proposals")
@@ -126,7 +126,7 @@ export const platingSupabase = {
     },
 
     async delete(platingId: string): Promise<{ deleted: boolean; id: string }> {
-        const supabase = getSupabase();
+        const supabase = getDbClient();
         if (!supabase) throw new Error("Supabase no configurado");
         const { error } = await supabase.from("plating_proposals").delete().eq("id", platingId);
         if (error) throw new Error(error.message);
@@ -143,7 +143,7 @@ export const wareKeys = {
 
 export const wareSupabase = {
     async list(tipo?: string, disponible?: boolean): Promise<Ware[]> {
-        const supabase = getSupabase();
+        const supabase = getDbClient();
         if (!supabase) throw new Error("Supabase no configurado");
         let q = supabase.from("ware").select("*");
         if (tipo) q = q.eq("tipo", tipo);
@@ -155,7 +155,7 @@ export const wareSupabase = {
     },
 
     async tipos(): Promise<string[]> {
-        const supabase = getSupabase();
+        const supabase = getDbClient();
         if (!supabase) throw new Error("Supabase no configurado");
         const { data, error } = await supabase.from("ware").select("tipo").not("tipo", "is", null);
         if (error) throw new Error(error.message);
@@ -167,7 +167,7 @@ export const wareSupabase = {
     },
 
     async get(wareId: string): Promise<Ware> {
-        const supabase = getSupabase();
+        const supabase = getDbClient();
         if (!supabase) throw new Error("Supabase no configurado");
         const { data, error } = await supabase.from("ware").select("*").eq("id", wareId).maybeSingle();
         if (error) throw new Error(error.message);
@@ -176,7 +176,7 @@ export const wareSupabase = {
     },
 
     async create(body: WareCreate): Promise<Ware> {
-        const supabase = getSupabase();
+        const supabase = getDbClient();
         if (!supabase) throw new Error("Supabase no configurado");
         const { data, error } = await supabase.from("ware").insert(body).select("*").maybeSingle();
         if (error) throw new Error(error.message);
@@ -184,7 +184,7 @@ export const wareSupabase = {
     },
 
     async update(wareId: string, body: WareUpdate): Promise<Ware> {
-        const supabase = getSupabase();
+        const supabase = getDbClient();
         if (!supabase) throw new Error("Supabase no configurado");
         const { data, error } = await supabase
             .from("ware")
@@ -198,7 +198,7 @@ export const wareSupabase = {
     },
 
     async delete(wareId: string): Promise<{ deleted: boolean; id: string }> {
-        const supabase = getSupabase();
+        const supabase = getDbClient();
         if (!supabase) throw new Error("Supabase no configurado");
         const { error } = await supabase.from("ware").delete().eq("id", wareId);
         if (error) throw new Error(error.message);

@@ -6,7 +6,7 @@
  */
 
 import { callRpc } from "@/lib/rpc";
-import { getSupabase } from "@/lib/supabase";
+import { getDbClient } from "@/lib/supabase";
 import type {
     CadenciaSemana,
     CadenciaSemanaActualResponse,
@@ -19,7 +19,7 @@ async function semanaActualSupabase(): Promise<CadenciaSemanaActualResponse> {
 }
 
 async function historialSupabase(limit = 12): Promise<CadenciaSemana[]> {
-    const supabase = getSupabase();
+    const supabase = getDbClient();
     if (!supabase) throw new Error("Supabase no configurado");
     const { data, error } = await supabase
         .from("weekly_objectives")
@@ -41,7 +41,7 @@ export const cadenciaKeys = {
 export const cadenciaSupabaseService = {
     semanaActual: semanaActualSupabase,
     historial: historialSupabase,
-    isAvailable: () => Boolean(getSupabase()),
+    isAvailable: () => Boolean(getDbClient()),
 };
 
 export const cadenciaLegacy = {
