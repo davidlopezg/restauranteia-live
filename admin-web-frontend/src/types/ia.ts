@@ -2,9 +2,13 @@
 
 export interface IaStatusResponse {
     configured: boolean;
-    model: string;
+    model: string | null;
     base_url: string;
     key_source: string;
+    ia_configured?: boolean;
+    openrouter_configured?: boolean;
+    openrouter_model?: string | null;
+    openrouter_base_url?: string | null;
 }
 
 export interface IaMetodosResponse {

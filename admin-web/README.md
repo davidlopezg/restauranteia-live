@@ -20,12 +20,17 @@ restauranteia-live/
 
 Desde la **raíz del repo**:
 
-**Linux / Mac / WSL:**
+**Linux / Mac / WSL / Termux (móvil Android):**
 ```bash
 ./start.sh                  # si tiene permisos
 bash start.sh               # alternativa universal si ./ falla
 chmod +x start.sh && ./start.sh   # arregla permisos una vez
 ```
+
+> 📱 **En Termux**: corré exactamente el mismo comando que en el PC.
+> Termux trae `bash`, `node`, `npm` y `python` nativos, así que `bash start.sh`
+> arranca el mismo servidor en `http://127.0.0.1:8765`. Si querés un atajo:
+> `echo "alias arrancar='cd ~/repos/restauranteia-live && bash start.sh'" >> ~/.bashrc`
 
 **Windows nativo (cmd / PowerShell):**
 ```bat

@@ -1,72 +1,97 @@
 # Supabase Edge Functions
 
 Edge Functions escritas en Deno/TypeScript que corren en el edge de Supabase.
-Reemplazan los endpoints de FastAPI que necesitan acceso a secretos (API keys)
-o que ejecutan lógica que no queremos en el cliente.
+Reemplazan TODOS los endpoints de FastAPI que dependen de la IA.
 
 ## Funciones
 
 | Función | Reemplaza | Por qué |
 |---|---|---|
-| `ia-status` | `GET /api/ia/status` + `GET /api/settings/key-status` | Lee `app_settings` con service_role. Sin secretos en la respuesta. |
-| `settings` | `PATCH /api/settings` | Escribe en `app_settings` con whitelist de claves. Service_role. |
-| `test-providers` | `GET /api/settings/test-providers` | Hace HTTP real a MiniMax + OpenRouter con keys guardadas en BD. NUNCA expone las keys. |
+| `ia-status` | `GET /api/ia/status` + `GET /api/settings/key-status` | Lee `app_settings` con service_role |
+| `settings` | `PATCH /api/settings` | Escribe en `app_settings` con whitelist |
+| `test-providers` | `GET /api/settings/test-providers` | Prueba MiniMax + OpenRouter con keys de BD |
+| `ia-ideas` | `POST /api/ia/ideas`, `POST /api/ia/aplicar-metodo`, `GET /api/ia/metodos`, convierte idea a ficha | Porte completo del agente Python (ideas creativas) |
+| `ia-chat` | `POST /api/ia/chat` | Chat libre con el chef (porte del agente Python) |
+| `ia-idea-cientifica` | `POST /api/ia/idea-cientifica` | Ideas científicas con flavor engine (porte completo) |
+| `ia-ayuda-semanal` | `POST /api/ia/ayuda-semanal` | Ayuda semanal con contexto de BD |
+| `plating-generar` | `POST /api/catalogos/{id}/plating/generar` | Genera 3 propuestas de emplatado + guarda en BD |
+| `ware-generar` | `GET /api/catalogos/{id}/ware/generar` | Genera combinaciones de vajilla del inventario |
+| `generar-ficha` | `POST /api/tests/{id}/generar-ficha` | Genera ficha de prueba via OpenRouter |
 
-## Lo que NO está migrado (mantiene FastAPI)
+## Módulos compartidos (`_shared/`)
 
-Las siguientes dependen del **agente Python** (`agents/creativo/agent.py`)
-y no se pueden traducir trivialmente a TypeScript/Deno:
+| Módulo | Descripción |
+|---|---|
+| `cors.ts` | Headers CORS + helpers de respuesta |
+| `ia-client.ts` | Cliente MiniMax (OpenAI-compatible) + OpenRouter + parseo de ideas |
+| `context.ts` | Carga y formatea contexto del restaurante y catálogo |
+| `prompts.ts` | System prompts embebidos (ideas_creativas, chat, idea_cientifica, ficha, plating, ware) |
+| `flavor-engine.ts` | Motor de flavor embebido (78 ingredientes curados con CIDs PubChem) |
 
-- `POST /api/ia/ideas` → generar_ideas
-- `POST /api/ia/aplicar-metodo` → aplicar_metodo_a_idea
-- `POST /api/ia/idea-cientifica` → idea_cientifica
-- `POST /api/ia/chat` → chat
-- `POST /api/ia/ayuda-semanal` → construir contexto + chat
-- `POST /api/catalogos/{id}/plating/generar` → build_plating_context + LLM + insert
-- `GET /api/catalogos/{id}/ware/generar` → build_ware_context + LLM
-- `POST /api/tests/{id}/generar-ficha` → OpenRouter ficha
+## Migración completada
 
-Cuando se porte el agente Python a Deno (proyecto aparte), se podrán migrar
-también.
+**FastAPI eliminado como dependencia.** Todo el backend IA corre en Edge Functions.
+El frontend llama via `supabase.functions.invoke()`.
+
+### Lo que se portó del agente Python (`agents/creativo/agent.py`)
+
+- `call_minimax` → `_shared/ia-client.ts` con reintentos, validación de idioma, backoff
+- `_generar_ideas_llm` + `_parsear_ideas` → `ia-ideas` (action: generar)
+- `_aplicar_metodo_a_idea` → `ia-ideas` (action: aplicar_metodo)
+- `procesar_mensaje_ideas_creativas` → `ia-ideas` (dispatch de comandos)
+- `procesar_mensaje_chat` → `ia-chat`
+- `procesar_mensaje_idea_cientifica` → `ia-idea-cientifica`
+- `formatear_restaurante_para_chef` → `_shared/context.ts` formatearRestaurante
+- `formatear_catalogo_para_chef` → `_shared/context.ts` formatearCatalogo
+- `check_estacionalidad` → se omite (el LLM juzga por contexto)
+
+### Lo que se portó de `admin-web/backend/`
+
+- `context_builder.py` → `plating-generar` y `ware-generar`
+- `ia_client.py` → `_shared/ia-client.ts`
+- `openrouter_client.py` → `generar-ficha`
+- `ia_integration.py` → integrado en `ia-ideas` y `ia-chat`
+
+### Estáticos / simples que ya no necesitan FastAPI
+
+- `GET /api/ia/metodos` → array estático en frontend (`METODOS_CREATIVOS`)
+- `PATCH /api/tests/{id}/evaluacion` → PostgREST directo (via `testsSupabase.update`)
+- `GET /api/healthz` → ya migrado a `lib/healthcheck.ts`
 
 ## Deploy
 
 ```bash
-# 1. Login
+# Login + link
 supabase login
-
-# 2. Link al proyecto
 supabase link --project-ref iprvxvsqpvsbvqbnfvly
 
-# 3. Deploy cada función
+# Deploy (sin verificar JWT porque validamos manualmente)
 supabase functions deploy ia-status --no-verify-jwt
 supabase functions deploy settings --no-verify-jwt
 supabase functions deploy test-providers --no-verify-jwt
+supabase functions deploy ia-ideas --no-verify-jwt
+supabase functions deploy ia-chat --no-verify-jwt
+supabase functions deploy ia-idea-cientifica --no-verify-jwt
+supabase functions deploy ia-ayuda-semanal --no-verify-jwt
+supabase functions deploy plating-generar --no-verify-jwt
+supabase functions deploy ware-generar --no-verify-jwt
+supabase functions deploy generar-ficha --no-verify-jwt
 ```
-
-(`--no-verify-jwt` porque las funciones validan el JWT del usuario
-manualmente cuando lo necesitan; por ahora aceptamos anon + authenticated.)
 
 ## Secrets requeridos
 
-Las funciones usan estas env vars (auto-inyectadas por Supabase):
+Solo los auto-inyectados por Supabase:
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
 
-- `SUPABASE_URL` — URL del proyecto (auto)
-- `SUPABASE_SERVICE_ROLE_KEY` — para bypassear RLS en escrituras (auto)
-
-NO requieren secrets adicionales (las API keys de IA viven en `app_settings`).
+Las API keys de IA viven en `app_settings` (configurables desde la UI).
 
 ## Invocar desde el frontend
 
 ```typescript
 import { getSupabase } from "@/lib/supabase";
-
 const supabase = getSupabase();
-const { data, error } = await supabase.functions.invoke("ia-status", {
-    body: {},
+const { data, error } = await supabase.functions.invoke("ia-chat", {
+    body: { peticion: "¿Qué me recomiendas para otoño?" },
 });
 ```
-
-La llamada envía el JWT del usuario logueado en el header `Authorization`.
-Las funciones usan `service_role` internamente para escribir en `app_settings`,
-pero el usuario debe estar autenticado (la RLS se aplica antes del invoke).

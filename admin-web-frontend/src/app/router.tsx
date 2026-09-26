@@ -1,5 +1,5 @@
 import { RouterProvider as AriaRouterProvider } from "react-aria-components";
-import { BrowserRouter, Route, Routes, useNavigate } from "react-router";
+import { HashRouter, Route, Routes, useNavigate } from "react-router";
 import type { NavigateOptions } from "react-router";
 import { Shell } from "@/app/shell";
 import { HomePage } from "@/features/home/home-page";
@@ -80,7 +80,9 @@ const VajillaPlaceholder = () => (
 );
 
 export const AppRouter = () => (
-    <BrowserRouter>
+    // HashRouter en lugar de BrowserRouter para que el refresh funcione en
+    // GitHub Pages (no hay server-side routing que redirija a index.html).
+    <HashRouter>
         <RouterBridge />
-    </BrowserRouter>
+    </HashRouter>
 );
