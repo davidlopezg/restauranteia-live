@@ -205,10 +205,11 @@ const TestItem = ({ test, onDelete, onChange, onCreateNext }: TestItemProps) => 
                 <button
                     type="button"
                     onClick={onDelete}
-                    className="rounded-md px-2 py-0.5 text-xs text-error-primary hover:bg-error-secondary"
+                    className="inline-flex items-center gap-1 rounded-md bg-error-secondary px-2 py-1 text-xs font-medium text-error-primary hover:bg-error-primary hover:text-white"
                     title="Eliminar prueba"
                 >
-                    <Trash01 className="size-3" />
+                    <Trash01 className="size-4" />
+                    <span>Eliminar</span>
                 </button>
             </header>
 
@@ -499,10 +500,10 @@ const FeedbackInline = ({ testId, feedbacks, onChange }: { testId: string; feedb
                             <button
                                 type="button"
                                 onClick={() => remove.mutate(fb.id)}
-                                className="rounded-full p-0.5 text-tertiary hover:text-error-primary"
+                                className="rounded-md bg-error-secondary p-1 text-error-primary hover:bg-error-primary hover:text-white"
                                 aria-label="Eliminar feedback"
                             >
-                                <Trash01 className="size-3" />
+                                <Trash01 className="size-4" />
                             </button>
                         </li>
                     ))}
