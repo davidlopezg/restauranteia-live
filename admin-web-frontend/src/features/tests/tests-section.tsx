@@ -90,14 +90,15 @@ export const TestsSection = ({ agendaId, onChange }: TestsSectionProps) => {
                 <h2 className="text-sm font-semibold uppercase tracking-wide text-tertiary">
                     Pruebas <span className="text-tertiary">({tests?.length ?? 0})</span>
                 </h2>
-                <button
-                    type="button"
+                <Button
+                    variant="tertiary"
+                    size="xs"
+                    iconLeft={<Plus className="size-3" />}
                     onClick={() => setShowNew(true)}
-                    className="inline-flex items-center gap-1 rounded-md border border-secondary px-2 py-1 text-xs hover:bg-secondary"
                     data-testid="new-test-btn"
                 >
-                    <Plus className="size-3" /> Nueva prueba
-                </button>
+                    Nueva prueba
+                </Button>
             </header>
 
             {isLoading ? (
@@ -270,14 +271,15 @@ const TestItem = ({ test, onDelete, onChange, onCreateNext }: TestItemProps) => 
                     actions={
                         <>
                             {!fichaTexto && (
-                                <button
-                                    type="button"
+                                <Button
+                                    variant="primary"
+                                    size="xs"
+                                    iconLeft={<MagicWand01 className="size-3" />}
                                     onClick={() => setGeneratingFicha(true)}
-                                    className="inline-flex items-center gap-1 rounded-md bg-brand-primary px-2 py-1 text-xs text-white hover:bg-brand-primary_hover"
                                     data-testid={`generar-ficha-${test.id}`}
                                 >
-                                    <MagicWand01 className="size-3" /> Generar
-                                </button>
+                                    Generar
+                                </Button>
                             )}
                             {fichaTexto && (
                                 <button
@@ -867,13 +869,13 @@ const GenerarFichaModal = ({ test, onClose, onSave }: { test: DevTest; onClose: 
                         La IA mira objetivo + qué hice + resultado + qué cambiaré + evaluación
                         y devuelve una ficha estructurada.
                     </p>
-                    <button
-                        type="button"
+                    <Button
+                        variant="primary"
                         onClick={generar}
-                        className="w-full rounded-md bg-brand-primary px-3 py-2 text-sm font-medium text-white hover:bg-brand-primary_hover"
+                        className="w-full"
                     >
                         ✨ Generar
-                    </button>
+                    </Button>
                 </div>
             )}
             {loading && <p className="text-sm text-tertiary">Generando… puede tardar unos segundos.</p>}
@@ -922,16 +924,14 @@ const Modal = ({ title, onClose, children }: { title: string; onClose: () => voi
 
 const ModalActions = ({ onClose, onSubmit, submitLabel, disabled }: { onClose: () => void; onSubmit?: () => void; submitLabel: string; disabled?: boolean }) => (
     <div className="mt-4 flex justify-end gap-2">
-        <button type="button" onClick={onClose} className="rounded-md px-3 py-1.5 text-sm text-secondary hover:bg-secondary">
-            Cancelar
-        </button>
-        <button
+        <CancelButton onClick={onClose} />
+        <Button
             type={onSubmit ? "button" : "submit"}
+            variant="primary"
             onClick={onSubmit}
             disabled={disabled}
-            className="rounded-md bg-brand-primary px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-primary_hover disabled:opacity-50"
         >
             {submitLabel}
-        </button>
+        </Button>
     </div>
 );

@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTheme } from "@/providers/theme-provider";
 import { settingsKeys, settingsService } from "@/services/settings";
 import type { SettingsUpdate } from "@/types/filters";
+import { Button } from "@/components/ui/button";
 
 // Settings: tema, MiniMax key, OpenRouter key, prompt ficha, diagnóstico real.
 
@@ -45,13 +46,13 @@ export const SettingsPage = () => {
                     <span className="rounded-full bg-secondary px-3 py-0.5 text-xs">
                         Tema: {theme === "dark" ? "oscuro 🌙" : "claro ☀️"}
                     </span>
-                    <button
-                        type="button"
+                    <Button
+                        variant="primary"
+                        size="xs"
                         onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                        className="rounded-md bg-brand-primary px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-primary_hover"
                     >
                         {theme === "dark" ? "☀️ Cambiar a claro" : "🌙 Cambiar a oscuro"}
-                    </button>
+                    </Button>
                 </div>
             </section>
 
@@ -94,14 +95,15 @@ export const SettingsPage = () => {
                 <p className="mt-1 text-xs text-tertiary">
                     Hace una petición real a cada proveedor. Nunca expone la API key completa.
                 </p>
-                <button
-                    type="button"
+                <Button
+                    variant="primary"
+                    size="xs"
                     onClick={() => testProviders.mutate()}
                     disabled={testProviders.isPending}
-                    className="mt-2 rounded-md bg-brand-primary px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-primary_hover disabled:opacity-50"
+                    className="mt-2"
                 >
                     {testProviders.isPending ? "Probando…" : "Probar conexiones ahora"}
-                </button>
+                </Button>
                 {testProviders.data && (
                     <pre className="mt-3 max-h-64 overflow-auto rounded-md bg-secondary p-3 font-mono text-xs text-primary">
                         {JSON.stringify(testProviders.data, null, 2)}
@@ -113,7 +115,38 @@ export const SettingsPage = () => {
                     </p>
                 )}
             </section>
+
+            {/* Versión */}
+            <VersionFooter />
         </div>
+    );
+};
+
+/**
+ * Footer con la versión de la app (commit SHA) para que sepas en qué
+ * build estás sin tener que mirar el repo. Se inyecta en build-time
+ * desde el workflow de GitHub Actions (VITE_GIT_SHA).
+ */
+const VersionFooter = () => {
+    const sha = (import.meta.env.VITE_GIT_SHA as string | undefined) ?? "local";
+    const shortSha = sha.slice(0, 7);
+    const url = sha === "local"
+        ? "#"
+        : `https://github.com/davidlopezg/restauranteia-live/commit/${sha}`;
+    return (
+        <footer className="mt-8 border-t border-secondary pt-3 text-center text-[11px] text-tertiary">
+            Versión:{" "}
+            <a
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-mono text-secondary hover:text-brand-primary hover:underline"
+                title={sha}
+            >
+                {shortSha}
+            </a>
+            <span className="ml-2">· admin-web-frontend</span>
+        </footer>
     );
 };
 
@@ -227,9 +260,9 @@ const ProviderCard = ({
                     </div>
                 )}
                 <div className="flex justify-end">
-                    <button type="submit" disabled={isSaving} className="rounded-md bg-brand-primary px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-primary_hover disabled:opacity-50">
+                    <Button type="submit" variant="primary" size="xs" disabled={isSaving}>
                         {isSaving ? "Guardando…" : "Guardar"}
-                    </button>
+                    </Button>
                 </div>
             </form>
         </section>

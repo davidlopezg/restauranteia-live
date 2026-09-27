@@ -66,8 +66,10 @@ jobs:
                   VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
                   VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
                   VITE_BASE_PATH: /restauranteia-live/
+                  VITE_GIT_SHA: ${{ github.sha }}
               run: |
                   cd admin-web-frontend
+                  echo "VITE_GIT_SHA=${VITE_GIT_SHA}" > .env.local
                   npm run build
 
             - name: Upload artifact
