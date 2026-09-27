@@ -25,18 +25,18 @@ export type ButtonSize = "xs" | "sm";
 
 const VARIANT: Record<ButtonVariant, string> = {
     primary:
-        "bg-brand-primary text-white hover:bg-brand-primary_hover disabled:bg-brand-primary disabled:opacity-50",
+        "bg-brand-primary text-white hover:bg-brand-primary_hover shadow-sm hover:shadow disabled:bg-brand-primary disabled:opacity-50",
     secondary:
-        "border border-secondary bg-primary text-primary hover:bg-secondary disabled:opacity-50",
+        "border border-secondary bg-primary text-primary hover:bg-secondary hover:border-primary disabled:opacity-50",
     tertiary:
-        "border border-secondary bg-transparent text-secondary hover:bg-secondary disabled:opacity-50",
+        "border border-secondary bg-primary text-primary hover:bg-secondary hover:border-primary disabled:opacity-50",
     ghost:
-        "bg-transparent text-secondary hover:bg-secondary disabled:opacity-50",
+        "bg-transparent text-primary hover:bg-secondary disabled:opacity-50",
 };
 
 const SIZE: Record<ButtonSize, string> = {
-    xs: "px-2 py-1 text-xs",
-    sm: "px-3 py-1.5 text-sm",
+    xs: "px-3 py-1.5 text-xs",
+    sm: "px-4 py-2 text-sm",
 };
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -58,7 +58,7 @@ export const Button = ({
     <button
         type="button"
         {...rest}
-        className={`inline-flex items-center gap-1.5 rounded-md font-medium transition-colors ${VARIANT[variant]} ${SIZE[size]} ${className}`}
+        className={`inline-flex items-center gap-1.5 rounded-md font-semibold transition-all ${VARIANT[variant]} ${SIZE[size]} ${className}`}
     >
         {iconLeft}
         {children}

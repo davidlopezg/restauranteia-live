@@ -15,7 +15,7 @@ import type { ButtonHTMLAttributes, ReactNode } from "react";
  * o border-secondary. Para acciones destructivas, SIEMPRE estos.
  */
 
-const BASE = "bg-error-primary text-white hover:bg-error-primary_hover focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed";
+const BASE = "bg-error-primary text-white hover:bg-error-primary_hover shadow-sm hover:shadow-md focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed";
 
 export const DangerButton = ({
     children,
@@ -25,7 +25,7 @@ export const DangerButton = ({
     <button
         type="button"
         {...rest}
-        className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium ${BASE} ${className}`}
+        className={`inline-flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-semibold ${BASE} ${className}`}
     >
         {children}
     </button>
@@ -39,7 +39,7 @@ export const DangerIconButton = ({
     <button
         type="button"
         {...rest}
-        className={`inline-flex items-center justify-center rounded-md p-1.5 ${BASE} ${className}`}
+        className={`inline-flex items-center justify-center rounded-md p-2 ${BASE} ${className}`}
     >
         {children}
     </button>
