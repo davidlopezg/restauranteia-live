@@ -166,6 +166,18 @@ export const DetailPage = ({ entidad }: DetailPageProps) => {
                             </dl>
                         </section>
 
+                        {/* Para agendas: Pruebas es el protagonista, va en la columna principal */}
+                        {entidad === "agendas" && (
+                            <section data-testid="pruebas-section">
+                                <TestsSection
+                                    agendaId={id}
+                                    onChange={() => mutations.update.mutate({ id, body: {} })}
+                                />
+                            </section>
+                        )}
+
+                        {/* Bloques de Notion: secundario. Para agendas queda debajo de Pruebas
+                            (la mayor parte del trabajo se hace dentro de las pruebas). */}
                         <section data-testid="bloques-section">
                             <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-tertiary">
                                 Contenido ({(data.blocks ?? []).length} bloques)
@@ -212,16 +224,10 @@ export const DetailPage = ({ entidad }: DetailPageProps) => {
                         />
 
                         {entidad === "agendas" && (
-                            <>
-                                <DevelopmentSection
-                                    agenda={item as never}
-                                    onChange={() => mutations.update.mutate({ id, body: {} })}
-                                />
-                                <TestsSection
-                                    agendaId={id}
-                                    onChange={() => mutations.update.mutate({ id, body: {} })}
-                                />
-                            </>
+                            <DevelopmentSection
+                                agenda={item as never}
+                                onChange={() => mutations.update.mutate({ id, body: {} })}
+                            />
                         )}
 
                         <RelationsPanel

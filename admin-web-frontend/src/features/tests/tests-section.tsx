@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { MagicWand01, Trash01 } from "@untitledui/icons";
+import { MagicWand01, Plus, Trash01 } from "@untitledui/icons";
 import { testsService, feedbackService, commentsService } from "@/services/tests";
 import { iaService } from "@/services/ia";
 import type { DevTest, TestEstado, TestCreate } from "@/types/test";
@@ -10,14 +10,18 @@ import { fmtDate } from "@/utils/date";
 import { ImageGallery } from "@/features/images/image-gallery";
 
 // Sección de Pruebas para una agenda.
-// Modelo: una Prueba = 1 iteración de desarrollo con:
-//   - datos de cocina (objetivo, receta, modificaciones, resultado, observaciones)
-//   - galería de imágenes propias
-//   - comentarios cronológicos (notas durante la prueba)
-//   - ficha de prueba (texto técnico generado/editado por IA)
-//   - evaluación de mínimos (checklist para "¿apta para servicio?")
-//   - feedback de mesa (datos estructurados por mesa servida)
-//
+// Modelo: una Prueba = 1 iteración de desarrollo que se muestra como una
+// secuencia vertical de BLOQUES apilados (estilo Notion):
+//   * Objetivo
+//   * Receta utilizada
+//   * Modificaciones
+//   * Resultado
+//   * Ficha de prueba
+//   * Evaluación de mínimos
+//   * Comentarios (N)
+//   * Imágenes (N)
+//   * Feedback de mesa (N)
+// Cada bloque se puede editar / eliminar / añadir (vía "+ Añadir bloque").
 // Ver docs/PRODUCT_WORKFLOW.md para el flujo completo.
 
 interface TestsSectionProps {
@@ -67,16 +71,16 @@ export const TestsSection = ({ agendaId, onChange }: TestsSectionProps) => {
     return (
         <section className="rounded-lg border border-secondary bg-primary p-4" data-testid="tests-section">
             <header className="mb-3 flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-primary">
+                <h2 className="text-sm font-semibold uppercase tracking-wide text-tertiary">
                     Pruebas <span className="text-tertiary">({tests?.length ?? 0})</span>
-                </h3>
+                </h2>
                 <button
                     type="button"
                     onClick={() => setShowNew(true)}
-                    className="rounded-md border border-secondary px-2 py-1 text-xs hover:bg-secondary"
+                    className="inline-flex items-center gap-1 rounded-md border border-secondary px-2 py-1 text-xs hover:bg-secondary"
                     data-testid="new-test-btn"
                 >
-                    + Nueva prueba
+                    <Plus className="size-3" /> Nueva prueba
                 </button>
             </header>
 
@@ -87,7 +91,7 @@ export const TestsSection = ({ agendaId, onChange }: TestsSectionProps) => {
             ) : (tests?.length ?? 0) === 0 ? (
                 <p className="text-xs italic text-tertiary">Sin pruebas todavía. Empieza con la prueba 1.</p>
             ) : (
-                <ul className="space-y-3">
+                <ul className="space-y-6">
                     {tests!.map(test => (
                         <TestItem
                             key={test.id}
@@ -114,12 +118,22 @@ export const TestsSection = ({ agendaId, onChange }: TestsSectionProps) => {
     );
 };
 
+// === Bloques ===
+
+type BlockKind = "objetivo" | "receta" | "modificaciones" | "resultado" | "observaciones";
+
+interface QuickEditState {
+    field: BlockKind;
+    value: string;
+}
+
 const TestItem = ({ test, onDelete, onChange }: { test: DevTest; onDelete: () => void; onChange: () => void }) => {
     const qc = useQueryClient();
-    const [editing, setEditing] = useState(false);
+    const [editingFull, setEditingFull] = useState(false);
     const [generatingFicha, setGeneratingFicha] = useState(false);
     const [evaluating, setEvaluating] = useState(false);
     const [showFichaEdit, setShowFichaEdit] = useState(false);
+    const [quickEdit, setQuickEdit] = useState<QuickEditState | null>(null);
 
     const update = useMutation({
         mutationFn: (body: Partial<DevTest>) => testsService.update(test.id, body as never),
@@ -145,9 +159,21 @@ const TestItem = ({ test, onDelete, onChange }: { test: DevTest; onDelete: () =>
             : (test.ficha_generada as { texto?: string }).texto ?? JSON.stringify(test.ficha_generada, null, 2)
         : null;
 
+    const evaluacionResultado = (test.evaluacion as { resultado?: string } | null)?.resultado;
+
+    const saveQuickEdit = () => {
+        if (!quickEdit) return;
+        update.mutate({ [quickEdit.field]: quickEdit.value || null } as never);
+        setQuickEdit(null);
+    };
+
     return (
-        <li className="rounded-md border border-secondary bg-secondary/30 p-3" data-testid={`test-${test.id}`}>
-            <header className="flex flex-wrap items-center justify-between gap-2">
+        <li
+            className="overflow-hidden rounded-lg border border-secondary bg-secondary/20"
+            data-testid={`test-${test.id}`}
+        >
+            {/* Header */}
+            <header className="flex flex-wrap items-center justify-between gap-2 border-b border-secondary bg-secondary/40 px-4 py-2">
                 <div className="flex flex-wrap items-center gap-2">
                     <strong className="text-sm">#{test.numero}</strong>
                     <span className={`rounded-full px-2 py-0.5 text-xs ${ESTADO_BADGE[test.estado]}`}>
@@ -158,77 +184,151 @@ const TestItem = ({ test, onDelete, onChange }: { test: DevTest; onDelete: () =>
                     </span>
                 </div>
                 <div className="flex gap-1">
-                    <button type="button" onClick={() => setEditing(true)} className="rounded-md px-2 py-0.5 text-xs hover:bg-secondary">
-                        ✎
+                    <button
+                        type="button"
+                        onClick={() => setEditingFull(true)}
+                        className="rounded-md px-2 py-0.5 text-xs hover:bg-secondary"
+                        title="Editar prueba completa"
+                    >
+                        ✎ Editar todo
                     </button>
-                    <button type="button" onClick={onDelete} className="rounded-md px-2 py-0.5 text-xs text-error-primary hover:bg-error-secondary">
+                    <button
+                        type="button"
+                        onClick={onDelete}
+                        className="rounded-md px-2 py-0.5 text-xs text-error-primary hover:bg-error-secondary"
+                        title="Eliminar prueba"
+                    >
                         <Trash01 className="size-3" />
                     </button>
                 </div>
             </header>
 
-            {test.objetivo && (
-                <p className="mt-1 text-xs text-secondary">
-                    <strong>Objetivo:</strong> {test.objetivo}
-                </p>
-            )}
-            {test.receta_utilizada && (
-                <p className="mt-0.5 text-xs text-tertiary">
-                    <strong>Receta:</strong> {test.receta_utilizada}
-                </p>
-            )}
-            {test.resultado && (
-                <div className="mt-2 rounded-md bg-success-secondary p-2 text-xs">
-                    <strong>Resultado:</strong> {test.resultado}
-                </div>
-            )}
+            {/* Bloques apilados */}
+            <div className="divide-y divide-secondary">
+                <Block title="🎯 Objetivo" onEdit={() => setQuickEdit({ field: "objetivo", value: test.objetivo ?? "" })}>
+                    {test.objetivo || <Placeholder>Definí qué querés probar en esta vuelta.</Placeholder>}
+                </Block>
 
-            <div className="mt-2 flex flex-wrap gap-2">
-                <button
-                    type="button"
-                    onClick={() => setGeneratingFicha(true)}
-                    className="inline-flex items-center gap-1 rounded-md bg-brand-primary px-2 py-1 text-xs text-white hover:bg-brand-primary_hover"
-                    data-testid={`generar-ficha-${test.id}`}
+                <Block title="📝 Receta utilizada" onEdit={() => setQuickEdit({ field: "receta", value: test.receta_utilizada ?? "" })}>
+                    {test.receta_utilizada || <Placeholder>Anotá la versión de la receta que probaste.</Placeholder>}
+                </Block>
+
+                <Block title="🔄 Modificaciones" onEdit={() => setQuickEdit({ field: "modificaciones", value: test.modificaciones ?? "" })}>
+                    {test.modificaciones || <Placeholder>Qué cambió respecto de la prueba anterior.</Placeholder>}
+                </Block>
+
+                <Block title="✅ Resultado" tone="success" onEdit={() => setQuickEdit({ field: "resultado", value: test.resultado ?? "" })}>
+                    {test.resultado || <Placeholder>Cómo salió (observaciones gruesas).</Placeholder>}
+                </Block>
+
+                <Block title="💭 Observaciones" onEdit={() => setQuickEdit({ field: "observaciones", value: test.observaciones ?? "" })}>
+                    {test.observaciones || <Placeholder>Notas libres adicionales.</Placeholder>}
+                </Block>
+
+                {/* Ficha de prueba */}
+                <Block
+                    title="🧾 Ficha de prueba"
+                    tone="warning"
+                    actions={
+                        <>
+                            {!fichaTexto && (
+                                <button
+                                    type="button"
+                                    onClick={() => setGeneratingFicha(true)}
+                                    className="inline-flex items-center gap-1 rounded-md bg-brand-primary px-2 py-1 text-xs text-white hover:bg-brand-primary_hover"
+                                    data-testid={`generar-ficha-${test.id}`}
+                                >
+                                    <MagicWand01 className="size-3" /> Generar
+                                </button>
+                            )}
+                            {fichaTexto && (
+                                <button
+                                    type="button"
+                                    onClick={() => setShowFichaEdit(true)}
+                                    className="text-xs text-brand-primary hover:underline"
+                                >
+                                    Editar
+                                </button>
+                            )}
+                        </>
+                    }
                 >
-                    <MagicWand01 className="size-3" /> Generar ficha de prueba
-                </button>
-                <button
-                    type="button"
-                    onClick={() => setEvaluating(true)}
-                    className="rounded-md border border-secondary px-2 py-1 text-xs hover:bg-secondary"
-                    data-testid={`evaluar-${test.id}`}
+                    {fichaTexto ? (
+                        <pre className="whitespace-pre-wrap font-mono text-xs">{fichaTexto}</pre>
+                    ) : (
+                        <Placeholder>Aún sin ficha. Generala con IA a partir del objetivo y la receta.</Placeholder>
+                    )}
+                </Block>
+
+                {/* Evaluación de mínimos */}
+                <Block
+                    title="⭐ Evaluación de mínimos"
+                    actions={
+                        <button
+                            type="button"
+                            onClick={() => setEvaluating(true)}
+                            className="rounded-md border border-secondary px-2 py-1 text-xs hover:bg-secondary"
+                            data-testid={`evaluar-${test.id}`}
+                        >
+                            {evaluacionResultado ? "Reevaluar" : "Evaluar"}
+                        </button>
+                    }
                 >
-                    Evaluar mínimos
-                </button>
+                    {evaluacionResultado ? (
+                        <p className={`text-xs ${evaluacionResultado === "APTA" ? "text-success-primary" : "text-warning-primary"}`}>
+                            {evaluacionResultado === "APTA" ? "✅ APTA para servicio" : "⚠️ Repasar antes de servir"}
+                        </p>
+                    ) : (
+                        <Placeholder>Marcá los 5 puntos para saber si la receta es apta.</Placeholder>
+                    )}
+                </Block>
+
+                {/* Comentarios cronológicos */}
+                <CommentsBlock testId={test.id} comments={comments ?? []} onChange={onChange} />
+
+                {/* Galería de imágenes */}
+                <Block title="🖼 Imágenes" inset={false}>
+                    <ImageGallery entidad="tests" entityId={test.id} onChange={onChange} />
+                </Block>
+
+                {/* Feedback de mesa */}
+                <FeedbackBlock testId={test.id} feedbacks={feedbacks ?? []} onChange={onChange} />
             </div>
 
-            {fichaTexto && (
-                <div className="mt-2 rounded-md bg-warning-secondary p-2 text-xs">
-                    <div className="mb-1 flex items-center justify-between">
-                        <strong>Ficha de prueba</strong>
-                        <button type="button" onClick={() => setShowFichaEdit(true)} className="text-xs text-brand-primary hover:underline">
-                            Editar
+            {/* Quick edit (inline, por campo) */}
+            {quickEdit && (
+                <Modal title={`Editar ${quickEdit.field}`} onClose={() => setQuickEdit(null)}>
+                    <textarea
+                        value={quickEdit.value}
+                        onChange={e => setQuickEdit(s => (s ? { ...s, value: e.target.value } : s))}
+                        rows={4}
+                        autoFocus
+                        className="w-full rounded-md border border-secondary bg-primary px-3 py-2 text-sm"
+                    />
+                    <div className="mt-3 flex justify-end gap-2">
+                        <button
+                            type="button"
+                            onClick={() => setQuickEdit(null)}
+                            className="rounded-md px-3 py-1.5 text-sm text-secondary hover:bg-secondary"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            type="button"
+                            onClick={saveQuickEdit}
+                            disabled={update.isPending}
+                            className="rounded-md bg-brand-primary px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-primary_hover disabled:opacity-50"
+                        >
+                            {update.isPending ? "Guardando…" : "Guardar"}
                         </button>
                     </div>
-                    <pre className="whitespace-pre-wrap">{fichaTexto.slice(0, 600)}{fichaTexto.length > 600 ? "…" : ""}</pre>
-                </div>
+                </Modal>
             )}
 
-            {/* Comentarios cronológicos de la prueba */}
-            <CommentsList testId={test.id} comments={comments ?? []} onChange={onChange} />
-
-            {/* Galería de imágenes propias de la prueba */}
-            <div className="mt-3">
-                <ImageGallery entidad="tests" entityId={test.id} onChange={onChange} />
-            </div>
-
-            {/* Feedback de mesa (estructurado por mesa) */}
-            <FeedbackList testId={test.id} feedbacks={feedbacks ?? []} onChange={onChange} />
-
-            {editing && (
+            {editingFull && (
                 <EditTestModal
                     test={test}
-                    onClose={() => setEditing(false)}
+                    onClose={() => setEditingFull(false)}
                     onSave={body => update.mutate(body)}
                 />
             )}
@@ -266,9 +366,58 @@ const TestItem = ({ test, onDelete, onChange }: { test: DevTest; onDelete: () =>
     );
 };
 
-// === Comentarios cronológicos ===
+// === Componentes de bloque ===
 
-const CommentsList = ({ testId, comments, onChange }: { testId: string; comments: TestComment[]; onChange: () => void }) => {
+const Block = ({
+    title,
+    children,
+    onEdit,
+    actions,
+    tone,
+    inset = true,
+}: {
+    title: string;
+    children: React.ReactNode;
+    onEdit?: () => void;
+    actions?: React.ReactNode;
+    tone?: "success" | "warning";
+    inset?: boolean;
+}) => {
+    const toneClass = tone === "success"
+        ? "bg-success-secondary/30 border-l-4 border-success-primary"
+        : tone === "warning"
+            ? "bg-warning-secondary/30 border-l-4 border-warning-primary"
+            : "";
+    return (
+        <div className={`px-4 py-3 ${toneClass}`}>
+            <div className="mb-1 flex items-center justify-between gap-2">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-tertiary">{title}</h3>
+                <div className="flex items-center gap-2">
+                    {actions}
+                    {onEdit && (
+                        <button
+                            type="button"
+                            onClick={onEdit}
+                            className="text-xs text-brand-primary hover:underline"
+                            aria-label={`Editar ${title}`}
+                        >
+                            Editar
+                        </button>
+                    )}
+                </div>
+            </div>
+            <div className={inset ? "pl-1 text-sm" : ""}>{children}</div>
+        </div>
+    );
+};
+
+const Placeholder = ({ children }: { children: React.ReactNode }) => (
+    <p className="text-xs italic text-tertiary">{children}</p>
+);
+
+// === Comentarios (bloque) ===
+
+const CommentsBlock = ({ testId, comments, onChange }: { testId: string; comments: TestComment[]; onChange: () => void }) => {
     const qc = useQueryClient();
     const [autor, setAutor] = useState("");
 
@@ -289,37 +438,39 @@ const CommentsList = ({ testId, comments, onChange }: { testId: string; comments
     });
 
     const submit = () => {
-        const texto = window.prompt("Comentario:");
+        const texto = window.prompt("Comentario / anotación:");
         if (!texto?.trim()) return;
         create.mutate({ autor: autor.trim() || undefined, texto: texto.trim() });
     };
 
     return (
-        <div className="mt-2 border-t border-secondary pt-2">
-            <div className="mb-1 flex items-center justify-between">
-                <span className="text-xs font-medium text-tertiary">Comentarios ({comments.length})</span>
+        <Block
+            title={`💬 Comentarios / Anotaciones (${comments.length})`}
+            actions={
                 <div className="flex items-center gap-1">
                     <input
                         type="text"
                         value={autor}
                         onChange={e => setAutor(e.target.value)}
-                        placeholder="autor (opcional)"
+                        placeholder="autor"
                         className="w-28 rounded-md border border-secondary bg-primary px-2 py-0.5 text-xs"
                     />
                     <button
                         type="button"
                         onClick={submit}
-                        className="text-xs text-brand-primary hover:underline"
+                        className="inline-flex items-center gap-1 rounded-md bg-brand-primary px-2 py-1 text-xs text-white hover:bg-brand-primary_hover disabled:opacity-50"
+                        disabled={create.isPending}
                         data-testid={`add-comment-${testId}`}
                     >
-                        + Añadir
+                        <Plus className="size-3" /> Añadir
                     </button>
                 </div>
-            </div>
+            }
+        >
             {comments.length === 0 ? (
-                <p className="text-xs italic text-tertiary">Sin comentarios.</p>
+                <Placeholder>Sin comentarios. Útil para notas durante la prueba (ej: "David dice: subir sal").</Placeholder>
             ) : (
-                <ul className="space-y-1">
+                <ul className="space-y-1.5">
                     {comments.map(c => (
                         <li key={c.id} className="flex items-start justify-between gap-2 text-xs">
                             <div className="flex-1">
@@ -339,13 +490,13 @@ const CommentsList = ({ testId, comments, onChange }: { testId: string; comments
                     ))}
                 </ul>
             )}
-        </div>
+        </Block>
     );
 };
 
-// === Feedback de mesa (estructurado) ===
+// === Feedback de mesa (bloque) ===
 
-const FeedbackList = ({ testId, feedbacks, onChange }: { testId: string; feedbacks: TestFeedback[]; onChange: () => void }) => {
+const FeedbackBlock = ({ testId, feedbacks, onChange }: { testId: string; feedbacks: TestFeedback[]; onChange: () => void }) => {
     const qc = useQueryClient();
     const [adding, setAdding] = useState(false);
 
@@ -366,17 +517,22 @@ const FeedbackList = ({ testId, feedbacks, onChange }: { testId: string; feedbac
     });
 
     return (
-        <div className="mt-2 border-t border-secondary pt-2">
-            <div className="mb-1 flex items-center justify-between">
-                <span className="text-xs font-medium text-tertiary">Feedback de mesa ({feedbacks.length})</span>
-                <button type="button" onClick={() => setAdding(true)} className="text-xs text-brand-primary hover:underline">
-                    + Añadir
+        <Block
+            title={`🍽 Feedback de mesa (${feedbacks.length})`}
+            actions={
+                <button
+                    type="button"
+                    onClick={() => setAdding(true)}
+                    className="inline-flex items-center gap-1 rounded-md border border-secondary px-2 py-1 text-xs hover:bg-secondary"
+                >
+                    <Plus className="size-3" /> Añadir
                 </button>
-            </div>
+            }
+        >
             {feedbacks.length === 0 ? (
-                <p className="text-xs italic text-tertiary">Sin feedback todavía.</p>
+                <Placeholder>Sin feedback de mesa todavía.</Placeholder>
             ) : (
-                <ul className="space-y-1">
+                <ul className="space-y-1.5">
                     {feedbacks.map(fb => (
                         <li key={fb.id} className="flex items-start justify-between gap-2 text-xs">
                             <div className="flex-1">
@@ -403,7 +559,7 @@ const FeedbackList = ({ testId, feedbacks, onChange }: { testId: string; feedbac
                     onCreate={body => create.mutate(body)}
                 />
             )}
-        </div>
+        </Block>
     );
 };
 
@@ -594,7 +750,7 @@ const EvaluacionModal = ({ test, onClose, onSave }: { test: DevTest; onClose: ()
 
 const NewFeedbackModal = ({ onClose, onCreate }: { onClose: () => void; onCreate: (body: FeedbackCreate) => void }) => {
     return (
-        <Modal title="Nuevo feedback" onClose={onClose}>
+        <Modal title="Nuevo feedback de mesa" onClose={onClose}>
             <form
                 onSubmit={ev => {
                     ev.preventDefault();
@@ -686,4 +842,3 @@ const Field = ({ label, name, type = "text", defaultValue, placeholder, textarea
         )}
     </div>
 );
-
