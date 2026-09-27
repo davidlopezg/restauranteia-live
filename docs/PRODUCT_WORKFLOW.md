@@ -5,6 +5,26 @@
 
 ---
 
+## 0. Glosario rápido
+
+| Término | Qué es |
+|---|---|
+| **Agenda** | Concepto de desarrollo: "Pizza de temporada con manzana y gorgonzola". Vive en `agendas`. |
+| **Prueba** | Una iteración concreta del concepto. #1, #2, #3… cada una con su receta + resultado. Vive en `development_tests`. |
+| **Ficha de prueba** | Texto técnico generado por IA para esa iteración (ingredientes, pasos, tiempos, temperaturas). Vive en `development_tests.ficha_generada`. |
+| **Comentario** | Nota libre cronológica de la prueba (ej: "David dice subir sal", "el horno tardó más de lo esperado"). Vive en `test_comments`. |
+| **Feedback de mesa** | Datos estructurados por mesa servida (valoración 1-5, criterio, observación). Vive en `test_feedback`. |
+| **Evaluación de mínimos** | Checklist de 5 puntos para saber si la receta es apta para servicio. Vive en `development_tests.evaluacion`. |
+| **Imagen de prueba** | Foto/documento adjunto a la prueba (plato emplatado, mise en place, gráfica de feedback). Vive en `test_images`. |
+
+⚠️ **"Ficha" se usa para dos cosas distintas:**
+- **Ficha técnica de la idea** (en `ideas.receta_estructurada` / `catalogos.receta_estructurada`): la receta definitiva.
+- **Ficha de prueba** (en `development_tests.ficha_generada`): la receta técnica de ESA iteración concreta.
+
+En la UI, la primera se llama "Ficha técnica" y la segunda "Ficha de prueba" para distinguirlas.
+
+---
+
 ## 1. Visión general
 
 ```
@@ -98,6 +118,80 @@ checklist de requisitos:
 
 Solo cuando todos los checks están marcados, el botón `[ Crear producto ]`
 se habilita.
+
+---
+
+## 4b. Anatomía de una Prueba
+
+Cada prueba (fila en `development_tests`) tiene:
+
+| Campo | Tipo | Para qué |
+|---|---|---|
+| `numero` | smallint | Secuencia dentro de la agenda (1, 2, 3…). Único por agenda. |
+| `fecha` | date | Cuándo se hizo. Por defecto hoy. |
+| `estado` | enum | `PENDIENTE` / `REALIZADA` / `DESCARTADA`. |
+| `objetivo` | text | Qué se quiere probar en esta vuelta ("subir el dulzor", "cambiar el emplatado"). |
+| `receta_utilizada` | text | Versión de la receta que se probó (resumen libre). |
+| `modificaciones` | text | Qué cambió respecto de la prueba anterior. |
+| `resultado` | text | Cómo salió (observaciones gruesas). |
+| `observaciones` | text | Notas libres adicionales (no estructuradas). |
+| `ficha_generada` | jsonb | Texto técnico: ingredientes, cantidades, pasos, tiempos, temperaturas. Editable. |
+| `evaluacion` | jsonb | `{respuestas: {…}, puntos: N, resultado: 'APTA'\|'REPASA'}`. |
+
+Y ENLAZADO a la prueba:
+
+| Tabla | Relación | Uso |
+|---|---|---|
+| `test_images` | 1:N | Fotos/documentos de la prueba (path en Storage). |
+| `test_comments` | 1:N | Comentarios cronológicos libres con autor + timestamp. |
+| `test_feedback` | 1:N | Datos por mesa servida: valoración, criterio, observación. |
+
+**Diferencia entre Comentario y Feedback de mesa:**
+- **Comentario**: nota libre del equipo ("probé con manzana Reineta en vez de Golden — mejor acidez"). Es interno.
+- **Feedback de mesa**: datos estructurados del cliente en servicio real. Mide satisfacción externa.
+
+**Diferencia entre `observaciones` y `Comentario`:**
+- `observaciones` es un campo resumen de la prueba (1 valor por prueba).
+- `test_comments` es un log cronológico (N valores por prueba).
+
+---
+
+## 4c. Flujo completo de una prueba
+
+```
+1. CREAR Prueba #N
+   └─ objetivo + fecha (auto-hoy) + estado=PENDIENTE
+   └─ se crea la fila; `numero` se asigna auto (siguiente al max de la agenda)
+
+2. TRABAJAR en cocina
+   └─ ir actualizando `receta_utilizada`, `modificaciones` durante el proceso
+   └─ subir fotos: click "Subir" en la galería → Storage path = tests/{id}/{sha}.{ext}
+   └─ dejar notas: click "+ Añadir" en Comentarios
+
+3. EVALUAR resultado
+   └─ marcar `resultado` y cambiar `estado` → REALIZADA o DESCARTADA
+
+4. GENERAR Ficha de prueba (IA)
+   └─ click "Generar ficha de prueba" → OpenRouter con PROMPT_FICHA_TEST
+   └─ inputs: titulo agenda + objetivo + receta + modificaciones + ingredientes
+   └─ output: ficha markdown estructurada (categoría, ingredientes,
+              mise en place, pasos con °C y minutos, puntos críticos, emplatado)
+   └─ editable: podés reescribirla y guardarla antes de cerrar
+
+5. SERVIR en mesa (opcional)
+   └─ por cada mesa servida, click "+ Añadir" en Feedback de mesa
+   └─ mesa, nº personas, valoración 1-5, criterio, observación, fecha
+
+6. EVALUAR MÍNIMOS (cuando creés que está lista)
+   └─ click "Evaluar mínimos" → 5 checks
+   └─ 5/5 → resultado="APTA para servicio" (verde)
+   └─ <5/5 → "REPASA antes de servir" (amarillo)
+   └─ se guarda en `evaluacion`
+
+7. ITERAR o PROMOVER
+   └─ si hay que ajustar → crear Prueba #N+1 copiando lo aprendido
+   └─ si está APTA → mover agenda a estado MODIFICACION/VALIDACION/PRODUCTO
+```
 
 ---
 

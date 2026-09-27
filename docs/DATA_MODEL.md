@@ -108,6 +108,28 @@ id uuid PK · test_id (FK CASCADE) · mesa · num_personas ·
 valoracion (1-5 CHECK) · criterio · observacion · fecha · created_at
 ```
 
+#### `test_images` (FASE 7b — adjuntos directos de la prueba)
+```sql
+id uuid PK · test_id (FK CASCADE) · source_type ·
+storage_bucket (default 'notion-migration-staging') · storage_path ·
+original_filename · mime_type · file_size_bytes · sha256 ·
+position · has_caption · caption · migrated_at · migration_run_id ·
+UNIQUE (test_id, storage_path)
+```
+Path en Storage: `tests/{test_id}/{sha[:16]}.{ext}`.
+
+#### `test_comments` (FASE 7b — log cronológico por prueba)
+```sql
+id uuid PK · test_id (FK CASCADE) · autor (text, nullable) ·
+texto (text NOT NULL) · created_at (timestamptz, default now())
+```
+Diferencia con `test_feedback`: `test_comments` es nota libre del equipo;
+`test_feedback` es dato estructurado de mesa servida (valoración 1-5).
+Diferencia con `development_tests.observaciones`: observaciones es resumen
+(1 por prueba); comentarios son N entradas cronológicas.
+
+```
+
 #### `plating_proposals` (FASE 8)
 ```sql
 id uuid PK · catalogo_id (FK CASCADE) · orden (1-5 CHECK) ·
@@ -165,11 +187,14 @@ Ver `docs/diagrams/data-model.mmd`.
 
 ## 6. RLS / Seguridad
 
-- RLS desactivado en TODAS las tablas.
-- Sin grants para `anon`/`authenticated`.
-- Acceso 100% vía backend con `SUPABASE_SERVICE_ROLE_KEY` (Storage) y
-  `SUPABASE_ACCESS_TOKEN` (Management API SQL).
-- Frontend NUNCA recibe credenciales.
+- RLS **activado** en TODAS las tablas (incluye `test_images`, `test_comments`
+  desde FASE 7b). Policies: `auth_full_access` para `authenticated`.
+- Vistas `public.*` con `security_invoker=false` para que `anon`/`authenticated`
+  puedan SELECT sin pasar por RLS.
+- Storage bucket `notion-migration-staging`: privado, RLS para
+  `authenticated`. Acceso vía signed URLs (1h TTL).
+- Frontend usa `VITE_SUPABASE_ANON_KEY` (clave pública, RLS filtra).
+- Backend legacy (FastAPI) usa `SUPABASE_SERVICE_ROLE_KEY` (bypasea RLS).
 
 ---
 
