@@ -11,6 +11,7 @@ import { RelationsPanel } from "@/features/relations/relations-panel";
 import { TestsSection } from "@/features/tests/tests-section";
 import { DevelopmentSection } from "@/features/tests/development-section";
 import { ENTITY_SINGULAR, ENTITY_PLURAL } from "@/features/entities/get-service";
+import { DangerButton } from "@/components/ui/danger-button";
 import { fmtDate } from "@/utils/date";
 import { fmtPrice } from "@/utils/currency";
 
@@ -89,13 +90,9 @@ export const DetailPage = ({ entidad }: DetailPageProps) => {
                             confirmLabel="Eliminar"
                             onConfirm={onDelete}
                         >
-                            <button
-                                type="button"
-                                className="rounded-md bg-error-primary px-3 py-1.5 text-sm font-medium text-white hover:bg-error-primary_hover"
-                                data-testid={`delete-${entidad}-${id}`}
-                            >
+                            <DangerButton data-testid={`delete-${entidad}-${id}`}>
                                 🗑 Eliminar
-                            </button>
+                            </DangerButton>
                         </ConfirmDialog>
                     </div>
                 )}

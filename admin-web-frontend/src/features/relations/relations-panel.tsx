@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, X } from "@untitledui/icons";
+import { DangerIconButton } from "@/components/ui/danger-button";
 import { relationsService } from "@/services/relations";
 import { ideasService, agendasService, catalogosService } from "@/services/entities";
 import type { EntityKind } from "@/types/entity";
@@ -115,17 +116,15 @@ const RelationSection = ({
                             <a href={`#/${target}/${it.id}`} className="flex-1 truncate text-primary hover:underline">
                                 {it.titulo ?? "(sin título)"}
                             </a>
-                            <button
-                                type="button"
+                            <DangerIconButton
                                 onClick={() => {
                                     if (confirm("¿Eliminar relación?")) remove.mutate(it.id);
                                 }}
                                 disabled={remove.isPending}
-                                className="rounded-full p-1 text-tertiary hover:bg-error-secondary hover:text-error-primary"
                                 aria-label="Eliminar relación"
                             >
                                 <X className="size-3" />
-                            </button>
+                            </DangerIconButton>
                         </li>
                     ))}
                 </ul>

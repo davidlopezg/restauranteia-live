@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { MagicWand01, Plus, Trash01 } from "@untitledui/icons";
+import { DangerButton, DangerIconButton } from "@/components/ui/danger-button";
 import { testsService, feedbackService, aprobarService } from "@/services/tests";
 import { iaService } from "@/services/ia";
 import type { DevTest, TestEstado, TestCreate, EvaluacionCriterios, EvaluacionProducto } from "@/types/test";
@@ -202,15 +203,10 @@ const TestItem = ({ test, onDelete, onChange, onCreateNext }: TestItemProps) => 
                         </button>
                     )}
                 </div>
-                <button
-                    type="button"
-                    onClick={onDelete}
-                    className="inline-flex items-center gap-1 rounded-md bg-error-secondary px-2 py-1 text-xs font-medium text-error-primary hover:bg-error-primary hover:text-white"
-                    title="Eliminar prueba"
-                >
+                <DangerButton onClick={onDelete} title="Eliminar prueba" className="text-xs">
                     <Trash01 className="size-4" />
                     <span>Eliminar</span>
-                </button>
+                </DangerButton>
             </header>
 
             {/* Bloques */}
@@ -497,14 +493,12 @@ const FeedbackInline = ({ testId, feedbacks, onChange }: { testId: string; feedb
                                 {fb.criterio && <span className="ml-2 text-tertiary">· {fb.criterio}</span>}
                                 {fb.observacion && <div className="text-secondary">{fb.observacion}</div>}
                             </div>
-                            <button
-                                type="button"
+                            <DangerIconButton
                                 onClick={() => remove.mutate(fb.id)}
-                                className="rounded-md bg-error-secondary p-1 text-error-primary hover:bg-error-primary hover:text-white"
                                 aria-label="Eliminar feedback"
                             >
                                 <Trash01 className="size-4" />
-                            </button>
+                            </DangerIconButton>
                         </li>
                     ))}
                 </ul>
@@ -789,13 +783,9 @@ const DecisionPanel = ({
                 >
                     🟢 Aprobar y promover
                 </button>
-                <button
-                    type="button"
-                    onClick={descartar}
-                    className="rounded-md border border-error-primary bg-error-secondary px-3 py-2 text-sm font-medium text-error-primary hover:bg-error-primary hover:text-white"
-                >
+                <DangerButton onClick={descartar}>
                     🔴 Descartar
-                </button>
+                </DangerButton>
             </div>
 
             {aproving && (

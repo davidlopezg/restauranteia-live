@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Trash01, X } from "@untitledui/icons";
+import { DangerIconButton } from "@/components/ui/danger-button";
 import { imagesService, imagesKeys, imagesSupabase } from "@/services/images";
 import type { EntityImage } from "@/types/image";
 import type { EntityKind } from "@/types/entity";
@@ -129,18 +130,17 @@ const ImageThumb = ({
                     <span className="flex h-full items-center justify-center text-xs text-tertiary">…</span>
                 )}
             </button>
-            <button
-                type="button"
+            <DangerIconButton
                 onClick={() => {
                     if (confirm("¿Eliminar imagen?")) remove.mutate();
                 }}
                 disabled={remove.isPending}
-                className="absolute right-1 top-1 hidden rounded-full bg-overlay p-1 text-white group-hover:block"
+                className="absolute right-1 top-1 hidden group-hover:flex"
                 title="Eliminar"
                 aria-label="Eliminar imagen"
             >
                 <Trash01 className="size-3" />
-            </button>
+            </DangerIconButton>
         </div>
     );
 };
