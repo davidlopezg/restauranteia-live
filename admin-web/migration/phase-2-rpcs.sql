@@ -217,7 +217,7 @@ GRANT EXECUTE ON FUNCTION notion_migration.pendientes() TO authenticated;
 DROP FUNCTION IF EXISTS notion_migration.cadencia_semana_actual();
 CREATE FUNCTION notion_migration.cadencia_semana_actual()
 RETURNS json
-LANGUAGE plpgsql STABLE
+LANGUAGE plpgsql VOLATILE
 SECURITY DEFINER
 AS $$
 DECLARE

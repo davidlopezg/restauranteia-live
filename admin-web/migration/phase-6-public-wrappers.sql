@@ -27,7 +27,7 @@ $$;
 
 -- cadencia_semana_actual()
 CREATE OR REPLACE FUNCTION public.cadencia_semana_actual()
-RETURNS json LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = notion_migration AS $$
+RETURNS json LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path = notion_migration AS $$
 BEGIN RETURN (SELECT notion_migration.cadencia_semana_actual()); END;
 $$;
 

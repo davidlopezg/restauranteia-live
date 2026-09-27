@@ -238,6 +238,7 @@ DELETE /api/{entidad}/{entity_id}/images/{id}  (ref-counting → borra fisico si
 5. **Constraints únicos en `*_images`**: las columnas `notion_block_id_key` / `notion_property_key` son GENERATED, lo que obliga a autogenerar `notion_block_id` para uploads manuales.
 6. **`agendas.etiquetas` vacío**: campo existente pero inutilizado. Se puede aprovechar como tags de desarrollo sin schema nuevo.
 7. **Recetas en bloques son texto libre**: `catalogo_blocks` solo tiene 29 filas, la mayoría párrafos cortos. NO hay receta estructurada.
+8. **`cadencia_semana_actual` marcada `STABLE` con `INSERT/UPDATE`** ✅ **Resuelto 2026-09-27**: la RPC `notion_migration.cadencia_semana_actual()` (y su wrapper `public.cadencia_semana_actual()`) estaba declarada `STABLE` pero ejecutaba `INSERT … ON CONFLICT` y `UPDATE` contra `weekly_objectives`. PostgreSQL prohíbe escrituras en funciones no-volátiles → error `INSERT is not allowed in a non-volatile function`. **Fix**: cambiar a `VOLATILE` en `admin-web/migration/phase-2-rpcs.sql` (línea 220) y `admin-web/migration/phase-6-public-wrappers.sql` (línea 30). El resto de RPCs (`pipeline_por_estado`, `pendientes`, `catalogos_agrupados`) son SELECT puros y siguen correctamente en `STABLE`.
 
 ### 4.3 UX
 1. **Sidebar agrupa por entidad, no por flujo**: Ideas / Agenda / Catálogo como secciones independientes en lugar de Desarrollo / Contenido / Análisis.
