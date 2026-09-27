@@ -138,7 +138,7 @@ export const CadenciaPage = () => {
                                 Aplazar semana
                             </button>
                         )}
-                        <button type="submit" disabled={update.isPending} className="rounded-md bg-brand-primary px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-primary_hover disabled:opacity-50">
+                        <button type="submit" disabled={update.isPending} className="rounded-md bg-brand-solid px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-solid_hover disabled:opacity-50">
                             {update.isPending ? "Guardando…" : "Guardar"}
                         </button>
                     </div>

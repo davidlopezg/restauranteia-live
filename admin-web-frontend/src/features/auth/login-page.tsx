@@ -90,7 +90,10 @@ export const LoginPage = () => {
                 <button
                     type="submit"
                     disabled={submitting || !isConfigured}
-                    className="w-full rounded-md bg-brand-primary px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-primary_hover disabled:opacity-50"
+                    style={{ backgroundColor: '#7F56D9' }}
+                    onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#6941C6')}
+                    onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#7F56D9')}
+                    className="w-full rounded-md px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
                     data-testid="login-submit"
                 >
                     {submitting ? "…" : mode === "signin" ? "Entrar" : "Crear cuenta"}

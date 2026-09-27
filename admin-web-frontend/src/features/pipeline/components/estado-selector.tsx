@@ -42,7 +42,7 @@ export const EstadoSelector = ({ estadoActual, onChange, disabled }: EstadoSelec
                         }
                         className={cx(
                             "rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors",
-                            isActual && "bg-brand-primary text-white cursor-default",
+                            isActual && "bg-brand-solid text-white cursor-default",
                             !isActual && isValido && "bg-secondary text-primary hover:bg-brand-secondary hover:text-brand-primary",
                             !isActual && !isValido && "bg-secondary text-disabled cursor-not-allowed",
                         )}

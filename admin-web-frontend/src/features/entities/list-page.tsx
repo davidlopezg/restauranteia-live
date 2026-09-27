@@ -121,7 +121,10 @@ export const ListPage = ({ entidad }: ListPageProps) => {
                 <button
                     type="button"
                     onClick={() => navigate(`/${entidad}/new`)}
-                    className="rounded-md bg-brand-primary px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-primary_hover"
+                    style={{ backgroundColor: '#7F56D9' }}
+                    onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#6941C6')}
+                    onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#7F56D9')}
+                    className="rounded-md px-3 py-1.5 text-sm font-medium text-white"
                 >
                     + Nuevo {ENTITY_SINGULAR[entidad].toLowerCase()}
                 </button>
@@ -148,14 +151,14 @@ export const ListPage = ({ entidad }: ListPageProps) => {
                     <button
                         type="button"
                         onClick={() => setView("table")}
-                        className={`rounded-md px-3 py-1 text-xs ${view === "table" ? "bg-brand-primary text-white" : "border border-secondary text-secondary"}`}
+                        className={`rounded-md px-3 py-1 text-xs ${view === "table" ? "bg-brand-solid text-white" : "border border-secondary text-secondary"}`}
                     >
                         Tabla
                     </button>
                     <button
                         type="button"
                         onClick={() => setView("groups")}
-                        className={`rounded-md px-3 py-1 text-xs ${view === "groups" ? "bg-brand-primary text-white" : "border border-secondary text-secondary"}`}
+                        className={`rounded-md px-3 py-1 text-xs ${view === "groups" ? "bg-brand-solid text-white" : "border border-secondary text-secondary"}`}
                     >
                         Categorías
                     </button>

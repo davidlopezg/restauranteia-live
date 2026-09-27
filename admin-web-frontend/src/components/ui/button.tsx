@@ -25,7 +25,7 @@ export type ButtonSize = "xs" | "sm";
 
 const VARIANT: Record<ButtonVariant, string> = {
     primary:
-        "bg-brand-primary text-white hover:bg-brand-primary_hover shadow-sm hover:shadow disabled:bg-brand-primary disabled:opacity-50",
+        "bg-brand-solid text-white hover:bg-brand-solid_hover shadow-sm hover:shadow disabled:bg-brand-solid disabled:opacity-50",
     secondary:
         "border border-secondary bg-primary text-primary hover:bg-secondary hover:border-primary disabled:opacity-50",
     tertiary:

@@ -15,7 +15,7 @@ import type { ButtonHTMLAttributes, ReactNode } from "react";
  * o border-secondary. Para acciones destructivas, SIEMPRE estos.
  */
 
-const BASE = "bg-error-primary text-white hover:bg-error-primary_hover shadow-sm hover:shadow-md focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed";
+const BASE_STYLE = { backgroundColor: '#DC2626', color: '#FFFFFF' };
 
 export const DangerButton = ({
     children,
@@ -25,7 +25,10 @@ export const DangerButton = ({
     <button
         type="button"
         {...rest}
-        className={`inline-flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-semibold ${BASE} ${className}`}
+        style={BASE_STYLE}
+        onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#B91C1C')}
+        onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#DC2626')}
+        className={`inline-flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-semibold shadow-sm hover:shadow-md focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
     >
         {children}
     </button>
@@ -39,7 +42,10 @@ export const DangerIconButton = ({
     <button
         type="button"
         {...rest}
-        className={`inline-flex items-center justify-center rounded-md p-2 ${BASE} ${className}`}
+        style={BASE_STYLE}
+        onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#B91C1C')}
+        onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#DC2626')}
+        className={`inline-flex items-center justify-center rounded-md p-2 shadow-sm hover:shadow-md focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
     >
         {children}
     </button>

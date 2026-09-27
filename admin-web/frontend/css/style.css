@@ -13,14 +13,14 @@
     --card-foreground: 240 10% 3.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 3.9%;
-    --primary: 24 75% 50%;              /* tono cálido Sol de Nit */
+    --primary: 259 63% 59%;              /* morado Sol de Nit — coincide con admin-web-frontend */
     --primary-foreground: 0 0% 98%;
     --secondary: 240 4.8% 95.9%;
     --secondary-foreground: 240 5.9% 10%;
     --muted: 240 4.8% 95.9%;
     --muted-foreground: 240 3.8% 46.1%;
-    --accent: 24 75% 95%;
-    --accent-foreground: 24 75% 30%;
+    --accent: 259 63% 95%;
+    --accent-foreground: 259 63% 30%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
     --success: 142 70% 35%;
@@ -28,7 +28,7 @@
     --info: 217 91% 60%;
     --border: 240 5.9% 90%;
     --input: 240 5.9% 90%;
-    --ring: 24 75% 50%;
+    --ring: 259 63% 59%;
     --radius: 0.5rem;
 }
 
@@ -39,19 +39,19 @@
     --card-foreground: 0 0% 98%;
     --popover: 240 10% 5.5%;
     --popover-foreground: 0 0% 98%;
-    --primary: 24 75% 55%;
+    --primary: 259 63% 65%;
     --primary-foreground: 0 0% 98%;
     --secondary: 240 3.7% 15.9%;
     --secondary-foreground: 0 0% 98%;
     --muted: 240 3.7% 15.9%;
     --muted-foreground: 240 5% 64.9%;
-    --accent: 24 50% 18%;
-    --accent-foreground: 24 75% 75%;
+    --accent: 259 40% 18%;
+    --accent-foreground: 259 63% 75%;
     --destructive: 0 70% 50%;
     --destructive-foreground: 0 0% 98%;
     --border: 240 3.7% 18%;
     --input: 240 3.7% 18%;
-    --ring: 24 75% 55%;
+    --ring: 259 63% 65%;
 }
 
 /* Reset + tipografía */

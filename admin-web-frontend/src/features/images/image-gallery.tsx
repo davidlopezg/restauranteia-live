@@ -259,7 +259,7 @@ const UploadModal = ({
                     <button type="button" onClick={onClose} className="rounded-md px-3 py-1.5 text-sm text-secondary hover:bg-secondary">
                         Cancelar
                     </button>
-                    <button type="submit" disabled={submitting} className="rounded-md bg-brand-primary px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-primary_hover disabled:opacity-50">
+                    <button type="submit" disabled={submitting} className="rounded-md bg-brand-solid px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-solid_hover disabled:opacity-50">
                         {submitting ? "Subiendo…" : "Subir"}
                     </button>
                 </div>

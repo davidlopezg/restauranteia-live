@@ -56,7 +56,7 @@ export const DevelopmentSection = ({ agenda, onChange }: DevelopmentSectionProps
                         type="button"
                         onClick={() => iniciar.mutate()}
                         disabled={iniciar.isPending}
-                        className="mt-2 rounded-md bg-brand-primary px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-primary_hover disabled:opacity-50"
+                        className="mt-2 rounded-md bg-brand-solid px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-solid_hover disabled:opacity-50"
                     >
                         {iniciar.isPending ? "Iniciando…" : "Iniciar desarrollo (CONCEPTO)"}
                     </button>
@@ -80,7 +80,7 @@ export const DevelopmentSection = ({ agenda, onChange }: DevelopmentSectionProps
                                         disabled={isActual || cambiar.isPending}
                                         onClick={() => cambiar.mutate(destino)}
                                         className={`rounded-full px-2.5 py-0.5 text-xs ${isActual
-                                                ? "bg-brand-primary text-white cursor-default"
+                                                ? "bg-brand-solid text-white cursor-default"
                                                 : "bg-secondary text-primary hover:bg-brand-secondary hover:text-brand-primary"
                                             }`}
                                     >

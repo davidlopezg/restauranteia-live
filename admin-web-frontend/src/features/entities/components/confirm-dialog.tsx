@@ -54,7 +54,7 @@ export const ConfirmDialog = ({
                                     }}
                                     className={cx(
                                         "rounded-md px-3 py-1.5 text-sm font-medium text-white",
-                                        danger ? "bg-error-primary hover:bg-error-primary_hover" : "bg-brand-primary hover:bg-brand-primary_hover",
+                                        danger ? "bg-error-solid hover:bg-error-solid_hover" : "bg-brand-solid hover:bg-brand-solid_hover",
                                     )}
                                 >
                                     {confirmLabel}

@@ -78,7 +78,7 @@ export const IdeasCreativasPage = () => {
                         className="flex-1 rounded-md border border-secondary bg-primary px-3 py-1.5 text-sm"
                         required
                     />
-                    <button type="submit" disabled={generar.isPending} className="rounded-md bg-brand-primary px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-primary_hover disabled:opacity-50">
+                    <button type="submit" disabled={generar.isPending} className="rounded-md bg-brand-solid px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-solid_hover disabled:opacity-50">
                         {generar.isPending ? "Generando…" : "✨ Generar 10 ideas"}
                     </button>
                 </form>
@@ -119,7 +119,7 @@ export const IdeasCreativasPage = () => {
                             <option value="">— elige método —</option>
                             {metodos.map(m => <option key={m} value={m}>{m}</option>)}
                         </select>
-                        <button type="button" onClick={() => aplicar.mutate()} disabled={!metodo || aplicar.isPending} className="rounded-md bg-brand-primary px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-primary_hover disabled:opacity-50">
+                        <button type="button" onClick={() => aplicar.mutate()} disabled={!metodo || aplicar.isPending} className="rounded-md bg-brand-solid px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-solid_hover disabled:opacity-50">
                             {aplicar.isPending ? "Aplicando…" : "Aplicar"}
                         </button>
                     </div>
@@ -129,7 +129,7 @@ export const IdeasCreativasPage = () => {
                             <pre className="mt-1 whitespace-pre-wrap rounded-md bg-secondary p-3 text-xs text-primary">
                                 {resultado}
                             </pre>
-                            <button type="button" onClick={() => guardar.mutate()} disabled={guardar.isPending} className="mt-3 rounded-md bg-brand-primary px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-primary_hover disabled:opacity-50">
+                            <button type="button" onClick={() => guardar.mutate()} disabled={guardar.isPending} className="mt-3 rounded-md bg-brand-solid px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-solid_hover disabled:opacity-50">
                                 {guardar.isPending ? "Guardando…" : "💾 Guardar como Idea"}
                             </button>
                         </div>

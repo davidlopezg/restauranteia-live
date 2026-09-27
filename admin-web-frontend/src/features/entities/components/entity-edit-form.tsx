@@ -126,7 +126,7 @@ export const EntityEditForm = ({ entidad, item, onSubmit, onCancel, isSubmitting
                 <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="rounded-md bg-brand-primary px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-primary_hover disabled:opacity-50"
+                    className="rounded-md bg-brand-solid px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-solid_hover disabled:opacity-50"
                 >
                     {isSubmitting ? "Guardando…" : "Guardar"}
                 </button>

@@ -34,7 +34,7 @@ interface TestsSectionProps {
 const ESTADO_BADGE: Record<TestEstado, string> = {
     PENDIENTE: "bg-warning-secondary text-warning-primary",
     REALIZADA: "bg-success-secondary text-success-primary",
-    APROBADO: "bg-brand-primary text-white",
+    APROBADO: "bg-brand-solid text-white",
     DESCARTADA: "bg-error-secondary text-error-primary",
 };
 
