@@ -25,7 +25,7 @@ export const KanbanColumn = ({ estado, items, disabled, onSelectEstado, mutation
     return (
         <div
             className={cx(
-                "flex w-64 shrink-0 flex-col rounded-lg border border-secondary bg-secondary/40",
+                "flex w-[80vw] shrink-0 snap-start flex-col rounded-lg border border-secondary bg-secondary/40 md:w-64",
                 isDropTarget && !disabled && "ring-2 ring-brand-primary bg-brand-secondary",
                 disabled && "opacity-50",
             )}
@@ -44,7 +44,7 @@ export const KanbanColumn = ({ estado, items, disabled, onSelectEstado, mutation
 
             <div
                 ref={ref}
-                className="flex-1 space-y-2 overflow-y-auto p-2"
+                className="min-h-[80px] flex-1 space-y-2 overflow-y-auto p-2"
                 data-body-for={estado}
                 data-droppable={!disabled}
             >

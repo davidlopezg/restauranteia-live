@@ -1,4 +1,4 @@
-import { DragDropProvider } from "@dnd-kit/react";
+import { DragDropProvider, DragOverlay } from "@dnd-kit/react";
 import { useEffect, useState } from "react";
 import { ESTADOS_DESARROLLO, type EstadoDesarrollo, type AgendaPipeline, type PipelinePorEstado } from "@/types/pipeline";
 import { usePipeline } from "@/features/pipeline/use-pipeline";
@@ -12,6 +12,8 @@ export const KanbanBoard = () => {
     const { data, isLoading, error } = usePipeline();
     const cambiarEstado = useCambiarEstado();
     const [feedback, setFeedback] = useState<{ kind: "ok" | "err"; msg: string } | null>(null);
+    // id (`card-...`) de la card en vuelo. Controla el <DragOverlay>.
+    const [activeId, setActiveId] = useState<string | null>(null);
 
     useEffect(() => {
         if (!feedback) return;
@@ -30,9 +32,17 @@ export const KanbanBoard = () => {
         );
     };
 
+    const handleDragStart = (event: {
+        operation: { source: { id: string | number } | null };
+    }) => {
+        const id = event.operation.source?.id;
+        if (typeof id === "string" && id.startsWith("card-")) setActiveId(id);
+    };
+
     const handleDragEnd = (event: {
         operation: { source: { id: string | number } | null; target: { id: string | number } | null; canceled: boolean };
     }) => {
+        setActiveId(null);
         if (event.operation.canceled) return;
         const sourceId = event.operation.source?.id;
         const targetId = event.operation.target?.id;
@@ -74,8 +84,11 @@ export const KanbanBoard = () => {
                 )}
             </div>
 
-            <DragDropProvider onDragEnd={handleDragEnd}>
-                <div className="flex gap-3 overflow-x-auto pb-4" data-testid="kanban-board">
+            <DragDropProvider onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+                <div
+                    className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-4"
+                    data-testid="kanban-board"
+                >
                     {ESTADOS_DESARROLLO.map(estado => (
                         <KanbanColumn
                             key={estado}
@@ -87,6 +100,13 @@ export const KanbanBoard = () => {
                         />
                     ))}
                 </div>
+
+                {/* El overlay se monta en un portal fuera de los contenedores con
+                    overflow (columnas y board), así que la card nunca se recorta.
+                    dropAnimation={null} evita la animación de "vuelta a casa". */}
+                <DragOverlay dropAnimation={null}>
+                    {activeId ? renderOverlayCard(data, activeId) : null}
+                </DragOverlay>
             </DragDropProvider>
         </div>
     );
@@ -99,6 +119,22 @@ function findCard(pipeline: PipelinePorEstado | undefined, agendaId: string): Ag
         if (found) return found;
     }
     return undefined;
+}
+
+// Preview que sigue al dedo/cursor. Es sólo presentación (sin hooks de DnD).
+function renderOverlayCard(pipeline: PipelinePorEstado, activeId: string) {
+    const card = findCard(pipeline, activeId.slice("card-".length));
+    if (!card) return null;
+    return (
+        <div className="w-64 rotate-2 cursor-grabbing rounded-md border border-secondary bg-primary p-3 shadow-xl">
+            <h3 className="text-sm font-medium text-primary line-clamp-2">
+                {card.titulo || "(sin título)"}
+            </h3>
+            {card.objetivo && (
+                <p className="mt-1 text-xs text-tertiary line-clamp-2">{card.objetivo}</p>
+            )}
+        </div>
+    );
 }
 
 // Hook de testing: expone el handler drag-end para que los tests unitarios

@@ -1,4 +1,5 @@
 import { useDraggable } from "@dnd-kit/react";
+import { useCallback } from "react";
 import { useNavigate } from "react-router";
 import { cx } from "@/utils/cx";
 import { ESTADO_LABELS, type AgendaPipeline, type EstadoDesarrollo } from "@/types/pipeline";
@@ -12,25 +13,45 @@ interface KanbanCardProps {
 }
 
 // Card arrastrable de una agenda en el Kanban.
-// useDraggable expone `ref` (la adjuntamos al div) e `isDragging` (true durante el drag).
-// Click en la card abre el detalle. El selector inline permite mover de estado
-// sin drag (alternativa accesible).
+// useDraggable expone `ref` (la adjuntamos al div), `handleRef` (zona que inicia el
+// drag) e `isDragging` (true durante el drag).
+//
+// IMPORTANTE: el cuerpo principal de la card es un <button> (para abrir el detalle).
+// El PointerSensor descarta la activación si el pointerdown cae sobre un elemento
+// interactivo que no sea el propio elemento/handle del draggable. Al declarar TODO
+// el div como handle (ref + handleRef sobre el mismo nodo), el sensor permite
+// arrastrar desde cualquier punto interior, incluido el botón. Sin esto el drag
+// sólo funciona en el borde de la card: ese es el bug real.
+//
+// touch-manipulation + select-none: permite el scroll de la página con el dedo y
+// evita seleccionar texto durante el long-press. NO usamos touch-action: none
+// (eso es para PointerSensor sin delay: mataría el scroll sobre la card).
 
 export const KanbanCard = ({ card, onSelectEstado, disabled }: KanbanCardProps) => {
     const navigate = useNavigate();
-    const { ref, isDragging } = useDraggable({
+    const { ref, handleRef, isDragging } = useDraggable({
         id: `card-${card.id}`,
         type: "pipeline-card",
         data: { agendaId: card.id, estadoActual: card.estado_desarrollo },
     });
 
+    // `ref` (elemento arrastrado) y `handleRef` (zona que inicia el drag) apuntan
+    // al mismo nodo: la card entera es su propio handle.
+    const setRefs = useCallback(
+        (el: HTMLDivElement | null) => {
+            ref(el);
+            handleRef(el);
+        },
+        [ref, handleRef],
+    );
+
     return (
         <div
-            ref={ref}
+            ref={setRefs}
             data-agenda-id={card.id}
             data-testid={`card-${card.id}`}
             className={cx(
-                "rounded-md border border-secondary bg-primary p-3 shadow-sm transition-shadow",
+                "touch-manipulation select-none rounded-md border border-secondary bg-primary p-3 shadow-sm transition-shadow",
                 "hover:shadow-md",
                 isDragging && "cursor-grabbing opacity-40 shadow-lg",
                 !isDragging && "cursor-grab",
