@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { MagicWand01, Plus, Trash01 } from "@untitledui/icons";
 import { DangerButton, DangerIconButton } from "@/components/ui/danger-button";
+import { Button, CancelButton } from "@/components/ui/button";
 import { testsService, feedbackService, aprobarService } from "@/services/tests";
 import { iaService } from "@/services/ia";
 import type { DevTest, TestEstado, TestCreate, EvaluacionCriterios, EvaluacionProducto } from "@/types/test";
@@ -406,21 +407,15 @@ const Block = ({
                         className="w-full rounded-md border border-secondary bg-primary px-3 py-2 text-sm"
                     />
                     <div className="flex justify-end gap-2">
-                        <button
-                            type="button"
-                            onClick={() => setEditing(false)}
-                            className="rounded-md px-3 py-1 text-xs text-secondary hover:bg-secondary"
-                        >
-                            Cancelar
-                        </button>
-                        <button
-                            type="button"
+                        <CancelButton size="xs" onClick={() => setEditing(false)} />
+                        <Button
+                            variant="primary"
+                            size="xs"
                             onClick={save}
                             disabled={update && (update as { isPending?: boolean }).isPending}
-                            className="rounded-md bg-brand-primary px-3 py-1 text-xs font-medium text-white hover:bg-brand-primary_hover disabled:opacity-50"
                         >
                             Guardar
-                        </button>
+                        </Button>
                     </div>
                 </div>
             ) : (
@@ -557,15 +552,10 @@ const NewFeedbackInline = ({ onClose, onCreate }: { onClose: () => void; onCreat
                 className="w-full rounded border border-secondary bg-primary px-2 py-1 text-xs"
             />
             <div className="flex justify-end gap-1">
-                <button
-                    type="button"
-                    onClick={onClose}
-                    className="rounded px-2 py-1 text-xs text-secondary hover:bg-secondary"
-                >
-                    Cancelar
-                </button>
-                <button
-                    type="button"
+                <CancelButton size="xs" onClick={onClose} />
+                <Button
+                    variant="primary"
+                    size="xs"
                     onClick={() => {
                         if (!mesa.trim()) return;
                         onCreate({
@@ -576,10 +566,9 @@ const NewFeedbackInline = ({ onClose, onCreate }: { onClose: () => void; onCreat
                             fecha: new Date().toISOString().slice(0, 10),
                         });
                     }}
-                    className="rounded bg-brand-primary px-2 py-1 text-xs text-white hover:bg-brand-primary_hover"
                 >
                     Guardar
-                </button>
+                </Button>
             </div>
         </div>
     );
@@ -601,13 +590,9 @@ const EvaluacionEditor = ({ current, onSave }: { current: EvaluacionProducto | n
 
     if (!open) {
         return (
-            <button
-                type="button"
-                onClick={abrir}
-                className="rounded-md border border-secondary px-2 py-1 text-xs hover:bg-secondary"
-            >
+            <Button variant="secondary" size="xs" onClick={abrir}>
                 {current ? "Reevaluar" : "Evaluar"}
-            </button>
+            </Button>
         );
     }
 
@@ -638,23 +623,16 @@ const EvaluacionEditor = ({ current, onSave }: { current: EvaluacionProducto | n
                 {veredicto === "DESCARTAR" && "🔴 Repensar enfoque"}
             </p>
             <div className="mt-4 flex justify-end gap-2">
-                <button
-                    type="button"
-                    onClick={() => setOpen(false)}
-                    className="rounded-md px-3 py-1.5 text-sm text-secondary hover:bg-secondary"
-                >
-                    Cancelar
-                </button>
-                <button
-                    type="button"
+                <CancelButton onClick={() => setOpen(false)} />
+                <Button
+                    variant="primary"
                     onClick={() => {
                         onSave({ criterios: draft, promedio, veredicto });
                         setOpen(false);
                     }}
-                    className="rounded-md bg-brand-primary px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-primary_hover"
                 >
                     Guardar evaluación
-                </button>
+                </Button>
             </div>
         </Modal>
     );
@@ -759,20 +737,18 @@ const DecisionPanel = ({
                 ¿Qué hacés con esta prueba?
             </p>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                <button
-                    type="button"
+                <Button
                     onClick={createNext}
                     disabled={creatingNext || !test.modificaciones}
-                    className="rounded-md border border-warning-primary bg-warning-secondary px-3 py-2 text-sm font-medium text-warning-primary hover:bg-warning-primary hover:text-white disabled:opacity-40"
                     title={!test.modificaciones ? "Anotá qué cambiarías primero" : "Crear prueba #N+1 con lo aprendido"}
+                    className="border-warning-primary bg-warning-secondary text-warning-primary hover:bg-warning-primary hover:text-white"
                 >
                     🟡 Repetir modificando
-                </button>
-                <button
-                    type="button"
+                </Button>
+                <Button
+                    variant="primary"
                     onClick={() => setAproving(true)}
                     disabled={aprobar.isPending || !evaluacion || evaluacion.veredicto !== "APTA"}
-                    className="rounded-md bg-brand-primary px-3 py-2 text-sm font-medium text-white hover:bg-brand-primary_hover disabled:opacity-40"
                     title={
                         !evaluacion
                             ? "Evaluá primero"
@@ -782,7 +758,7 @@ const DecisionPanel = ({
                     }
                 >
                     🟢 Aprobar y promover
-                </button>
+                </Button>
                 <DangerButton onClick={descartar}>
                     🔴 Descartar
                 </DangerButton>
@@ -805,21 +781,14 @@ const DecisionPanel = ({
                         </p>
                     )}
                     <div className="mt-4 flex justify-end gap-2">
-                        <button
-                            type="button"
-                            onClick={() => setAproving(false)}
-                            className="rounded-md px-3 py-1.5 text-sm text-secondary hover:bg-secondary"
-                        >
-                            Cancelar
-                        </button>
-                        <button
-                            type="button"
+                        <CancelButton onClick={() => setAproving(false)} />
+                        <Button
+                            variant="primary"
                             onClick={() => aprobar.mutate()}
                             disabled={aprobar.isPending}
-                            className="rounded-md bg-brand-primary px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-primary_hover disabled:opacity-50"
                         >
                             {aprobar.isPending ? "Promoviendo…" : "Confirmar aprobación"}
-                        </button>
+                        </Button>
                     </div>
                 </Modal>
             )}

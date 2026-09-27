@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Trash01, X } from "@untitledui/icons";
 import { DangerIconButton } from "@/components/ui/danger-button";
+import { Button } from "@/components/ui/button";
 import { imagesService, imagesKeys, imagesSupabase } from "@/services/images";
 import type { EntityImage } from "@/types/image";
 import type { EntityKind } from "@/types/entity";
@@ -41,14 +42,15 @@ export const ImageGallery = ({ entidad, entityId, images, onChange }: ImageGalle
                 <h3 className="text-sm font-semibold text-primary">
                     Imágenes <span className="text-tertiary">({list.length})</span>
                 </h3>
-                <button
-                    type="button"
+                <Button
+                    variant="tertiary"
+                    size="xs"
+                    iconLeft={<Plus className="size-3" />}
                     onClick={() => setUploading(true)}
-                    className="inline-flex items-center gap-1 rounded-md border border-secondary px-2 py-1 text-xs hover:bg-secondary"
                     data-testid="upload-image-btn"
                 >
-                    <Plus className="size-3" /> Subir
-                </button>
+                    Subir
+                </Button>
             </header>
 
             {list.length === 0 ? (
