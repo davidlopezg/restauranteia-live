@@ -5,6 +5,7 @@
 import { env } from "@/config/env";
 import {
     testsSupabase, feedbackSupabase, commentsSupabase,
+    aprobarYPromover as aprobarYPromoverSupabase,
     testsLegacy, feedbackLegacy,
     type DevelopmentTest, type TestCreate, type TestUpdate,
     type TestFeedback, type FeedbackCreate, type FeedbackUpdate,
@@ -13,7 +14,7 @@ import {
 } from "@/services/tests.supabase";
 
 export type { DevelopmentTest, TestCreate, TestUpdate, TestFeedback, FeedbackCreate, FeedbackUpdate, TestComment, TestCommentCreate };
-export { testsKeys, feedbackKeys };
+export { testsKeys, feedbackKeys, aprobarYPromoverSupabase };
 
 export const testsService = {
     list: (agendaId: string, estado?: string): Promise<DevelopmentTest[]> =>
@@ -61,4 +62,10 @@ export const commentsService = {
     list: (testId: string): Promise<TestComment[]> => commentsSupabase.list(testId),
     create: (testId: string, body: TestCommentCreate): Promise<TestComment> => commentsSupabase.create(testId, body),
     delete: (commentId: string): Promise<{ deleted: boolean; id: string }> => commentsSupabase.delete(commentId),
+};
+
+// Aprueba una prueba y promueve a producto. Crea la fila en catalogos,
+// linkea agenda_catalogo y marca la agenda como PRODUCTO. Solo Supabase.
+export const aprobarService = {
+    run: (testId: string) => aprobarYPromoverSupabase(testId),
 };

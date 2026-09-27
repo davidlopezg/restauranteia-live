@@ -242,6 +242,92 @@ export const commentsSupabase = {
     },
 };
 
+// === Aprobar y promover ===
+// Marca la prueba como APROBADO, crea un producto en catalogos con los
+// datos de la agenda + ficha_generada de la prueba, linkea agenda_catalogo
+// y mueve la agenda a estado_desarrollo='PRODUCTO'.
+// Devuelve { test, agenda, catalogo }.
+
+export interface AprobarResult {
+    testId: string;
+    agendaId: string;
+    catalogoId: string;
+}
+
+export async function aprobarYPromover(testId: string): Promise<AprobarResult> {
+    const supabase = getSupabase();
+    if (!supabase) throw new Error("Supabase no configurado");
+
+    // 1. Cargar la prueba + su agenda + catálogo relacionado (si existe)
+    const { data: test, error: testErr } = await supabase
+        .from("development_tests")
+        .select("id, agenda_id, ficha_generada, receta_utilizada, modificaciones")
+        .eq("id", testId)
+        .maybeSingle();
+    if (testErr) throw new Error(testErr.message);
+    if (!test) throw new Error("Prueba no encontrada");
+
+    const { data: agenda, error: agErr } = await supabase
+        .from("agendas")
+        .select("id, titulo, receta_final, objetivo")
+        .eq("id", (test as { agenda_id: string }).agenda_id)
+        .maybeSingle();
+    if (agErr) throw new Error(agErr.message);
+    if (!agenda) throw new Error("Agenda no encontrada");
+
+    // 2. Crear fila en catalogos con titulo de la agenda + ficha_generada como receta_estructurada
+    const fichaTexto = (test as { ficha_generada?: { texto?: string } | string | null }).ficha_generada;
+    const recetaTexto = typeof fichaTexto === "string"
+        ? fichaTexto
+        : fichaTexto?.texto ?? JSON.stringify(fichaTexto ?? null);
+
+    const { data: catalogo, error: catErr } = await supabase
+        .from("catalogos")
+        .insert({
+            titulo: (agenda as { titulo: string }).titulo,
+            estado: "Listo",
+            seleccionada: false,
+            receta_estructurada: {
+                fuente: "test_aprobado",
+                test_id: testId,
+                ficha_generada: recetaTexto,
+                receta_utilizada: (test as { receta_utilizada?: string | null }).receta_utilizada ?? null,
+                modificaciones: (test as { modificaciones?: string | null }).modificaciones ?? null,
+                receta_final_agenda: (agenda as { receta_final?: unknown }).receta_final ?? null,
+            },
+            migrated_at: new Date().toISOString(),
+            migration_run_id: "test_aprobado",
+        })
+        .select("id")
+        .maybeSingle();
+    if (catErr) throw new Error(catErr.message);
+    if (!catalogo) throw new Error("No se pudo crear el producto");
+
+    const catalogoId = (catalogo as { id: string }).id;
+    const agendaId = (test as { agenda_id: string }).agenda_id;
+
+    // 3. Linkear agenda_catalogo (idempotente)
+    await supabase
+        .from("agenda_catalogo")
+        .upsert({ agenda_id: agendaId, catalogo_id: catalogoId }, { onConflict: "agenda_id,catalogo_id" });
+
+    // 4. Marcar la prueba como APROBADO
+    const { error: upTestErr } = await supabase
+        .from("development_tests")
+        .update({ estado: "APROBADO" })
+        .eq("id", testId);
+    if (upTestErr) throw new Error(upTestErr.message);
+
+    // 5. Mover la agenda a PRODUCTO
+    const { error: upAgErr } = await supabase
+        .from("agendas")
+        .update({ estado_desarrollo: "PRODUCTO" })
+        .eq("id", agendaId);
+    if (upAgErr) throw new Error(upAgErr.message);
+
+    return { testId, agendaId, catalogoId };
+}
+
 // === Legacy fallback ===
 
 export const testsLegacy = {
