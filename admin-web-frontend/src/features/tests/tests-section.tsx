@@ -68,6 +68,7 @@ export const TestsSection = ({ agendaId, onChange }: TestsSectionProps) => {
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ["tests", "agenda", agendaId] });
             onChange?.();
+            setShowNew(false);
         },
     });
 
@@ -126,6 +127,8 @@ export const TestsSection = ({ agendaId, onChange }: TestsSectionProps) => {
                 <NewTestModal
                     onClose={() => setShowNew(false)}
                     onCreate={body => create.mutate(body)}
+                    submitting={create.isPending}
+                    error={create.error as Error | null}
                 />
             )}
         </section>
@@ -835,7 +838,7 @@ const DecisionPanel = ({
 
 // === Modales auxiliares ===
 
-const NewTestModal = ({ onClose, onCreate }: { onClose: () => void; onCreate: (body: TestCreate) => void }) => {
+const NewTestModal = ({ onClose, onCreate, submitting, error }: { onClose: () => void; onCreate: (body: TestCreate) => void; submitting?: boolean; error?: Error | null }) => {
     const [objetivo, setObjetivo] = useState("");
     const [fecha, setFecha] = useState(new Date().toISOString().slice(0, 10));
     return (
@@ -843,11 +846,16 @@ const NewTestModal = ({ onClose, onCreate }: { onClose: () => void; onCreate: (b
             <form
                 onSubmit={ev => {
                     ev.preventDefault();
-                    if (!objetivo.trim()) return;
+                    if (!objetivo.trim() || submitting) return;
                     onCreate({ objetivo: objetivo.trim(), fecha, estado: "PENDIENTE" });
                 }}
                 className="space-y-3"
             >
+                {error && (
+                    <p className="rounded-md bg-error-secondary px-3 py-2 text-xs text-error-primary">
+                        Error: {error.message}
+                    </p>
+                )}
                 <label className="block text-xs text-tertiary">Objetivo</label>
                 <input
                     type="text"
@@ -856,6 +864,7 @@ const NewTestModal = ({ onClose, onCreate }: { onClose: () => void; onCreate: (b
                     className="w-full rounded-md border border-secondary bg-primary px-3 py-1.5 text-sm"
                     autoFocus
                     required
+                    disabled={submitting}
                 />
                 <label className="block text-xs text-tertiary">Fecha</label>
                 <input
@@ -863,8 +872,9 @@ const NewTestModal = ({ onClose, onCreate }: { onClose: () => void; onCreate: (b
                     value={fecha}
                     onChange={e => setFecha(e.target.value)}
                     className="rounded-md border border-secondary bg-primary px-3 py-1.5 text-sm"
+                    disabled={submitting}
                 />
-                <ModalActions onClose={onClose} submitLabel="Crear" />
+                <ModalActions onClose={onClose} submitLabel={submitting ? "Creando…" : "Crear"} disabled={submitting} />
             </form>
         </Modal>
     );
@@ -950,7 +960,7 @@ const Modal = ({ title, onClose, children }: { title: string; onClose: () => voi
     </div>
 );
 
-const ModalActions = ({ onClose, onSubmit, submitLabel }: { onClose: () => void; onSubmit?: () => void; submitLabel: string }) => (
+const ModalActions = ({ onClose, onSubmit, submitLabel, disabled }: { onClose: () => void; onSubmit?: () => void; submitLabel: string; disabled?: boolean }) => (
     <div className="mt-4 flex justify-end gap-2">
         <button type="button" onClick={onClose} className="rounded-md px-3 py-1.5 text-sm text-secondary hover:bg-secondary">
             Cancelar
@@ -958,7 +968,8 @@ const ModalActions = ({ onClose, onSubmit, submitLabel }: { onClose: () => void;
         <button
             type={onSubmit ? "button" : "submit"}
             onClick={onSubmit}
-            className="rounded-md bg-brand-primary px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-primary_hover"
+            disabled={disabled}
+            className="rounded-md bg-brand-primary px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-primary_hover disabled:opacity-50"
         >
             {submitLabel}
         </button>
