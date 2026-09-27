@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { RouterProvider as AriaRouterProvider } from "react-aria-components";
 import { HashRouter, Route, Routes, useNavigate } from "react-router";
 import type { NavigateOptions } from "react-router";
@@ -14,6 +15,21 @@ import { IdeasCreativasPage } from "@/features/ia/ideas-creativas-page";
 import { IdeasCientificasPage } from "@/features/ia/ideas-cientificas-page";
 import { DocumentationPage } from "@/features/documentation/documentation-page";
 import { PlaceholderPage } from "@/features/layout/placeholder-page";
+import { LoginPage } from "@/features/auth/login-page";
+import { useAuth } from "@/lib/auth";
+
+// Gate de auth: redirige a /login si no hay sesión. Si Supabase no está
+// configurado deja pasar (no se puede loguear de todos modos y la página
+// de login muestra el error en pantalla).
+const RequireAuth = ({ children }: { children: React.ReactNode }) => {
+    const { user, loading, isConfigured } = useAuth();
+    const navigate = useNavigate();
+    useEffect(() => {
+        if (!loading && isConfigured && !user) navigate("/login", { replace: true });
+    }, [loading, isConfigured, user, navigate]);
+    if (loading) return <p className="p-6 text-sm text-tertiary">Cargando…</p>;
+    return <>{children}</>;
+};
 
 declare module "react-aria-components" {
     interface RouterConfig {
@@ -26,7 +42,8 @@ const RouterBridge = () => {
     return (
         <AriaRouterProvider navigate={navigate}>
             <Routes>
-                <Route path="/" element={<Shell />}>
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/" element={<RequireAuth><Shell /></RequireAuth>}>
                     <Route index element={<HomePage />} />
                     {/* Pipeline */}
                     <Route path="desarrollo" element={<PipelinePage />} />

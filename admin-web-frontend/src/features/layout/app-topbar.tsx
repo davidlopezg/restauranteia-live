@@ -1,8 +1,9 @@
-import { ArrowLeft } from "@untitledui/icons";
+import { ArrowLeft, LogOut01 } from "@untitledui/icons";
 import { useLocation, useNavigate } from "react-router";
 import { SECTION_TITLES } from "@/features/layout/nav-config";
 import { useActiveNav } from "@/features/layout/use-active-nav";
 import { GlobalSearch } from "@/features/search/global-search";
+import { useAuth } from "@/lib/auth";
 
 interface AppTopbarProps {
     /** Callback para abrir un overlay de búsqueda personalizado (si se quiere). */
@@ -15,6 +16,7 @@ export const AppTopbar = ({ onOpenSearch }: AppTopbarProps) => {
     const location = useLocation();
     const navigate = useNavigate();
     const activeLeaf = useActiveNav();
+    const { user, signOut } = useAuth();
 
     const title = activeLeaf?.label ?? SECTION_TITLES[location.pathname] ?? "Sol de Nit";
     const sectionBase = activeLeaf?.href ?? location.pathname;
@@ -53,6 +55,18 @@ export const AppTopbar = ({ onOpenSearch }: AppTopbarProps) => {
                     </button>
                 ) : (
                     <GlobalSearch />
+                )}
+                {user && (
+                    <button
+                        type="button"
+                        onClick={() => signOut()}
+                        className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-sm text-tertiary hover:bg-secondary"
+                        aria-label="Cerrar sesión"
+                        title={`Cerrar sesión (${user.email ?? ""})`}
+                        data-testid="signout-btn"
+                    >
+                        <LogOut01 className="size-4" />
+                    </button>
                 )}
             </div>
         </header>

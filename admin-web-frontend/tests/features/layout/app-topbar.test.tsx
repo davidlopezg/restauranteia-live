@@ -4,10 +4,13 @@ import { describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router";
 import type { PropsWithChildren } from "react";
 import { AppTopbar } from "@/features/layout/app-topbar";
+import { AuthProvider } from "@/lib/auth";
 
 const wrap = (path: string) => {
     return ({ children }: PropsWithChildren) => (
-        <MemoryRouter initialEntries={[path]}>{children}</MemoryRouter>
+        <MemoryRouter initialEntries={[path]}>
+            <AuthProvider>{children}</AuthProvider>
+        </MemoryRouter>
     );
 };
 
