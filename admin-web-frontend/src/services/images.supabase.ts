@@ -24,12 +24,14 @@ const IMAGE_TABLES = {
     ideas: "idea_images",
     agendas: "agenda_images",
     catalogos: "catalogo_images",
+    tests: "test_images",
 } as const;
 
 const ENTITY_FK_COL = {
     ideas: "idea_id",
     agendas: "agenda_id",
     catalogos: "catalogo_id",
+    tests: "test_id",
 } as const;
 
 type Entidad = keyof typeof IMAGE_TABLES;

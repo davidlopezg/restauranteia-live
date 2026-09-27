@@ -18,6 +18,7 @@ interface RelationsPanelProps {
 }
 
 const RELATIONS_BY_ENTITY: Record<EntityKind, Array<{ rel: RelationKind; label: string; target: EntityKind; key: keyof Relations }>> = {
+    tests: [],
     ideas: [
         { rel: "idea_agenda", label: "Agendas relacionadas", target: "agendas", key: "agendas" },
         { rel: "idea_catalogo", label: "Catálogos relacionados", target: "catalogos", key: "catalogos" },
@@ -36,6 +37,7 @@ const SERVICE_BY_ENTITY = {
     ideas: ideasService,
     agendas: agendasService,
     catalogos: catalogosService,
+    tests: ideasService, // stub: tests no aparece como target de relaciones
 } as const;
 
 export const RelationsPanel = ({ entidad, entityId, relations, onChange }: RelationsPanelProps) => {

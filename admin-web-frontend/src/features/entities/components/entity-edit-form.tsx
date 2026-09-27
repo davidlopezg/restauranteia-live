@@ -15,6 +15,7 @@ interface FieldDef {
 }
 
 const FIELDS: Record<EntityKind, FieldDef[]> = {
+    tests: [], // tests se editan dentro de la agenda, no en este form genérico.
     ideas: [
         { name: "titulo", label: "Título", type: "text" },
         { name: "descripcion", label: "Descripción", type: "textarea" },

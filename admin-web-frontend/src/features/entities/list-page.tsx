@@ -20,6 +20,7 @@ interface Column<T> {
 }
 
 const COLUMNS: Record<EntityKind, Column<Record<string, unknown>>[]> = {
+    tests: [],
     ideas: [
         { key: "titulo", label: "Título", render: i => <strong>{String(i.titulo ?? "(sin título)")}</strong> },
         {

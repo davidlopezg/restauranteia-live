@@ -74,6 +74,27 @@ export interface FeedbackCreate {
 
 export type FeedbackUpdate = Partial<FeedbackCreate>;
 
+// === COMMENTS (test_comments) ===
+// Comentario libre cronológico por prueba. Complementa `observaciones`
+// (campo resumen de la prueba) y `test_feedback` (datos estructurados
+// de mesa). Use case: notas durante la prueba, "David dice: subir sal",
+// "feedback de David al ver el emplatado", etc.
+
+export interface TestComment {
+    id: string;
+    test_id: string;
+    autor: string | null;
+    texto: string;
+    created_at: string;
+}
+
+export interface TestCommentCreate {
+    autor?: string;
+    texto: string;
+}
+
+export type TestCommentUpdate = Partial<TestCommentCreate>;
+
 // === TESTS ===
 
 export const testsKeys = {
@@ -181,6 +202,43 @@ export const feedbackSupabase = {
         const { error } = await supabase.from("test_feedback").delete().eq("id", feedbackId);
         if (error) throw new Error(error.message);
         return { deleted: true, id: feedbackId };
+    },
+};
+
+// === COMMENTS (Supabase) ===
+
+export const commentsSupabase = {
+    async list(testId: string): Promise<TestComment[]> {
+        const supabase = getSupabase();
+        if (!supabase) throw new Error("Supabase no configurado");
+        const { data, error } = await supabase
+            .from("test_comments")
+            .select("*")
+            .eq("test_id", testId)
+            .order("created_at", { ascending: false });
+        if (error) throw new Error(error.message);
+        return (data ?? []) as TestComment[];
+    },
+
+    async create(testId: string, body: TestCommentCreate): Promise<TestComment> {
+        const supabase = getSupabase();
+        if (!supabase) throw new Error("Supabase no configurado");
+        const { data, error } = await supabase
+            .from("test_comments")
+            .insert({ test_id: testId, ...body })
+            .select("*")
+            .maybeSingle();
+        if (error) throw new Error(error.message);
+        if (!data) throw new Error("No se pudo crear el comentario");
+        return data as TestComment;
+    },
+
+    async delete(commentId: string): Promise<{ deleted: boolean; id: string }> {
+        const supabase = getSupabase();
+        if (!supabase) throw new Error("Supabase no configurado");
+        const { error } = await supabase.from("test_comments").delete().eq("id", commentId);
+        if (error) throw new Error(error.message);
+        return { deleted: true, id: commentId };
     },
 };
 

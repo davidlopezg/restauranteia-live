@@ -8,14 +8,19 @@ import {
     uploadImage as uploadImageSupabase,
     updateImage as updateImageSupabase,
     deleteImage as deleteImageSupabase,
+    listImages as listImagesSupabase,
     imagesLegacy,
     type UploadMeta, type UploadResult,
 } from "@/services/images.supabase";
 
 export type { UploadMeta, UploadResult };
+export const imagesSupabase = {
+    list: listImagesSupabase,
+};
 
 export const imagesKeys = {
     signedUrl: (bucket: string, path: string) => ["images", "signed", bucket, path] as const,
+    listFor: (entidad: string, entityId: string) => ["images", "list", entidad, entityId] as const,
 };
 
 export const imagesService = {
@@ -25,7 +30,7 @@ export const imagesService = {
     },
 
     upload: (
-        entidad: "ideas" | "agendas" | "catalogos",
+        entidad: "ideas" | "agendas" | "catalogos" | "tests",
         entityId: string,
         file: File,
         meta: UploadMeta = {},
@@ -46,7 +51,7 @@ export const imagesService = {
     },
 
     update: (
-        entidad: "ideas" | "agendas" | "catalogos",
+        entidad: "ideas" | "agendas" | "catalogos" | "tests",
         entityId: string,
         imageId: string,
         body: Record<string, unknown>,
@@ -56,7 +61,7 @@ export const imagesService = {
     },
 
     delete: (
-        entidad: "ideas" | "agendas" | "catalogos",
+        entidad: "ideas" | "agendas" | "catalogos" | "tests",
         entityId: string,
         imageId: string,
     ): Promise<{ deleted: boolean; id: string; cleanup: boolean }> => {

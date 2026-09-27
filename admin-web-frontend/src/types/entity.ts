@@ -1,7 +1,7 @@
 // Tipos mínimos compartidos por las 3 entidades (Idea / Agenda / Catálogo).
 // Se completan en Fase 3 cuando se generan los servicios y queries específicas.
 
-export type EntityKind = "ideas" | "agendas" | "catalogos";
+export type EntityKind = "ideas" | "agendas" | "catalogos" | "tests";
 
 /** Item mínimo que cualquier listado devuelve. Lo demás se afina por entidad. */
 export interface BaseItem {

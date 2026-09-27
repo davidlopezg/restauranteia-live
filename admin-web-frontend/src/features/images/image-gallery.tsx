@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Trash01, X } from "@untitledui/icons";
-import { imagesService } from "@/services/images";
+import { imagesService, imagesKeys, imagesSupabase } from "@/services/images";
 import type { EntityImage } from "@/types/image";
 import type { EntityKind } from "@/types/entity";
 
@@ -16,7 +16,8 @@ import type { EntityKind } from "@/types/entity";
 interface ImageGalleryProps {
     entidad: EntityKind;
     entityId: string;
-    images: EntityImage[];
+    /** Si se omite, la galería hace su propio fetch (recomendado para sub-entidades como tests). */
+    images?: EntityImage[];
     onChange?: () => void;
 }
 
@@ -24,11 +25,20 @@ export const ImageGallery = ({ entidad, entityId, images, onChange }: ImageGalle
     const [zoomed, setZoomed] = useState<EntityImage | null>(null);
     const [uploading, setUploading] = useState(false);
 
+    // Si no nos pasan `images`, las buscamos nosotros mismos (necesario
+    // para sub-entidades como `tests` donde el padre no las carga).
+    const fetched = useQuery<EntityImage[]>({
+        queryKey: [...imagesKeys.listFor(entidad, entityId)],
+        queryFn: () => imagesSupabase.list(entidad, entityId) as Promise<EntityImage[]>,
+        enabled: images === undefined,
+    });
+    const list: EntityImage[] = images ?? (fetched.data ?? []);
+
     return (
         <section className="rounded-lg border border-secondary bg-primary p-4" data-testid="image-gallery">
             <header className="mb-3 flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-primary">
-                    Imágenes <span className="text-tertiary">({images.length})</span>
+                    Imágenes <span className="text-tertiary">({list.length})</span>
                 </h3>
                 <button
                     type="button"
@@ -40,11 +50,11 @@ export const ImageGallery = ({ entidad, entityId, images, onChange }: ImageGalle
                 </button>
             </header>
 
-            {images.length === 0 ? (
+            {list.length === 0 ? (
                 <p className="text-xs italic text-tertiary">Sin imágenes.</p>
             ) : (
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                    {images.map(img => (
+                    {list.map(img => (
                         <ImageThumb
                             key={img.id}
                             img={img}
@@ -66,6 +76,7 @@ export const ImageGallery = ({ entidad, entityId, images, onChange }: ImageGalle
                     onUploaded={() => {
                         setUploading(false);
                         onChange?.();
+                        fetched.refetch();
                     }}
                 />
             )}
@@ -97,6 +108,7 @@ const ImageThumb = ({
         mutationFn: () => imagesService.delete(entidad, entityId, img.id),
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: [entidad] });
+            qc.invalidateQueries({ queryKey: imagesKeys.listFor(entidad, entityId) });
             onDelete?.();
         },
     });

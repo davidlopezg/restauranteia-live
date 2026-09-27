@@ -1,17 +1,24 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { MagicWand01, Trash01 } from "@untitledui/icons";
-import { testsService } from "@/services/tests";
-import { feedbackService } from "@/services/feedback";
+import { testsService, feedbackService, commentsService } from "@/services/tests";
 import { iaService } from "@/services/ia";
 import type { DevTest, TestEstado, TestCreate } from "@/types/test";
 import type { TestFeedback, FeedbackCreate } from "@/types/feedback";
+import type { TestComment, TestCommentCreate } from "@/services/tests";
 import { fmtDate } from "@/utils/date";
+import { ImageGallery } from "@/features/images/image-gallery";
 
-// Sección de Pruebas + Feedback para una agenda. Subcomponentes:
-// - Lista de tests con acciones (editar, eliminar, generar ficha IA, evaluar)
-// - Lista de feedbacks por test
-// - Modales para crear/editar test, generar ficha IA, evaluar mínimos, añadir feedback
+// Sección de Pruebas para una agenda.
+// Modelo: una Prueba = 1 iteración de desarrollo con:
+//   - datos de cocina (objetivo, receta, modificaciones, resultado, observaciones)
+//   - galería de imágenes propias
+//   - comentarios cronológicos (notas durante la prueba)
+//   - ficha de prueba (texto técnico generado/editado por IA)
+//   - evaluación de mínimos (checklist para "¿apta para servicio?")
+//   - feedback de mesa (datos estructurados por mesa servida)
+//
+// Ver docs/PRODUCT_WORKFLOW.md para el flujo completo.
 
 interface TestsSectionProps {
     agendaId: string;
@@ -124,7 +131,12 @@ const TestItem = ({ test, onDelete, onChange }: { test: DevTest; onDelete: () =>
 
     const { data: feedbacks } = useQuery<TestFeedback[]>({
         queryKey: ["feedback", "test", test.id],
-        queryFn: () => feedbackService.listByTest(test.id) as Promise<TestFeedback[]>,
+        queryFn: () => feedbackService.list(test.id) as Promise<TestFeedback[]>,
+    });
+
+    const { data: comments } = useQuery<TestComment[]>({
+        queryKey: ["comments", "test", test.id],
+        queryFn: () => commentsService.list(test.id),
     });
 
     const fichaTexto = test.ficha_generada
@@ -135,13 +147,15 @@ const TestItem = ({ test, onDelete, onChange }: { test: DevTest; onDelete: () =>
 
     return (
         <li className="rounded-md border border-secondary bg-secondary/30 p-3" data-testid={`test-${test.id}`}>
-            <header className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
+            <header className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                     <strong className="text-sm">#{test.numero}</strong>
                     <span className={`rounded-full px-2 py-0.5 text-xs ${ESTADO_BADGE[test.estado]}`}>
                         {test.estado}
                     </span>
-                    {test.fecha && <span className="text-xs text-tertiary">{fmtDate(test.fecha)}</span>}
+                    <span className="text-xs text-tertiary" title="Fecha de la prueba">
+                        📅 {fmtDate(test.fecha)}
+                    </span>
                 </div>
                 <div className="flex gap-1">
                     <button type="button" onClick={() => setEditing(true)} className="rounded-md px-2 py-0.5 text-xs hover:bg-secondary">
@@ -169,14 +183,14 @@ const TestItem = ({ test, onDelete, onChange }: { test: DevTest; onDelete: () =>
                 </div>
             )}
 
-            <div className="mt-2 flex gap-2">
+            <div className="mt-2 flex flex-wrap gap-2">
                 <button
                     type="button"
                     onClick={() => setGeneratingFicha(true)}
                     className="inline-flex items-center gap-1 rounded-md bg-brand-primary px-2 py-1 text-xs text-white hover:bg-brand-primary_hover"
                     data-testid={`generar-ficha-${test.id}`}
                 >
-                    <MagicWand01 className="size-3" /> Generar ficha IA
+                    <MagicWand01 className="size-3" /> Generar ficha de prueba
                 </button>
                 <button
                     type="button"
@@ -191,7 +205,7 @@ const TestItem = ({ test, onDelete, onChange }: { test: DevTest; onDelete: () =>
             {fichaTexto && (
                 <div className="mt-2 rounded-md bg-warning-secondary p-2 text-xs">
                     <div className="mb-1 flex items-center justify-between">
-                        <strong>Ficha IA</strong>
+                        <strong>Ficha de prueba</strong>
                         <button type="button" onClick={() => setShowFichaEdit(true)} className="text-xs text-brand-primary hover:underline">
                             Editar
                         </button>
@@ -200,7 +214,15 @@ const TestItem = ({ test, onDelete, onChange }: { test: DevTest; onDelete: () =>
                 </div>
             )}
 
-            {/* Feedback */}
+            {/* Comentarios cronológicos de la prueba */}
+            <CommentsList testId={test.id} comments={comments ?? []} onChange={onChange} />
+
+            {/* Galería de imágenes propias de la prueba */}
+            <div className="mt-3">
+                <ImageGallery entidad="tests" entityId={test.id} onChange={onChange} />
+            </div>
+
+            {/* Feedback de mesa (estructurado por mesa) */}
             <FeedbackList testId={test.id} feedbacks={feedbacks ?? []} onChange={onChange} />
 
             {editing && (
@@ -243,6 +265,85 @@ const TestItem = ({ test, onDelete, onChange }: { test: DevTest; onDelete: () =>
         </li>
     );
 };
+
+// === Comentarios cronológicos ===
+
+const CommentsList = ({ testId, comments, onChange }: { testId: string; comments: TestComment[]; onChange: () => void }) => {
+    const qc = useQueryClient();
+    const [autor, setAutor] = useState("");
+
+    const create = useMutation({
+        mutationFn: (body: TestCommentCreate) => commentsService.create(testId, body),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ["comments", "test", testId] });
+            onChange();
+        },
+    });
+
+    const remove = useMutation({
+        mutationFn: (id: string) => commentsService.delete(id),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ["comments", "test", testId] });
+            onChange();
+        },
+    });
+
+    const submit = () => {
+        const texto = window.prompt("Comentario:");
+        if (!texto?.trim()) return;
+        create.mutate({ autor: autor.trim() || undefined, texto: texto.trim() });
+    };
+
+    return (
+        <div className="mt-2 border-t border-secondary pt-2">
+            <div className="mb-1 flex items-center justify-between">
+                <span className="text-xs font-medium text-tertiary">Comentarios ({comments.length})</span>
+                <div className="flex items-center gap-1">
+                    <input
+                        type="text"
+                        value={autor}
+                        onChange={e => setAutor(e.target.value)}
+                        placeholder="autor (opcional)"
+                        className="w-28 rounded-md border border-secondary bg-primary px-2 py-0.5 text-xs"
+                    />
+                    <button
+                        type="button"
+                        onClick={submit}
+                        className="text-xs text-brand-primary hover:underline"
+                        data-testid={`add-comment-${testId}`}
+                    >
+                        + Añadir
+                    </button>
+                </div>
+            </div>
+            {comments.length === 0 ? (
+                <p className="text-xs italic text-tertiary">Sin comentarios.</p>
+            ) : (
+                <ul className="space-y-1">
+                    {comments.map(c => (
+                        <li key={c.id} className="flex items-start justify-between gap-2 text-xs">
+                            <div className="flex-1">
+                                <span className="font-medium">{c.autor ?? "Anónimo"}</span>
+                                <span className="ml-2 text-tertiary">{fmtDate(c.created_at)}</span>
+                                <div className="text-secondary">{c.texto}</div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => remove.mutate(c.id)}
+                                className="rounded-full p-0.5 text-tertiary hover:text-error-primary"
+                                aria-label="Eliminar comentario"
+                            >
+                                <Trash01 className="size-3" />
+                            </button>
+                        </li>
+                    ))}
+                </ul>
+            )}
+        </div>
+    );
+};
+
+// === Feedback de mesa (estructurado) ===
 
 const FeedbackList = ({ testId, feedbacks, onChange }: { testId: string; feedbacks: TestFeedback[]; onChange: () => void }) => {
     const qc = useQueryClient();
@@ -400,7 +501,7 @@ const GenerarFichaModal = ({ test, onClose, onSave }: { test: DevTest; onClose: 
     };
 
     return (
-        <Modal title="Generar ficha con IA" onClose={onClose}>
+        <Modal title="Generar ficha de prueba con IA" onClose={onClose}>
             {!text && !loading && !err && (
                 <div>
                     <p className="mb-3 text-sm text-secondary">
@@ -435,7 +536,7 @@ const GenerarFichaModal = ({ test, onClose, onSave }: { test: DevTest; onClose: 
 const FichaEditModal = ({ initial, onClose, onSave }: { initial: string; onClose: () => void; onSave: (text: string) => void }) => {
     const [text, setText] = useState(initial);
     return (
-        <Modal title="Editar ficha IA" onClose={onClose}>
+        <Modal title="Editar ficha de prueba" onClose={onClose}>
             <textarea
                 value={text}
                 onChange={e => setText(e.target.value)}
@@ -585,3 +686,4 @@ const Field = ({ label, name, type = "text", defaultValue, placeholder, textarea
         )}
     </div>
 );
+

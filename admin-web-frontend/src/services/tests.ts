@@ -4,14 +4,15 @@
 
 import { env } from "@/config/env";
 import {
-    testsSupabase, feedbackSupabase,
+    testsSupabase, feedbackSupabase, commentsSupabase,
     testsLegacy, feedbackLegacy,
     type DevelopmentTest, type TestCreate, type TestUpdate,
     type TestFeedback, type FeedbackCreate, type FeedbackUpdate,
+    type TestComment, type TestCommentCreate,
     testsKeys, feedbackKeys,
 } from "@/services/tests.supabase";
 
-export type { DevelopmentTest, TestCreate, TestUpdate, TestFeedback, FeedbackCreate, FeedbackUpdate };
+export type { DevelopmentTest, TestCreate, TestUpdate, TestFeedback, FeedbackCreate, FeedbackUpdate, TestComment, TestCommentCreate };
 export { testsKeys, feedbackKeys };
 
 export const testsService = {
@@ -51,4 +52,13 @@ export const feedbackService = {
 
     delete: (feedbackId: string): Promise<{ deleted: boolean; id: string }> =>
         env.isSupabaseConfigured ? feedbackSupabase.delete(feedbackId) : feedbackLegacy.delete(feedbackId),
+};
+
+// Comentarios cronológicos por prueba. Solo Supabase por ahora
+// (no hay endpoint legacy en backend). Si isSupabaseConfigured=false,
+// falla explícito.
+export const commentsService = {
+    list: (testId: string): Promise<TestComment[]> => commentsSupabase.list(testId),
+    create: (testId: string, body: TestCommentCreate): Promise<TestComment> => commentsSupabase.create(testId, body),
+    delete: (commentId: string): Promise<{ deleted: boolean; id: string }> => commentsSupabase.delete(commentId),
 };

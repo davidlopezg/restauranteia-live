@@ -17,6 +17,14 @@ type ServiceMap = {
 };
 
 export const SERVICES: ServiceMap = {
+    tests: {
+        list: ideasService.list,
+        detail: ideasService.detail,
+        create: ideasService.create,
+        update: ideasService.update,
+        delete: ideasService.delete,
+        keys: ideasKeys,
+    }, // stub: tests no es entidad CRUD propia; se accede por agenda.
     ideas: {
         list: ideasService.list,
         detail: ideasService.detail,
@@ -47,6 +55,7 @@ export const getService = (entidad: EntityKind) => SERVICES[entidad];
 
 /** Etiqueta singular para UI. */
 export const ENTITY_SINGULAR: Record<EntityKind, string> = {
+    tests: "Prueba",
     ideas: "Idea",
     agendas: "Agenda",
     catalogos: "Catálogo",
@@ -54,6 +63,7 @@ export const ENTITY_SINGULAR: Record<EntityKind, string> = {
 
 /** Plural para listas. */
 export const ENTITY_PLURAL: Record<EntityKind, string> = {
+    tests: "Pruebas",
     ideas: "Ideas",
     agendas: "Pruebas",
     catalogos: "Catálogo",
