@@ -170,7 +170,11 @@ export async function uploadImage(
         mime_type: file.type || `image/${ext}`,
         file_size_bytes: file.size,
         sha256: sha,
-        position: meta.position === undefined ? "" : String(meta.position),
+        // position: test_images es int (no acepta ""), idea/agenda/catalogo
+        // son tolerantes. Mandamos null cuando no hay valor.
+        position: meta.position === undefined || meta.position === ""
+            ? null
+            : Number(meta.position),
         has_caption: false,
         migrated_at: new Date().toISOString(),
         migration_run_id: "manual_upload",
