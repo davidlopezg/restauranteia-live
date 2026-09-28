@@ -34,6 +34,15 @@ const ENTITY_FK_COL = {
     tests: "test_id",
 } as const;
 
+// test_images NO tiene las columnas Notion-specific ni ref_count.
+// Solo ideas/agendas/catalogos las tienen.
+const HAS_NOTION_COLS: Record<Entidad, boolean> = {
+    ideas: true,
+    agendas: true,
+    catalogos: true,
+    tests: false,
+};
+
 type Entidad = keyof typeof IMAGE_TABLES;
 
 const ALLOWED_EXTS = ["png", "jpg", "jpeg", "gif", "webp"] as const;
@@ -122,7 +131,11 @@ export async function uploadImage(
     // 5. Lookup dedup por hash en la tabla de la entidad
     const table = IMAGE_TABLES[entidad];
     const fk = ENTITY_FK_COL[entidad];
+    const hasNotion = HAS_NOTION_COLS[entidad];
 
+    // Para entidades SIN ref_count (tests), la unicidad la gestiona el
+    // UNIQUE(test_id, storage_path) de la tabla. Hacemos el lookup pero
+    // no incrementamos contador — la fila existente ya cubre el archivo.
     const { data: existing } = await supabase
         .from(table)
         .select("*")
@@ -131,25 +144,26 @@ export async function uploadImage(
         .maybeSingle();
 
     if (existing) {
-        // Deduplicated: update ref_count
-        const newRef = (existing.ref_count ?? 1) + 1;
-        const { data: updated, error: upErr2 } = await supabase
-            .from(table)
-            .update({ ref_count: newRef })
-            .eq("id", existing.id)
-            .select("*")
-            .maybeSingle();
-        if (upErr2) throw new Error(upErr2.message);
-        return { ...(updated as EntityImage), deduplicated: true };
+        if (hasNotion) {
+            // Deduplicated: update ref_count
+            const newRef = (existing.ref_count ?? 1) + 1;
+            const { data: updated, error: upErr2 } = await supabase
+                .from(table)
+                .update({ ref_count: newRef })
+                .eq("id", existing.id)
+                .select("*")
+                .maybeSingle();
+            if (upErr2) throw new Error(upErr2.message);
+            return { ...(updated as EntityImage), deduplicated: true };
+        }
+        // tests: ya existe la fila con ese hash, devolvemos tal cual
+        return { ...(existing as EntityImage), deduplicated: true };
     }
 
     // 6. INSERT nueva fila
-    const insertPayload = {
+    const insertPayload: Record<string, unknown> = {
         [fk]: entityId,
         source_type: meta.source_type ?? "",
-        notion_block_id: meta.notion_block_id ?? "",
-        notion_page_id: entityId,
-        notion_property: meta.notion_property ?? "",
         storage_bucket: bucket,
         storage_path: path,
         original_filename: file.name || null,
@@ -161,6 +175,11 @@ export async function uploadImage(
         migrated_at: new Date().toISOString(),
         migration_run_id: "manual_upload",
     };
+    if (hasNotion) {
+        insertPayload.notion_block_id = meta.notion_block_id ?? "";
+        insertPayload.notion_page_id = entityId;
+        insertPayload.notion_property = meta.notion_property ?? "";
+    }
     const { data: inserted, error: insErr } = await supabase
         .from(table)
         .insert(insertPayload)
