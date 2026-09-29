@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { desarrolloService } from "@/services/desarrollo";
-import { ESTADOS_DESARROLLO, ESTADO_LABELS, type EstadoDesarrollo } from "@/types/pipeline";
+import { ESTADOS_DESARROLLO, ESTADO_LABELS, TRANSICIONES, type EstadoDesarrollo } from "@/types/pipeline";
 import type { TimelineEvent } from "@/types/agenda";
 import { fmtDate } from "@/utils/date";
 
@@ -73,15 +73,25 @@ export const DevelopmentSection = ({ agenda, onChange }: DevelopmentSectionProps
                         <div className="flex flex-wrap gap-1">
                             {ESTADOS_DESARROLLO.map(destino => {
                                 const isActual = destino === estado;
+                                const isValido = estado ? TRANSICIONES[estado].includes(destino) : false;
                                 return (
                                     <button
                                         key={destino}
                                         type="button"
-                                        disabled={isActual || cambiar.isPending}
+                                        disabled={isActual || !isValido || cambiar.isPending}
+                                        title={
+                                            isActual
+                                                ? "Estado actual"
+                                                : isValido
+                                                    ? `Mover a ${ESTADO_LABELS[destino]}`
+                                                    : `Transición no permitida desde ${ESTADO_LABELS[estado!]}`
+                                        }
                                         onClick={() => cambiar.mutate(destino)}
                                         className={`rounded-full px-2.5 py-0.5 text-xs ${isActual
                                                 ? "bg-brand-solid text-white cursor-default"
-                                                : "bg-secondary text-primary hover:bg-brand-secondary hover:text-brand-primary"
+                                                : isValido
+                                                    ? "bg-secondary text-primary hover:bg-brand-secondary hover:text-brand-primary"
+                                                    : "bg-secondary text-disabled cursor-not-allowed"
                                             }`}
                                     >
                                         {ESTADO_LABELS[destino]}

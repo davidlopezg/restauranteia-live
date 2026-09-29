@@ -5,7 +5,8 @@ import { settingsKeys, settingsService } from "@/services/settings";
 import type { SettingsUpdate } from "@/types/filters";
 import { Button } from "@/components/ui/button";
 
-// Settings: tema, MiniMax key, OpenRouter key, prompt ficha, diagnóstico real.
+// Settings: tema, MiniMax key, OpenRouter key, prompt ficha, plantillas
+// (FASE 8: prompt_emplatado, plantilla_ficha_tecnica), diagnóstico real.
 
 export const SettingsPage = () => {
     const qc = useQueryClient();
@@ -87,6 +88,16 @@ export const SettingsPage = () => {
                 onSubmit={body => update.mutate(body)}
                 isSaving={update.isPending}
                 keyPrefix="or-"
+            />
+
+            {/* Plantillas IA (FASE 8) */}
+            <PlantillasCard
+                promptEmplatadoValue={settings?.prompt_emplatado}
+                plantillaFichaValue={settings?.plantilla_ficha_tecnica}
+                imageModelValue={settings?.openrouter_image_model}
+                imageModelDefault="nano-banana/nano-banana"
+                onSubmit={body => update.mutate(body)}
+                isSaving={update.isPending}
             />
 
             {/* Diagnóstico */}
@@ -261,6 +272,116 @@ const ProviderCard = ({
                 )}
                 <div className="flex justify-end">
                     <Button type="submit" variant="primary" size="xs" disabled={isSaving}>
+                        {isSaving ? "Guardando…" : "Guardar"}
+                    </Button>
+                </div>
+            </form>
+        </section>
+    );
+};
+
+/**
+ * FASE 8 — Plantillas para Emplatado IA + Ficha tecnica.
+ *
+ * - prompt_emplatado: prompt con variables {{titulo}}, {{ingredientes}}, etc.
+ *   Si esta vacio, el boton "Generar propuestas de emplatado" devuelve 503.
+ * - plantilla_ficha_tecnica: HTML/CSS con variables {{...}}.
+ *   Si esta vacio, se usa la plantilla por defecto embebida en backend.
+ * - openrouter_image_model: modelo de imagen (default 'nano-banana/nano-banana').
+ *   Mismo API key que openrouter_api_key — no requiere configuracion adicional.
+ */
+interface PlantillasCardProps {
+    promptEmplatadoValue?: string;
+    plantillaFichaValue?: string;
+    imageModelValue?: string;
+    imageModelDefault: string;
+    onSubmit: (body: SettingsUpdate) => void;
+    isSaving: boolean;
+}
+
+const PlantillasCard = ({
+    promptEmplatadoValue,
+    plantillaFichaValue,
+    imageModelValue,
+    imageModelDefault,
+    onSubmit,
+    isSaving,
+}: PlantillasCardProps) => {
+    const [promptEmplatado, setPromptEmplatado] = useState(promptEmplatadoValue ?? "");
+    const [plantillaFicha, setPlantillaFicha] = useState(plantillaFichaValue ?? "");
+    const [imageModel, setImageModel] = useState(imageModelValue ?? imageModelDefault);
+
+    const dirty =
+        promptEmplatado !== (promptEmplatadoValue ?? "") ||
+        plantillaFicha !== (plantillaFichaValue ?? "") ||
+        imageModel !== (imageModelValue ?? imageModelDefault);
+
+    return (
+        <section className="rounded-lg border border-secondary bg-primary p-4">
+            <h2 className="text-sm font-semibold text-primary">
+                🎨 Plantillas IA — Emplatado + Ficha técnica
+            </h2>
+            <p className="mt-1 text-xs text-tertiary">
+                Variables disponibles en los prompts: <code className="font-mono">{"{{titulo}}"}</code>,{" "}
+                <code className="font-mono">{"{{ingredientes}}"}</code>,{" "}
+                <code className="font-mono">{"{{mise_en_place}}"}</code>,{" "}
+                <code className="font-mono">{"{{servicio}}"}</code>.
+            </p>
+            <form
+                onSubmit={ev => {
+                    ev.preventDefault();
+                    if (!dirty) return;
+                    const body: SettingsUpdate = {};
+                    if (promptEmplatado !== (promptEmplatadoValue ?? "")) {
+                        body.prompt_emplatado = promptEmplatado;
+                    }
+                    if (plantillaFicha !== (plantillaFichaValue ?? "")) {
+                        body.plantilla_ficha_tecnica = plantillaFicha;
+                    }
+                    if (imageModel !== (imageModelValue ?? imageModelDefault)) {
+                        body.openrouter_image_model = imageModel;
+                    }
+                    if (Object.keys(body).length === 0) return;
+                    onSubmit(body);
+                }}
+                className="mt-3 space-y-2"
+            >
+                <div>
+                    <label className="block text-xs text-tertiary">Modelo de generación de imagen (OpenRouter)</label>
+                    <input
+                        type="text"
+                        value={imageModel}
+                        onChange={e => setImageModel(e.target.value)}
+                        placeholder={imageModelDefault}
+                        className="w-full rounded-md border border-secondary bg-primary px-3 py-1.5 text-sm font-mono"
+                    />
+                </div>
+                <div>
+                    <label className="block text-xs text-tertiary">
+                        Prompt para generar propuestas de emplatado
+                    </label>
+                    <textarea
+                        value={promptEmplatado}
+                        onChange={e => setPromptEmplatado(e.target.value)}
+                        rows={5}
+                        placeholder={'Ej: Genera una imagen cenital fotorrealista de un plato de alta cocina con estos ingredientes:\n{{ingredientes}}\nEstilo minimalista, fondo oscuro…'}
+                        className="w-full rounded-md border border-secondary bg-primary px-3 py-1.5 font-mono text-xs"
+                    />
+                </div>
+                <div>
+                    <label className="block text-xs text-tertiary">
+                        Plantilla HTML/CSS para ficha técnica (deja vacío para usar la por defecto)
+                    </label>
+                    <textarea
+                        value={plantillaFicha}
+                        onChange={e => setPlantillaFicha(e.target.value)}
+                        rows={6}
+                        placeholder="<!DOCTYPE html>… variables: {{titulo}}, {{ingredientes}}, {{mise_en_place}}, {{servicio}}, {{imagen_emplatado_url}}…"
+                        className="w-full rounded-md border border-secondary bg-primary px-3 py-1.5 font-mono text-xs"
+                    />
+                </div>
+                <div className="flex justify-end">
+                    <Button type="submit" variant="primary" size="xs" disabled={isSaving || !dirty}>
                         {isSaving ? "Guardando…" : "Guardar"}
                     </Button>
                 </div>

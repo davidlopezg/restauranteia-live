@@ -47,12 +47,14 @@ from routers.desarrollo import router as desarrollo_router
 from routers.images import router as images_router
 from routers.ia import router as ia_router
 from routers.settings import router as settings_router
+from routers.catalogos_ia import router as catalogos_ia_router
 
 app.include_router(entities_router)
 app.include_router(desarrollo_router)
 app.include_router(images_router)
 app.include_router(ia_router)
 app.include_router(settings_router)
+app.include_router(catalogos_ia_router)
 
 
 # === Serve Frontend SPA (production) ===

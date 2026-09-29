@@ -49,8 +49,10 @@ def get_settings():
     """Devuelve settings NO sensibles (no incluye api_keys ni prompts sensibles)."""
     try:
         rows = sb.query(f"SELECT key, value FROM {config.DB_SCHEMA}.app_settings ORDER BY key")
-        # Claves NUNCA deben salir al frontend.
+        # Claves NUNCA deben salir al frontend (secretos).
         NEVER = {"minimax_api_key", "openrouter_api_key", "prompt_ficha_test"}
+        # Claves NUEVAS (FASE 8 — emplatado IA + ficha tecnica). NO son secretos
+        # (plantillas editables por el usuario), asi que SI salen al frontend.
         safe = {r["key"]: r["value"] for r in rows if r["key"] not in NEVER}
         safe["ia_configured"] = _ia.is_configured()
         safe["openrouter_configured"] = _or_is_configured()

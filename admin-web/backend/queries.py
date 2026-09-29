@@ -31,7 +31,7 @@ EDITABLE_COLUMNS = {
     config.TABLE_IDEAS: {"titulo", "descripcion", "categorias", "puntuacion", "estado_idea", "fecha_creacion"},
     config.TABLE_AGENDAS: {"titulo", "fecha_creacion", "fecha", "etiquetas",
                           "estado_desarrollo", "objetivo", "receta_final", "timeline"},
-    config.TABLE_CATALOGOS: {"titulo", "orden", "precio", "anio", "estado", "categorias", "seleccionada", "ingredientes", "receta_estructurada"},
+    config.TABLE_CATALOGOS: {"titulo", "orden", "precio", "anio", "estado", "categorias", "seleccionada", "ingredientes", "receta_estructurada", "receta_tecnica", "imagen_emplatado_id", "ficha_tecnica_id"},
 }
 
 

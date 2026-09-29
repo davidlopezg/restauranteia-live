@@ -2,3 +2,6 @@ httpx>=0.27.0
 fastapi>=0.115.0
 uvicorn[standard]>=0.32.0
 python-dotenv>=1.0.0
+# FASE 8 — Emplatado IA (imagen) + Ficha tecnica
+weasyprint>=62.0
+pypdfium2>=4.0

@@ -16,6 +16,10 @@ export interface SettingsResponse {
     openrouter_base_url?: string;
     openrouter_model?: string;
     prompt_ficha_test?: string;
+    // FASE 8 — plantillas (NO son secretos)
+    prompt_emplatado?: string;
+    plantilla_ficha_tecnica?: string;
+    openrouter_image_model?: string;
     [k: string]: unknown;
 }
 
@@ -39,4 +43,8 @@ export interface SettingsUpdate {
     openrouter_base_url?: string;
     openrouter_model?: string;
     prompt_ficha_test?: string;
+    // FASE 8 — plantillas
+    prompt_emplatado?: string;
+    plantilla_ficha_tecnica?: string;
+    openrouter_image_model?: string;
 }

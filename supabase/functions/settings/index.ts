@@ -22,6 +22,10 @@ const UPDATABLE_KEYS = new Set([
     "openrouter_base_url",
     "openrouter_model",
     "prompt_ficha_test",
+    // FASE 8 — emplatado IA (imagen) + ficha tecnica
+    "prompt_emplatado",
+    "plantilla_ficha_tecnica",
+    "openrouter_image_model",
 ]);
 
 interface RequestBody {

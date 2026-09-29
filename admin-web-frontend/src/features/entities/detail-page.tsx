@@ -8,6 +8,7 @@ import { ConfirmDialog } from "@/features/entities/components/confirm-dialog";
 import { BlockRenderer } from "@/features/blocks/block-renderer";
 import { ImageGallery } from "@/features/images/image-gallery";
 import { RelationsPanel } from "@/features/relations/relations-panel";
+import { CatalogEmplatadoSection } from "@/features/entities/components/catalog-emplatado-section";
 import { TestsSection } from "@/features/tests/tests-section";
 import { DevelopmentSection } from "@/features/tests/development-section";
 import { ENTITY_SINGULAR, ENTITY_PLURAL } from "@/features/entities/get-service";
@@ -219,6 +220,14 @@ export const DetailPage = ({ entidad }: DetailPageProps) => {
                             entityId={id}
                             images={(data.images ?? []) as never}
                         />
+
+                        {entidad === "catalogos" && (
+                            <CatalogEmplatadoSection
+                                catalogoId={id}
+                                catalogoTitulo={titulo}
+                                onChange={() => mutations.update.mutate({ id, body: {} })}
+                            />
+                        )}
 
                         {entidad === "agendas" && (
                             <DevelopmentSection
