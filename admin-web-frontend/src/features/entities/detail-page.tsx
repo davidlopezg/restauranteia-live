@@ -9,6 +9,8 @@ import { BlockRenderer } from "@/features/blocks/block-renderer";
 import { ImageGallery } from "@/features/images/image-gallery";
 import { RelationsPanel } from "@/features/relations/relations-panel";
 import { CatalogEmplatadoSection } from "@/features/entities/components/catalog-emplatado-section";
+import { FichaCatalogoSection } from "@/features/entities/components/ficha-catalogo-section";
+import { RecetaSection, type RecetaEstructurada } from "@/features/entities/components/receta-section";
 import { TestsSection } from "@/features/tests/tests-section";
 import { DevelopmentSection } from "@/features/tests/development-section";
 import { ENTITY_SINGULAR, ENTITY_PLURAL } from "@/features/entities/get-service";
@@ -163,6 +165,24 @@ export const DetailPage = ({ entidad }: DetailPageProps) => {
                                 )}
                             </dl>
                         </section>
+
+                        {/* FASE 9: Ficha catálogo completa (receta unificada con 9 secciones) */}
+                        {entidad === "catalogos" && item.receta != null && (
+                            <FichaCatalogoSection
+                                catalogoId={id}
+                                receta={item.receta as never}
+                                pvpCatalogo={(item.precio as number | null) ?? null}
+                                onChange={() => mutations.update.mutate({ id, body: {} })}
+                            />
+                        )}
+
+                        {/* Receta estructurada legacy (de scripts/import-recetas). Solo catalogos.
+                            Mantener como fallback si receta unificada aún no existe. */}
+                        {entidad === "catalogos" &&
+                            item.receta == null &&
+                            item.receta_estructurada != null && (
+                            <RecetaSection receta={item.receta_estructurada as RecetaEstructurada} />
+                        )}
 
                         {/* Para agendas: Pruebas es el protagonista, va en la columna principal */}
                         {entidad === "agendas" && (

@@ -3,6 +3,8 @@
  *
  * Mantenemos tipos manuales (no generados con `supabase gen types`) porque
  * podemos ajustar el shape sin esperar un roundtrip al CLI.
+ *
+ * FASE 9: incluye tablas normalizadas para ingredientes, subrecetas y alérgenos.
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -55,11 +57,88 @@ export interface CatalogoRow {
     seleccionada: boolean | null;
     ingredientes: string | null;
     receta_estructurada: unknown;
+    receta_tecnica: unknown;
+    /** Receta unificada con 9 secciones. FASE 9. */
+    receta: unknown;
     notion_last_edited: string | null;
     migrated_at: string;
     migration_run_id: string;
     created_at: string | null;
     updated_at: string | null;
+}
+
+// === FASE 9: Tablas normalizadas ===
+
+export interface IngredienteRow {
+    id: string;
+    nombre: string;
+    categoria: string | null;
+    coste_medio: number | null;
+    unidad_compra: "kg" | "g" | "L" | "ml" | "ud" | "docena";
+    merma_default_pct: number;
+    proveedor: string | null;
+    alergenos: string[];
+    dietas_validas: string[];
+    notas: string | null;
+    activo: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface AlergenoRow {
+    id: string;
+    codigo: string;
+    nombre: string;
+    icono: string;
+    descripcion: string | null;
+    obligatorio_ue: boolean;
+    activo: boolean;
+    created_at: string;
+}
+
+export interface SubrecetaRow {
+    id: string;
+    nombre: string;
+    descripcion: string | null;
+    receta_origen_id: string | null;
+    cantidad_producida: number | null;
+    unidad_producida: "kg" | "g" | "L" | "ml" | "ud" | "raciones" | null;
+    coste_total: number | null;
+    activo: boolean;
+    notas: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface RecetaIngredienteRow {
+    id: string;
+    receta_id: string;
+    ingrediente_id: string;
+    cantidad_bruta: number;
+    unidad: "kg" | "g" | "L" | "ml" | "ud";
+    merma_pct_override: number | null;
+    notas: string | null;
+    orden: number;
+    created_at: string;
+}
+
+export interface RecetaSubrecetaRow {
+    id: string;
+    receta_parent_id: string;
+    subreceta_id: string;
+    cantidad: number;
+    unidad: "kg" | "g" | "L" | "ml" | "ud";
+    notas: string | null;
+    orden: number;
+    created_at: string;
+}
+
+export interface RecetaAlergenoRow {
+    id: string;
+    receta_id: string;
+    alergeno_id: string;
+    origen: "heredado_ingrediente" | "heredado_subreceta" | "manual";
+    created_at: string;
 }
 
 export interface EntityImageRow {
@@ -108,64 +187,45 @@ export interface BlockRow {
     migration_run_id: string;
 }
 
-export interface AppSettingRow {
-    key: string;
-    value: string;
-}
+/**
+ * Decodifica strings mal codificados (latin1 → utf8).
+ * El módulo de migración introdujo este bug; mantenemos fallback de UI.
+ */
+export function deepFix<T>(rows: T | T[]): T | T[] {
+    const fix = (s: unknown): unknown => {
+        if (typeof s !== "string") return s;
+        try {
+            // Detectar patrón típico: "Caf�" → "Café"
+            if (/�/.test(s)) {
+                return Buffer.from(s, "latin1").toString("utf8");
+            }
+            return s;
+        } catch {
+            return s;
+        }
+    };
 
-// === Helper: encoding fix (latin1 -> utf8) ===
-//
-// El backend Python aplicaba `deep_fix` para corregir strings mal codificados.
-// Esto era un parche runtime. PostgREST devuelve UTF-8 nativo, pero algunos
-// datos históricos pueden seguir latin1. Replicamos la lógica en cliente.
-
-function tryDecode(s: string): string {
-    if (!s) return s;
-    // Heurística: si contiene "?" seguido de caracter Unicode raro, intenta re-decoding
-    try {
-        const buf = Buffer.from(s, "latin1");
-        const decoded = buf.toString("utf8");
-        // Si la versión decodificada tiene menos "?" que la original, es probablemente correcta
-        const origQuestions = (s.match(/\?/g) || []).length;
-        const decodedQuestions = (decoded.match(/\?/g) || []).length;
-        if (decodedQuestions < origQuestions) return decoded;
-    } catch {
-        // ignore
+    if (Array.isArray(rows)) {
+        return rows.map((r) => deepFixObject(r, fix) as T);
     }
-    return s;
+    return deepFixObject(rows, fix) as T;
 }
 
-export function deepFix<T>(input: T): T {
-    if (input === null || input === undefined) return input;
-    if (Array.isArray(input)) return input.map(deepFix) as unknown as T;
-    if (typeof input === "object") {
+function deepFixObject<T>(row: T, fix: (s: unknown) => unknown): T {
+    if (row === null || row === undefined) return row;
+    if (typeof row === "string") return fix(row) as T;
+    if (Array.isArray(row)) {
+        return row.map((item) => deepFixObject(item, fix)) as unknown as T;
+    }
+    if (typeof row === "object") {
         const out: Record<string, unknown> = {};
-        for (const [k, v] of Object.entries(input as Record<string, unknown>)) {
-            out[k] = deepFix(v);
+        for (const [k, v] of Object.entries(row)) {
+            out[k] = deepFixObject(v, fix);
         }
         return out as T;
     }
-    if (typeof input === "string") return tryDecode(input) as unknown as T;
-    return input;
+    return row;
 }
 
-/** Convierte una key de orden a su forma PostgREST (e.g. "fecha_creacion" -> "fecha_creacion"). */
-export function pgOrder(column: string, ascending: boolean): { column: string; ascending: boolean } {
-    return { column, ascending };
-}
-
-/** Helper para selects con orden + paginación cursor (id > cursor). */
-export function buildListQuery(
-    q: { order: (col: string, opts?: { ascending: boolean }) => unknown },
-    column: string,
-    ascending: boolean,
-    cursor: string | null | undefined,
-    limit: number,
-) {
-    let query = q.order(column, { ascending });
-    if (cursor) query = (query as { gt: (col: string, val: string) => unknown }).gt("id", cursor);
-    query = (query as { limit: (n: number) => unknown }).limit(limit + 1);
-    return query;
-}
-
-export type DbClient = SupabaseClient | null;
+/** Tipo helper para el cliente Supabase. */
+export type AnySupabase = SupabaseClient | null;

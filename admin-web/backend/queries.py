@@ -31,7 +31,20 @@ EDITABLE_COLUMNS = {
     config.TABLE_IDEAS: {"titulo", "descripcion", "categorias", "puntuacion", "estado_idea", "fecha_creacion"},
     config.TABLE_AGENDAS: {"titulo", "fecha_creacion", "fecha", "etiquetas",
                           "estado_desarrollo", "objetivo", "receta_final", "timeline"},
-    config.TABLE_CATALOGOS: {"titulo", "orden", "precio", "anio", "estado", "categorias", "seleccionada", "ingredientes", "receta_estructurada", "receta_tecnica", "imagen_emplatado_id", "ficha_tecnica_id"},
+    # FASE 9: `receta` (jsonb unificado) reemplaza gradualmente a receta_estructurada y receta_tecnica.
+    # Las legacy se mantienen en editable para permitir migración de datos sin tocar nada.
+    config.TABLE_CATALOGOS: {"titulo", "orden", "precio", "anio", "estado", "categorias", "seleccionada",
+                            "ingredientes", "receta_estructurada", "receta_tecnica",
+                            "receta", "imagen_emplatado_id", "ficha_tecnica_id"},
+    # FASE 9: tablas nuevas
+    config.TABLE_INGREDIENTES: {"nombre", "categoria", "coste_medio", "unidad_compra",
+                                "merma_default_pct", "proveedor", "alergenos",
+                                "dietas_validas", "notas", "activo"},
+    config.TABLE_SUBRECETAS: {"nombre", "descripcion", "receta_origen_id",
+                              "cantidad_producida", "unidad_producida",
+                              "coste_total", "activo", "notas"},
+    config.TABLE_ALERGENOS: {"codigo", "nombre", "icono", "descripcion",
+                            "obligatorio_ue", "activo"},
 }
 
 

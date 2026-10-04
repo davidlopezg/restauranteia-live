@@ -9,7 +9,17 @@
 export const EDITABLE_COLUMNS = {
     ideas: ["titulo", "descripcion", "categorias", "puntuacion", "estado_idea", "fecha_creacion"],
     agendas: ["titulo", "fecha_creacion", "fecha", "etiquetas", "estado_desarrollo", "objetivo", "receta_final", "timeline"],
-    catalogos: ["titulo", "orden", "precio", "anio", "estado", "categorias", "seleccionada", "ingredientes", "receta_estructurada"],
+    // FASE 9: `receta` (jsonb unificado) reemplaza gradualmente a receta_estructurada y receta_tecnica.
+    // Las legacy se mantienen en editable para permitir migración de datos sin tocar nada.
+    catalogos: ["titulo", "orden", "precio", "anio", "estado", "categorias", "seleccionada",
+        "ingredientes", "receta_estructurada", "receta_tecnica", "receta",
+        "imagen_emplatado_id", "ficha_tecnica_id"],
+    // FASE 9: tablas nuevas
+    ingredientes: ["nombre", "categoria", "coste_medio", "unidad_compra",
+        "merma_default_pct", "proveedor", "alergenos", "dietas_validas", "notas", "activo"],
+    subrecetas: ["nombre", "descripcion", "receta_origen_id",
+        "cantidad_producida", "unidad_producida", "coste_total", "activo", "notas"],
+    alergenos: ["codigo", "nombre", "icono", "descripcion", "obligatorio_ue", "activo"],
 } as const;
 
 export type EditableTable = keyof typeof EDITABLE_COLUMNS;

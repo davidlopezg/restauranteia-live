@@ -52,10 +52,22 @@ class Config:
     TABLE_IDEA_CATALOGO = f"{DB_SCHEMA}.idea_catalogo"
     TABLE_AGENDA_CATALOGO = f"{DB_SCHEMA}.agenda_catalogo"
 
+    # Receta unificada (FASE 9)
+    TABLE_INGREDIENTES = f"{DB_SCHEMA}.ingredientes"
+    TABLE_ALERGENOS = f"{DB_SCHEMA}.alergenos"
+    TABLE_SUBRECETAS = f"{DB_SCHEMA}.subrecetas"
+    TABLE_RECETA_INGREDIENTES = f"{DB_SCHEMA}.receta_ingredientes"
+    TABLE_RECETA_SUBRECETAS = f"{DB_SCHEMA}.receta_subrecetas"
+    TABLE_RECETA_ALERGENOS = f"{DB_SCHEMA}.receta_alergenos"
+
     # Nombre de la columna FK hacia la entidad
     COL_IDEA_ID = "idea_id"
     COL_AGENDA_ID = "agenda_id"
     COL_CATALOGO_ID = "catalogo_id"
+    COL_RECETA_ID = "receta_id"
+    COL_INGREDIENTE_ID = "ingrediente_id"
+    COL_ALERGENO_ID = "alergeno_id"
+    COL_SUBRECETA_ID = "subreceta_id"
 
 
 config = Config()
