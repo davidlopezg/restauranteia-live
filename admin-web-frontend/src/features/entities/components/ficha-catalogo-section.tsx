@@ -23,11 +23,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
     recetaService, recetaKeys,
-    ingredientesService, ingredientesKeys,
-    alergenosService, alergenosKeys,
-    subrecetasService, subrecetasKeys,
 } from "@/services/receta.service";
-import type { Receta, Ingrediente, Alergeno, Subreceta } from "@/types/catalogo";
+import type { Receta } from "@/types/catalogo";
 import type { UnidadMedida, EstadoReceta } from "@/types/catalogo";
 import { cx } from "@/utils/cx";
 
@@ -407,7 +404,7 @@ function IngredientesView({
         nombre: string;
         cantidad_bruta: number;
         unidad: string;
-        merma_pct: number;
+        merma_pct_override: number | null;
         coste_unitario: number | null;
         coste_linea: number | null;
         orden: number;
@@ -432,7 +429,7 @@ function IngredientesView({
                                 <tr key={ing.ingrediente_id} className="border-t border-secondary">
                                     <td className="py-1 text-primary">{ing.nombre}</td>
                                     <td className="py-1 text-right text-tertiary">{fmtQty(ing.cantidad_bruta, ing.unidad)}</td>
-                                    <td className="py-1 text-right text-tertiary">{fmtPct(ing.merma_pct)}</td>
+                                    <td className="py-1 text-right text-tertiary">{fmtPct(ing.merma_pct_override ?? 0)}</td>
                                     <td className="py-1 text-right text-tertiary">{fmtMoney(ing.coste_unitario)}</td>
                                     <td className="py-1 text-right font-medium text-primary">{fmtMoney(ing.coste_linea)}</td>
                                 </tr>
@@ -759,18 +756,19 @@ function FieldEdit({
     label, value, onChange, multiline, type = "text", rows = 3,
 }: {
     label: string;
-    value: string;
+    value: string | number;
     onChange: (v: string) => void;
     multiline?: boolean;
     type?: string;
     rows?: number;
 }) {
+    const stringValue = typeof value === "number" ? String(value) : value;
     return (
         <div>
             <label className="mb-0.5 block text-xs font-medium text-tertiary">{label}</label>
             {multiline ? (
                 <textarea
-                    value={value}
+                    value={stringValue}
                     onChange={(e) => onChange(e.target.value)}
                     rows={rows}
                     className="w-full rounded-md border border-secondary bg-primary px-2 py-1.5 text-sm"
@@ -778,7 +776,7 @@ function FieldEdit({
             ) : (
                 <input
                     type={type}
-                    value={value}
+                    value={stringValue}
                     onChange={(e) => onChange(e.target.value)}
                     className="w-full rounded-md border border-secondary bg-primary px-2 py-1.5 text-sm"
                 />
@@ -791,15 +789,16 @@ function FieldEditSelect({
     label, value, options, onChange,
 }: {
     label: string;
-    value: string;
+    value: string | number;
     options: string[];
     onChange: (v: string) => void;
 }) {
+    const stringValue = typeof value === "number" ? String(value) : value;
     return (
         <div>
             <label className="mb-0.5 block text-xs font-medium text-tertiary">{label}</label>
             <select
-                value={value}
+                value={stringValue}
                 onChange={(e) => onChange(e.target.value)}
                 className="w-full rounded-md border border-secondary bg-primary px-2 py-1.5 text-sm"
             >

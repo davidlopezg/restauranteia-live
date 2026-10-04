@@ -35,7 +35,6 @@ import type {
     Ingrediente, Alergeno, Subreceta, Receta,
     RecetaIngrediente, RecetaAlergeno,
 } from "@/types/catalogo";
-import type { IngredienteRow, AlergenoRow, SubrecetaRow } from "@/lib/database";
 
 // === Tipos auxiliares ===
 
