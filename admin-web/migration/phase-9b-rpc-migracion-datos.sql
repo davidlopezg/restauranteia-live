@@ -37,7 +37,35 @@ $$;
 
 
 -- =============================================================
--- 2. Helper: extrae unidad canónica de un string
+-- 2. Helper: convierte texto a numeric de forma tolerante
+-- =============================================================
+-- Acepta formatos europeos "1,5" / "1.500,75" y anglosajones "1.5" / "1,500.75".
+-- Limpia basura (espacios, puntos sueltos tipo "4.5.").
+-- Devuelve numeric o NULL si no se puede parsear.
+
+CREATE OR REPLACE FUNCTION notion_migration._to_numeric_safe(s text)
+RETURNS numeric
+LANGUAGE sql IMMUTABLE
+AS $$
+    SELECT CASE
+        WHEN s IS NULL OR trim(s) = '' THEN NULL
+        ELSE (
+                CASE
+                    WHEN trim(s) ~ '^[0-9]+(\.[0-9]+)?$' THEN (trim(s))::numeric
+                    WHEN trim(s) ~ '^[0-9]+,[0-9]+$' THEN replace(trim(s), ',', '.')::numeric
+                    WHEN trim(s) ~ '^[0-9]{1,3}(\.[0-9]{3})+(,[0-9]+)?$' THEN
+                        replace(replace(trim(s), '.', ''), ',', '.')::numeric
+                    WHEN trim(s) ~ '^[0-9]{1,3}(,[0-9]{3})+(\.[0-9]+)?$' THEN
+                        replace(trim(s), ',', '')::numeric
+                    ELSE NULL
+                END
+            )
+    END;
+$$;
+
+
+-- =============================================================
+-- 2.5. Helper: extrae unidad canónica de un string
 -- =============================================================
 -- Acepta "g" / "gr" / "gramos" → 'g'
 --         "kg" / "kilo" → 'kg'
@@ -132,30 +160,31 @@ BEGIN
         BEGIN
             -- ===== SECCIÓN 3: INGREDIENTES =====
             -- Priorizamos receta_tecnica (más detalle) + añadimos coste de receta_estructurada
+            -- FIX: el alias 'elem' evita que Postgres confunda record vs jsonb
             ingredientes_arr := '[]'::jsonb;
 
             IF (rt_data->'ingredientes') IS NOT NULL AND jsonb_typeof(rt_data->'ingredientes') = 'array' THEN
                 FOR ing IN
-                    SELECT * FROM jsonb_array_elements(rt_data->'ingredientes')
+                    SELECT elem FROM jsonb_array_elements(rt_data->'ingredientes') AS elem
                 LOOP
                     ingredientes_arr := ingredientes_arr || jsonb_build_object(
-                        'nombre', COALESCE(ing->>'nombre', '?'),
+                        'nombre', COALESCE(ing.elem->>'nombre', '?'),
                         'cantidad_bruta',
                             COALESCE(
-                                notion_migration._parse_qty(ing->>'cantidad'),
-                                (ing->>'cantidad')::numeric
+                                notion_migration._parse_qty(ing.elem->>'cantidad'),
+                                (ing.elem->>'cantidad')::numeric
                             ),
                         'unidad',
                             COALESCE(
-                                notion_migration._parse_unit(ing->>'cantidad'),
-                                COALESCE(ing->>'unidad', 'g')
+                                notion_migration._parse_unit(ing.elem->>'cantidad'),
+                                COALESCE(ing.elem->>'unidad', 'g')
                             ),
                         'porcentaje', NULL,
                         'merma_pct', 0,
                         'cantidad_neta',
                             COALESCE(
-                                notion_migration._parse_qty(ing->>'cantidad'),
-                                (ing->>'cantidad')::numeric
+                                notion_migration._parse_qty(ing.elem->>'cantidad'),
+                                (ing.elem->>'cantidad')::numeric
                             ),
                         'coste_unitario', NULL,
                         'coste_linea', NULL,
@@ -166,25 +195,25 @@ BEGIN
                 END LOOP;
             ELSIF (re_data->'ingredientes') IS NOT NULL AND jsonb_typeof(re_data->'ingredientes') = 'array' THEN
                 FOR ing IN
-                    SELECT * FROM jsonb_array_elements(re_data->'ingredientes')
+                    SELECT elem FROM jsonb_array_elements(re_data->'ingredientes') AS elem
                 LOOP
                     ingredientes_arr := ingredientes_arr || jsonb_build_object(
-                        'nombre', COALESCE(ing->>'nombre', '?'),
+                        'nombre', COALESCE(ing.elem->>'nombre', '?'),
                         'cantidad_bruta',
                             COALESCE(
-                                notion_migration._parse_qty(ing->>'cantidad'),
-                                (ing->>'cantidad')::numeric
+                                notion_migration._parse_qty(ing.elem->>'cantidad'),
+                                (ing.elem->>'cantidad')::numeric
                             ),
-                        'unidad', COALESCE(notion_migration._parse_unit(ing->>'cantidad'), 'g'),
+                        'unidad', COALESCE(notion_migration._parse_unit(ing.elem->>'cantidad'), 'g'),
                         'porcentaje', NULL,
                         'merma_pct', 0,
                         'cantidad_neta',
                             COALESCE(
-                                notion_migration._parse_qty(ing->>'cantidad'),
-                                (ing->>'cantidad')::numeric
+                                notion_migration._parse_qty(ing.elem->>'cantidad'),
+                                (ing.elem->>'cantidad')::numeric
                             ),
-                        'coste_unitario', (ing->>'precio_unidad')::numeric,
-                        'coste_linea', (ing->>'coste_real')::numeric,
+                        'coste_unitario', notion_migration._to_numeric_safe(ing.elem->>'precio_unidad'),
+                        'coste_linea', notion_migration._to_numeric_safe(ing.elem->>'coste_real'),
                         'ingrediente_id', NULL,
                         'fuente', 'receta_estructurada'
                     );
@@ -219,20 +248,20 @@ BEGIN
 
             -- ===== SECCIÓN 9: ECONOMÍA =====
             economia := jsonb_build_object(
-                'coste_total', (re_data->'coste'->>'coste_total')::numeric,
-                'coste_racion', (re_data->'coste'->>'coste_total')::numeric,
-                'pvp', COALESCE(cat_precio, (re_data->'coste'->>'pvp')::numeric),
+                'coste_total', notion_migration._to_numeric_safe(re_data->'coste'->>'coste_total'),
+                'coste_racion', notion_migration._to_numeric_safe(re_data->'coste'->>'coste_total'),
+                'pvp', COALESCE(cat_precio, notion_migration._to_numeric_safe(re_data->'coste'->>'pvp')),
                 'food_cost_pct',
                     CASE
                         WHEN cat_precio IS NOT NULL AND (re_data->'coste'->>'coste_total') IS NOT NULL
                              AND cat_precio > 0
-                        THEN ROUND(((re_data->'coste'->>'coste_total')::numeric / cat_precio) * 100, 2)
+                        THEN ROUND((notion_migration._to_numeric_safe(re_data->'coste'->>'coste_total') / cat_precio) * 100, 2)
                         WHEN (re_data->'coste'->>'porcentaje_beneficio') IS NOT NULL
-                        THEN ROUND(100 - (re_data->'coste'->>'porcentaje_beneficio')::numeric, 2)
+                        THEN ROUND(100 - notion_migration._to_numeric_safe(re_data->'coste'->>'porcentaje_beneficio'), 2)
                         ELSE NULL
                     END,
-                'margen_bruto', (re_data->'coste'->>'margen_bruto')::numeric,
-                'margen_pct', (re_data->'coste'->>'porcentaje_beneficio')::numeric
+                'margen_bruto', notion_migration._to_numeric_safe(re_data->'coste'->>'margen_bruto'),
+                'margen_pct', notion_migration._to_numeric_safe(re_data->'coste'->>'porcentaje_beneficio')
             );
 
             -- ===== SECCIÓN 2: RENDIMIENTO =====
