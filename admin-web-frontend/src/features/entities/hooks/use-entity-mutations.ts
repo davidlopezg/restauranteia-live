@@ -3,9 +3,14 @@ import { useNavigate } from "react-router";
 import type { EntityKind } from "@/types/entity";
 import { ideasService } from "@/services/entities";
 import { getService } from "@/features/entities/get-service";
+import { conservacionKeys } from "@/services/conservacion";
 
 // Hooks de mutación CRUD. Cada mutación invalida las queries de la entidad
 // para que la UI se reconcilie con el backend.
+//
+// Además, las entidades que alimentan la página de Conservación (catalogos
+// con receta; el CRUD de ingredientes aún no tiene UI propia) invalidan
+// también las keys de conservacion para refrescar las tablas.
 //
 // Ponytail: los servicios específicos (ideas/agendas/catalogos) tienen tipos
 // distintos en create/update. Aquí los tratamos como `unknown` porque el
@@ -16,7 +21,15 @@ export const useEntityMutations = (entidad: EntityKind) => {
     const qc = useQueryClient();
     const navigate = useNavigate();
 
-    const invalidate = () => qc.invalidateQueries({ queryKey: [service.keys.all[0]] });
+    const invalidate = () => {
+        qc.invalidateQueries({ queryKey: [service.keys.all[0]] });
+        // Auto-refresh de la página de Conservación cuando cambian catálogos
+        // (los campos receta.conservacion los alimentan la tabla de
+        // elaboraciones).
+        if (entidad === "catalogos") {
+            qc.invalidateQueries({ queryKey: conservacionKeys.all });
+        }
+    };
 
     const create = useMutation<{ id: string }, Error, unknown>({
         mutationFn: body => (service.create as (b: unknown) => Promise<{ id: string }>)(body),

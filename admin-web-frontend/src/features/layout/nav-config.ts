@@ -45,7 +45,14 @@ export const NAV_ITEMS: NavItem[] = [
             { id: "pendientes", label: "Pendientes", href: "/pendientes", countable: "pendientes", nested: true },
         ],
     },
-    { id: "catalogo", label: "Catálogo", href: "/catalogos", countable: "catalogos" },
+    {
+        id: "catalogo",
+        label: "Catálogo",
+        children: [
+            { id: "catalogo", label: "Catálogo", href: "/catalogos", countable: "catalogos", nested: true },
+            { id: "conservacion", label: "Conservación", href: "/conservacion", nested: true },
+        ],
+    },
     {
         id: "analisis",
         label: "Análisis",
@@ -93,6 +100,7 @@ export const SECTION_TITLES: Record<string, string> = {
     "/ideas-cientificas": "Ideas científicas",
     "/agendas": "Pruebas",
     "/catalogos": "Catálogo",
+    "/conservacion": "Conservación",
     "/evaluaciones": "Evaluaciones",
     "/emplatado": "Emplatado IA",
     "/vajilla": "Vajilla",

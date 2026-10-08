@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import {
     recetaService, recetaKeys,
 } from "@/services/receta.service";
+import { conservacionKeys } from "@/services/conservacion";
 import type { Receta } from "@/types/catalogo";
 import type { UnidadMedida, EstadoReceta } from "@/types/catalogo";
 import { cx } from "@/utils/cx";
@@ -102,6 +103,8 @@ export const FichaCatalogoSection = ({ catalogoId, receta, pvpCatalogo, onChange
         mutationFn: (newReceta: Receta) => recetaService.updateReceta(catalogoId, newReceta),
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: recetaKeys.fichaCompleta(catalogoId) });
+            // La sección 6 · Conservación alimenta la página /conservacion.
+            qc.invalidateQueries({ queryKey: conservacionKeys.all });
             onChange?.();
         },
     });

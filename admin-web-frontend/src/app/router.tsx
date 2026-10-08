@@ -15,6 +15,7 @@ import { IdeasCreativasPage } from "@/features/ia/ideas-creativas-page";
 import { IdeasCientificasPage } from "@/features/ia/ideas-cientificas-page";
 import { DocumentationPage } from "@/features/documentation/documentation-page";
 import { PlaceholderPage } from "@/features/layout/placeholder-page";
+import { ConservacionPage } from "@/features/conservacion/conservacion-page";
 import { LoginPage } from "@/features/auth/login-page";
 import { useAuth } from "@/lib/auth";
 
@@ -57,6 +58,8 @@ const RouterBridge = () => {
                     <Route path="catalogos" element={<ListPage entidad="catalogos" />} />
                     <Route path="catalogos/new" element={<NewPage entidad="catalogos" />} />
                     <Route path="catalogos/:id" element={<DetailPage entidad="catalogos" />} />
+                    {/* Conservación (auto-actualizada desde ingredientes + catalogos.receta) */}
+                    <Route path="conservacion" element={<ConservacionPage />} />
                     {/* Dashboard */}
                     <Route path="cadencia" element={<CadenciaPage />} />
                     <Route path="pendientes" element={<PendientesPage />} />
