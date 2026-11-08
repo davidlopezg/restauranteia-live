@@ -1,10 +1,15 @@
 /**
  * Servicio de settings — fachada Supabase (Edge Functions + PostgREST) / Legacy.
  *
- * - get(): PostgREST + RLS filtra secretos (FASE 2)
- * - keyStatus(): Edge Function `ia-status`
- * - update(): Edge Function `settings` (PATCH con whitelist)
+ * - get(): PostgREST (filtra secretos server-side)
+ * - keyStatus(): Edge Function `ia-status` → fallback PostgREST
+ * - update(): Edge Function `settings` → fallback PostgREST directo
  * - testProviders(): Edge Function `test-providers` (probe HTTP real)
+ *
+ * IMPORTANTE: la Edge Function `settings` puede NO existir en el proyecto
+ * (si nunca se desplegó). En ese caso la llamada devuelve 404 y el guardado
+ * se hace directo contra PostgREST, que es exactamente lo que hacía el
+ * backend `/api/settings` antes de la migración a React.
  */
 
 import { env } from "@/config/env";
@@ -18,6 +23,27 @@ export const settingsKeys = {
     keyStatus: () => ["settings", "key-status"] as const,
 };
 
+/** Error de invocación de Edge Function, con status HTTP para poder decidir el fallback. */
+export class FunctionInvokeError extends Error {
+    constructor(
+        public fn: string,
+        public status?: number,
+        public detail?: string,
+    ) {
+        super(
+            `Edge Function "${fn}" falló${status ? ` [${status}]` : ""}: ${detail || "sin detalle"}`,
+        );
+        this.name = "FunctionInvokeError";
+    }
+}
+
+/** La función no existe en el proyecto (404) → hay que usar el fallback. */
+function isMissingFunction(err: unknown): boolean {
+    if (err instanceof FunctionInvokeError) return err.status === 404;
+    const msg = err instanceof Error ? err.message : String(err);
+    return /not found|404|no such function/i.test(msg);
+}
+
 // Llamada a Edge Function via supabase.functions.invoke (con JWT del usuario)
 async function invokeFunction<T>(name: string, body?: Record<string, unknown>): Promise<T> {
     const supabase = getSupabase();
@@ -25,7 +51,16 @@ async function invokeFunction<T>(name: string, body?: Record<string, unknown>): 
     const { data, error } = await supabase.functions.invoke<T>(name, {
         body: body ?? {},
     });
-    if (error) throw new Error(error.message);
+    if (error) {
+        const ctx = (error as { context?: Response }).context;
+        let detail = "";
+        try {
+            detail = ctx ? await ctx.clone().text() : "";
+        } catch {
+            detail = "";
+        }
+        throw new FunctionInvokeError(name, ctx?.status, detail || error.message);
+    }
     return data as T;
 }
 
@@ -35,16 +70,28 @@ export const settingsService = {
         return settingsLegacy.get();
     },
 
-    keyStatus: (): Promise<KeyStatusResponse> => {
-        if (env.isSupabaseConfigured) return invokeFunction<KeyStatusResponse>("ia-status");
-        return settingsLegacy.keyStatus();
+    keyStatus: async (): Promise<KeyStatusResponse> => {
+        if (!env.isSupabaseConfigured) return settingsLegacy.keyStatus();
+        try {
+            return await invokeFunction<KeyStatusResponse>("ia-status");
+        } catch (err) {
+            // La Edge Function no está desplegada → consultamos la presencia directamente.
+            if (!isMissingFunction(err)) throw err;
+            return settingsSupabaseService.keyStatus();
+        }
     },
 
     update: async (body: SettingsUpdate | Record<string, unknown>): Promise<{ updated: Record<string, string> }> => {
-        if (env.isSupabaseConfigured) {
-            return invokeFunction("settings", { keys: body });
+        if (!env.isSupabaseConfigured) {
+            return httpClient.patch<{ updated: Record<string, string> }>("/api/settings", body);
         }
-        return httpClient.patch<{ updated: Record<string, string> }>("/api/settings", body);
+        try {
+            return await invokeFunction<{ updated: Record<string, string> }>("settings", { keys: body });
+        } catch (err) {
+            // La Edge Function no está desplegada → escribimos directo en PostgREST.
+            if (!isMissingFunction(err)) throw err;
+            return settingsSupabaseService.upsert(body as Record<string, string>);
+        }
     },
 
     testProviders: (): Promise<TestProvidersResponse> => {

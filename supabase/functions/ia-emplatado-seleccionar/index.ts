@@ -72,7 +72,7 @@ Deno.serve(async (req: Request) => {
         }
 
         // 5) Borrar fila vieja (1:1)
-        const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, { db: { schema: "notion_migration" } });
+        const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
         const { data: oldRows } = await admin
             .from("catalogo_images")
             .select("id")

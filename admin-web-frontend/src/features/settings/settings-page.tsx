@@ -40,6 +40,18 @@ export const SettingsPage = () => {
                 <h1 className="text-lg font-semibold text-primary">Configuración</h1>
             </header>
 
+            {/* Estado del guardado — NUNCA fallar en silencio */}
+            {update.isSuccess && (
+                <p className="rounded-md bg-success-secondary px-3 py-2 text-xs text-success-primary">
+                    ✅ Guardado
+                </p>
+            )}
+            {update.error && (
+                <p className="rounded-md bg-error-secondary px-3 py-2 text-xs text-error-primary">
+                    ❌ No se pudo guardar: {(update.error as Error).message}
+                </p>
+            )}
+
             {/* Tema */}
             <section className="rounded-lg border border-secondary bg-primary p-4">
                 <h2 className="text-sm font-semibold text-primary">🎨 Apariencia</h2>
@@ -68,7 +80,7 @@ export const SettingsPage = () => {
                 baseUrlValue={settings?.minimax_base_url}
                 modelValue={settings?.minimax_model}
                 promptEnabled={false}
-                onSubmit={body => update.mutate(body)}
+                onSubmit={body => update.mutateAsync(body)}
                 isSaving={update.isPending}
                 keyPrefix="s-"
             />
@@ -78,14 +90,14 @@ export const SettingsPage = () => {
                 title="🌐 OpenRouter — Fichas de Prueba con IA"
                 statusConfigured={keyStatus?.openrouter_configured ?? false}
                 statusModel={settings?.openrouter_model}
-                keySource={settings?.openrouter_key_source}
+                keySource={keyStatus?.openrouter_key_source ?? settings?.openrouter_key_source}
                 baseUrlDefault="https://openrouter.ai/api/v1"
                 modelDefault="nano-banana/nano-banana"
                 baseUrlValue={settings?.openrouter_base_url}
                 modelValue={settings?.openrouter_model}
                 promptEnabled
                 promptValue={settings?.prompt_ficha_test}
-                onSubmit={body => update.mutate(body)}
+                onSubmit={body => update.mutateAsync(body)}
                 isSaving={update.isPending}
                 keyPrefix="or-"
             />
@@ -96,7 +108,7 @@ export const SettingsPage = () => {
                 plantillaFichaValue={settings?.plantilla_ficha_tecnica}
                 imageModelValue={settings?.openrouter_image_model}
                 imageModelDefault="nano-banana/nano-banana"
-                onSubmit={body => update.mutate(body)}
+                onSubmit={body => update.mutateAsync(body)}
                 isSaving={update.isPending}
             />
 
@@ -172,7 +184,7 @@ interface ProviderCardProps {
     modelValue?: string;
     promptEnabled: boolean;
     promptValue?: string;
-    onSubmit: (body: SettingsUpdate) => void;
+    onSubmit: (body: SettingsUpdate) => void | Promise<unknown>;
     isSaving: boolean;
     keyPrefix: string;
 }
@@ -226,8 +238,12 @@ const ProviderCard = ({
                         body.prompt_ficha_test = prompt;
                     }
                     if (Object.keys(body).length === 0) return;
-                    onSubmit(body);
-                    setKey("");
+                    // Solo se borra el input si el guardado fue bien: si falla, la key
+                    // escrita se pierde y el usuario cree que "no se guarda".
+                    Promise.resolve(onSubmit(body)).then(
+                        () => setKey(""),
+                        () => { /* el error se muestra en el banner de arriba */ },
+                    );
                 }}
                 className="mt-3 space-y-2"
             >
@@ -295,7 +311,7 @@ interface PlantillasCardProps {
     plantillaFichaValue?: string;
     imageModelValue?: string;
     imageModelDefault: string;
-    onSubmit: (body: SettingsUpdate) => void;
+    onSubmit: (body: SettingsUpdate) => void | Promise<unknown>;
     isSaving: boolean;
 }
 
@@ -342,7 +358,9 @@ const PlantillasCard = ({
                         body.openrouter_image_model = imageModel;
                     }
                     if (Object.keys(body).length === 0) return;
-                    onSubmit(body);
+                    Promise.resolve(onSubmit(body)).catch(() => {
+                        /* el error se muestra en el banner de arriba */
+                    });
                 }}
                 className="mt-3 space-y-2"
             >

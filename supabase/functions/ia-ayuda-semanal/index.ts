@@ -16,7 +16,7 @@ Deno.serve(async (req: Request) => {
 
     try {
         const body = await req.json();
-        const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, { db: { schema: "notion_migration" } });
+        const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
         // Load context from DB: products in development
         const { data: enDesarrollo } = await admin

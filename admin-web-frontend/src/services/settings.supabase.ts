@@ -1,55 +1,98 @@
 /**
- * Settings (lectura) desde Supabase.
+ * Settings (lectura/escritura) desde Supabase.
+ *
+ * - Lectura: PostgREST sobre la vista `public.app_settings` EXCLUYENDO las claves
+ *   secretas. La API key nunca viaja al navegador (la vista `public.app_settings`
+ *   tiene `security_invoker = false`, o sea que la RLS de la tabla NO filtra:
+ *   el filtro hay que ponerlo en la consulta).
+ * - Estado de providers: consulta de presencia (`select=key` + `value=neq.`).
+ *   Dice si hay key configurada sin devolver el valor.
+ * - Escritura: upsert sobre `public.app_settings` (fallback cuando la Edge
+ *   Function `settings` no está desplegada en el proyecto).
  *
  * GET /api/settings devolvía un dict seguro (sin api_keys).
  * La policy RLS `auth_read_safe_settings` ya filtra las claves secretas.
- *
- * Decisión: leemos TODAS las settings desde PostgREST (la RLS filtra server-side)
- * y exponemos el mismo shape que tenía el backend.
  */
 
 import { getSupabase } from "@/lib/supabase";
 import type { SettingsResponse, KeyStatusResponse } from "@/types/filters";
 import { httpClient } from "@/services/http-client";
 
+/** Claves NUNCA devueltas al frontend (secretos). */
+export const SECRET_SETTING_KEYS = ["minimax_api_key", "openrouter_api_key", "prompt_ficha_test"];
+
 async function getSupabaseSettings(): Promise<SettingsResponse> {
     const supabase = getSupabase();
     if (!supabase) throw new Error("Supabase no configurado");
-    const { data, error } = await supabase.from("app_settings").select("key, value");
+    const { data, error } = await supabase
+        .from("app_settings")
+        .select("key, value")
+        .not("key", "in", `(${SECRET_SETTING_KEYS.join(",")})`);
     if (error) throw new Error(error.message);
 
     const out: Record<string, unknown> = {};
     for (const row of (data ?? []) as Array<{ key: string; value: string }>) {
         out[row.key] = row.value;
     }
-
-    // Flags derivados: si existe minimax_api_key, está configurado.
-    out["ia_configured"] = Boolean(out["minimax_api_key"]);
-    out["openrouter_configured"] = Boolean(out["openrouter_api_key"]);
-    out["minimax_key_source"] = out["minimax_api_key"] ? "bd" : "ninguna";
-    out["openrouter_key_source"] = out["openrouter_api_key"] ? "bd" : "ninguna";
     return out as SettingsResponse;
 }
 
+/**
+ * Estado de providers sin leer los valores de las keys.
+ * `select=key` + `value=neq.` devuelve SOLO las claves que tienen valor configurado
+ * (una key guardada pero vacía cuenta como "no configurada").
+ */
 async function keyStatusSupabase(): Promise<KeyStatusResponse> {
     const supabase = getSupabase();
     if (!supabase) throw new Error("Supabase no configurado");
+
     const { data, error } = await supabase
         .from("app_settings")
-        .select("key, value")
-        .in("key", ["minimax_api_key", "minimax_model", "openrouter_api_key"]);
+        .select("key")
+        .in("key", ["minimax_api_key", "openrouter_api_key"])
+        .neq("value", "");
     if (error) throw new Error(error.message);
 
-    const map: Record<string, string> = {};
-    for (const row of (data ?? []) as Array<{ key: string; value: string }>) {
-        map[row.key] = row.value;
-    }
+    const rows = (data ?? []) as Array<{ key: string }>;
+    const has = (k: string) => rows.some((r) => r.key === k);
+
+    const { data: modelRow } = await supabase
+        .from("app_settings")
+        .select("value")
+        .eq("key", "minimax_model")
+        .limit(1)
+        .maybeSingle();
+    const model = (modelRow as { value?: string } | null)?.value ?? null;
+
     return {
-        ia_configured: Boolean(map["minimax_api_key"]),
-        model: map["minimax_model"] ?? null,
-        openrouter_configured: Boolean(map["openrouter_api_key"]),
-        key_source: map["minimax_api_key"] ? "bd" : "ninguna",
+        ia_configured: has("minimax_api_key"),
+        model,
+        openrouter_configured: has("openrouter_api_key"),
+        key_source: has("minimax_api_key") ? "bd" : "ninguna",
+        openrouter_key_source: has("openrouter_api_key") ? "bd" : "ninguna",
     };
+}
+
+/**
+ * Escritura directa en PostgREST.
+ * Se usa cuando la Edge Function `settings` no está desplegada en el proyecto
+ * (o devuelve 404). Mismo resultado que el PATCH del backend.
+ */
+async function upsertSettingsDirect(
+    keys: Record<string, string>,
+): Promise<{ updated: Record<string, string> }> {
+    const supabase = getSupabase();
+    if (!supabase) throw new Error("Supabase no configurado");
+
+    const updated: Record<string, string> = {};
+    for (const [key, value] of Object.entries(keys)) {
+        const { error } = await supabase
+            .from("app_settings")
+            .upsert({ key, value }, { onConflict: "key" });
+        if (error) throw new Error(error.message);
+        updated[key] = "updated";
+    }
+    return { updated };
 }
 
 export const settingsKeys = {
@@ -60,6 +103,7 @@ export const settingsKeys = {
 export const settingsSupabaseService = {
     get: getSupabaseSettings,
     keyStatus: keyStatusSupabase,
+    upsert: upsertSettingsDirect,
     isAvailable: () => Boolean(getSupabase()),
 };
 

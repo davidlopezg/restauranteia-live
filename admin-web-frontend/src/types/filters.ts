@@ -28,6 +28,8 @@ export interface KeyStatusResponse {
     model: string | null;
     openrouter_configured: boolean;
     key_source: string;
+    /** Origen de la key de OpenRouter ("bd" | "ninguna"). */
+    openrouter_key_source?: string;
 }
 
 export interface TestProvidersResponse {

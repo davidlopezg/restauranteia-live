@@ -17,7 +17,6 @@ concurrency:
 jobs:
     deploy-edge-functions:
         runs-on: ubuntu-latest
-        continue-on-error: true  # No bloquea el frontend si falla
         steps:
             - name: Checkout
               uses: actions/checkout@v4
@@ -33,11 +32,14 @@ jobs:
             - name: Deploy Edge Functions
               env:
                   SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+                  SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
               run: |
-                  supabase login --token "${{ secrets.SUPABASE_ACCESS_TOKEN }}" 2>&1 || echo "⚠️ Login failed"
-                  for fn in ia-status settings test-providers ia-ideas ia-chat ia-idea-cientifica ia-ayuda-semanal plating-generar ware-generar generar-ficha; do
+                  supabase login --token "$SUPABASE_ACCESS_TOKEN"
+                  for fn in ia-status settings test-providers ia-ideas ia-chat ia-idea-cientifica ia-ayuda-semanal plating-generar ware-generar generar-ficha ia-emplatado-imagen ia-emplatado-seleccionar; do
                       echo "Deploying $fn..."
-                      supabase functions deploy "$fn" --project-ref "${{ env.SUPABASE_PROJECT_REF }}" --no-verify-jwt 2>&1 || echo "⚠️ $fn deploy failed"
+                      # Si falla el deploy, el job falla (antes se silenciaba con `|| echo`
+                      # y las Edge Functions nunca se despliegan).
+                      supabase functions deploy "$fn" --project-ref "$SUPABASE_PROJECT_REF" --no-verify-jwt
                   done
 
     build-frontend:

@@ -118,7 +118,7 @@ Deno.serve(async (req: Request) => {
 
         if (!catalogoId) return errorResponse("catalogo_id es obligatorio", 400);
 
-        const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, { db: { schema: "notion_migration" } });
+        const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
         // 1) Leer settings
         const { data: settings } = await admin
