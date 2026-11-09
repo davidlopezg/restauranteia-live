@@ -41,3 +41,6 @@ output/
 node_modules/
 dist/
 *.local
+
+# Supabase CLI (estado local del proyecto)
+supabase/.temp/
