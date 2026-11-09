@@ -71,17 +71,34 @@ Deno.serve(async (req: Request) => {
             Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
         );
 
-        // Upsert cada key (idempotente)
+        // Guarda cada key (idempotente).
+        // Mismo patrón que el backend (queries.upsert_setting): UPDATE y, si no
+        // había fila, INSERT. NO usamos upsert/ON CONFLICT porque public.app_settings
+        // es una VISTA y las vistas no admiten inferencia de índice único
+        // (error 42P10 "there is no unique or exclusion constraint...").
         const results: Record<string, string> = {};
         for (const [key, value] of Object.entries(validKeys)) {
-            const { error } = await supabaseAdmin
+            const { data, error: updErr } = await supabaseAdmin
                 .from("app_settings")
-                .upsert({ key, value }, { onConflict: "key" });
-            if (error) {
+                .update({ value })
+                .eq("key", key)
+                .select("key");
+            if (updErr) {
                 return new Response(
-                    JSON.stringify({ error: `Failed to upsert ${key}: ${error.message}` }),
+                    JSON.stringify({ error: `Failed to update ${key}: ${updErr.message}` }),
                     { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
                 );
+            }
+            if (!data || data.length === 0) {
+                const { error: insErr } = await supabaseAdmin
+                    .from("app_settings")
+                    .insert({ key, value });
+                if (insErr) {
+                    return new Response(
+                        JSON.stringify({ error: `Failed to insert ${key}: ${insErr.message}` }),
+                        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+                    );
+                }
             }
             results[key] = "updated";
         }

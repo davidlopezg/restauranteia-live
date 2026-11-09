@@ -37,9 +37,15 @@ jobs:
                   supabase login --token "$SUPABASE_ACCESS_TOKEN"
                   for fn in ia-status settings test-providers ia-ideas ia-chat ia-idea-cientifica ia-ayuda-semanal plating-generar ware-generar generar-ficha ia-emplatado-imagen ia-emplatado-seleccionar; do
                       echo "Deploying $fn..."
-                      # Si falla el deploy, el job falla (antes se silenciaba con `|| echo`
-                      # y las Edge Functions nunca se despliegan).
-                      supabase functions deploy "$fn" --project-ref "$SUPABASE_PROJECT_REF" --no-verify-jwt
+                      # `settings` ESCRIBE las API keys → exigimos JWT del usuario (verify_jwt).
+                      # El resto se despliega con --no-verify-jwt como hasta ahora.
+                      if [ "$fn" = "settings" ]; then
+                          supabase functions deploy "$fn" --project-ref "$SUPABASE_PROJECT_REF"
+                      else
+                          # Si falla el deploy, el job falla (antes se silenciaba con `|| echo`
+                          # y las Edge Functions nunca se despliegan).
+                          supabase functions deploy "$fn" --project-ref "$SUPABASE_PROJECT_REF" --no-verify-jwt
+                      fi
                   done
 
     build-frontend:

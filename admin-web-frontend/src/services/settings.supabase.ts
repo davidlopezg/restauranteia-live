@@ -21,6 +21,20 @@ import { httpClient } from "@/services/http-client";
 /** Claves NUNCA devueltas al frontend (secretos). */
 export const SECRET_SETTING_KEYS = ["minimax_api_key", "openrouter_api_key", "prompt_ficha_test"];
 
+/** Misma whitelist que la Edge Function `settings` (supabase/functions/settings). */
+const UPDATABLE_KEYS = new Set([
+    "minimax_api_key",
+    "minimax_base_url",
+    "minimax_model",
+    "openrouter_api_key",
+    "openrouter_base_url",
+    "openrouter_model",
+    "prompt_ficha_test",
+    "prompt_emplatado",
+    "plantilla_ficha_tecnica",
+    "openrouter_image_model",
+]);
+
 async function getSupabaseSettings(): Promise<SettingsResponse> {
     const supabase = getSupabase();
     if (!supabase) throw new Error("Supabase no configurado");
@@ -76,7 +90,11 @@ async function keyStatusSupabase(): Promise<KeyStatusResponse> {
 /**
  * Escritura directa en PostgREST.
  * Se usa cuando la Edge Function `settings` no está desplegada en el proyecto
- * (o devuelve 404). Mismo resultado que el PATCH del backend.
+ * (o el navegador no puede invocarla). Mismo resultado que el PATCH del backend.
+ *
+ * Patrón UPDATE + INSERT (como `queries.upsert_setting` del backend): NO usamos
+ * `upsert()`/ON CONFLICT porque `public.app_settings` es una VISTA y las vistas
+ * no tienen índice único → PostgREST devuelve 42P10.
  */
 async function upsertSettingsDirect(
     keys: Record<string, string>,
@@ -86,10 +104,29 @@ async function upsertSettingsDirect(
 
     const updated: Record<string, string> = {};
     for (const [key, value] of Object.entries(keys)) {
-        const { error } = await supabase
+        if (!UPDATABLE_KEYS.has(key)) continue;
+
+        const { data, error: updErr } = await supabase
             .from("app_settings")
-            .upsert({ key, value }, { onConflict: "key" });
-        if (error) throw new Error(error.message);
+            .update({ value })
+            .eq("key", key)
+            .select("key");
+        if (updErr) throw new Error(updErr.message);
+
+        if (!data || data.length === 0) {
+            // No existía la fila → insert. Si falla por conflicto (la fila existe
+            // pero el UPDATE no la vio), reintentamos el UPDATE.
+            const { error: insErr } = await supabase
+                .from("app_settings")
+                .insert({ key, value });
+            if (insErr) {
+                const { error: retryErr } = await supabase
+                    .from("app_settings")
+                    .update({ value })
+                    .eq("key", key);
+                if (retryErr) throw new Error(insErr.message);
+            }
+        }
         updated[key] = "updated";
     }
     return { updated };
