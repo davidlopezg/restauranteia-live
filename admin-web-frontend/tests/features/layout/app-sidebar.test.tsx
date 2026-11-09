@@ -27,7 +27,8 @@ describe("AppSidebar", () => {
     it("muestra las secciones de primer nivel del nav-config", () => {
         render(<AppSidebar open onClose={vi.fn()} />, { wrapper });
         expect(screen.getByText("Ideas")).toBeInTheDocument();
-        expect(screen.getByText("Catálogo")).toBeInTheDocument();
+        // "Catálogo" es un grupo con una entrada anidada del mismo nombre.
+        expect(screen.getAllByText("Catálogo").length).toBeGreaterThan(0);
         expect(screen.getByText("Dashboard")).toBeInTheDocument();
     });
 

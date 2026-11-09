@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
 import { useTheme } from "@/providers/theme-provider";
 import { settingsKeys, settingsService } from "@/services/settings";
 import type { SettingsUpdate } from "@/types/filters";
-import { Button } from "@/components/ui/button";
 
 // Settings: tema, MiniMax key, OpenRouter key, prompt ficha, plantillas
 // (FASE 8: prompt_emplatado, plantilla_ficha_tecnica), diagnóstico real.
@@ -20,6 +20,16 @@ export const SettingsPage = () => {
     const { data: keyStatus } = useQuery({
         queryKey: settingsKeys.keyStatus(),
         queryFn: () => settingsService.keyStatus(),
+        retry: false,
+    });
+
+    // ¿Están desplegadas las Edge Functions del proyecto? Si no, las features de
+    // IA (Ideas, Chat, Fichas) no funcionan aunque la API key esté guardada.
+    const { data: functions } = useQuery({
+        queryKey: settingsKeys.functions(),
+        queryFn: () => settingsService.functionsDeployed(),
+        retry: false,
+        staleTime: 60_000,
     });
 
     const update = useMutation({
@@ -27,12 +37,24 @@ export const SettingsPage = () => {
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: settingsKeys.all() });
             qc.invalidateQueries({ queryKey: settingsKeys.keyStatus() });
+            qc.invalidateQueries({ queryKey: ["ia", "status"] });
+        },
+    });
+
+    const clearKey = useMutation({
+        mutationFn: (key: string) => settingsService.clear(key),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: settingsKeys.all() });
+            qc.invalidateQueries({ queryKey: settingsKeys.keyStatus() });
+            qc.invalidateQueries({ queryKey: ["ia", "status"] });
         },
     });
 
     const testProviders = useMutation({
         mutationFn: () => settingsService.testProviders(),
     });
+
+    const savedKeys = Object.keys(update.data?.updated ?? {});
 
     return (
         <div className="mx-auto max-w-2xl space-y-4">
@@ -43,27 +65,32 @@ export const SettingsPage = () => {
             {/* Estado del guardado — NUNCA fallar en silencio */}
             {update.isSuccess && (
                 <p className="rounded-md bg-success-secondary px-3 py-2 text-xs text-success-primary">
-                    ✅ Guardado
+                    ✅ Guardado{savedKeys.length > 0 && ` (${savedKeys.join(", ")})`}
                 </p>
             )}
             {update.error && (
-                <p className="rounded-md bg-error-secondary px-3 py-2 text-xs text-error-primary">
-                    ❌ No se pudo guardar: {(update.error as Error).message}
-                </p>
+                <p className="rounded-md bg-error-secondary px-3 py-2 text-xs text-error-primary">❌ No se pudo guardar: {(update.error as Error).message}</p>
+            )}
+            {clearKey.isSuccess && <p className="rounded-md bg-success-secondary px-3 py-2 text-xs text-success-primary">✅ Key borrada</p>}
+            {clearKey.error && (
+                <p className="rounded-md bg-error-secondary px-3 py-2 text-xs text-error-primary">❌ No se pudo borrar: {(clearKey.error as Error).message}</p>
+            )}
+
+            {/* Estado del sistema: sin Edge Functions la IA no funciona */}
+            {functions && !functions.deployed && (
+                <div className="border-warning-primary rounded-md border bg-warning-secondary px-3 py-2 text-xs text-primary">
+                    <strong>⚠️ Las funciones de IA no están desplegadas en este proyecto.</strong> Podés guardar la API key (se guarda en la base de datos),
+                    pero generar ideas, chat o fichas no funcionará hasta desplegarlas. Se despliegan con el workflow <em>Deploy Frontend + Edge Functions</em>{" "}
+                    (necesita un access token válido de Supabase en el secret <code>SUPABASE_ACCESS_TOKEN</code>).
+                </div>
             )}
 
             {/* Tema */}
             <section className="rounded-lg border border-secondary bg-primary p-4">
                 <h2 className="text-sm font-semibold text-primary">🎨 Apariencia</h2>
                 <div className="mt-2 flex items-center gap-2">
-                    <span className="rounded-full bg-secondary px-3 py-0.5 text-xs">
-                        Tema: {theme === "dark" ? "oscuro 🌙" : "claro ☀️"}
-                    </span>
-                    <Button
-                        variant="primary"
-                        size="xs"
-                        onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                    >
+                    <span className="rounded-full bg-secondary px-3 py-0.5 text-xs">Tema: {theme === "dark" ? "oscuro 🌙" : "claro ☀️"}</span>
+                    <Button variant="primary" size="xs" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
                         {theme === "dark" ? "☀️ Cambiar a claro" : "🌙 Cambiar a oscuro"}
                     </Button>
                 </div>
@@ -80,9 +107,12 @@ export const SettingsPage = () => {
                 baseUrlValue={settings?.minimax_base_url}
                 modelValue={settings?.minimax_model}
                 promptEnabled={false}
-                onSubmit={body => update.mutateAsync(body)}
+                onSubmit={(body) => update.mutateAsync(body)}
                 isSaving={update.isPending}
                 keyPrefix="s-"
+                apiKeyName="minimax_api_key"
+                onClear={() => clearKey.mutate("minimax_api_key")}
+                isClearing={clearKey.isPending && clearKey.variables === "minimax_api_key"}
             />
 
             {/* OpenRouter */}
@@ -97,9 +127,12 @@ export const SettingsPage = () => {
                 modelValue={settings?.openrouter_model}
                 promptEnabled
                 promptValue={settings?.prompt_ficha_test}
-                onSubmit={body => update.mutateAsync(body)}
+                onSubmit={(body) => update.mutateAsync(body)}
                 isSaving={update.isPending}
                 keyPrefix="or-"
+                apiKeyName="openrouter_api_key"
+                onClear={() => clearKey.mutate("openrouter_api_key")}
+                isClearing={clearKey.isPending && clearKey.variables === "openrouter_api_key"}
             />
 
             {/* Plantillas IA (FASE 8) */}
@@ -108,23 +141,15 @@ export const SettingsPage = () => {
                 plantillaFichaValue={settings?.plantilla_ficha_tecnica}
                 imageModelValue={settings?.openrouter_image_model}
                 imageModelDefault="nano-banana/nano-banana"
-                onSubmit={body => update.mutateAsync(body)}
+                onSubmit={(body) => update.mutateAsync(body)}
                 isSaving={update.isPending}
             />
 
             {/* Diagnóstico */}
             <section className="rounded-lg border border-secondary bg-primary p-4">
                 <h2 className="text-sm font-semibold text-primary">🔍 Diagnóstico de proveedores</h2>
-                <p className="mt-1 text-xs text-tertiary">
-                    Hace una petición real a cada proveedor. Nunca expone la API key completa.
-                </p>
-                <Button
-                    variant="primary"
-                    size="xs"
-                    onClick={() => testProviders.mutate()}
-                    disabled={testProviders.isPending}
-                    className="mt-2"
-                >
+                <p className="mt-1 text-xs text-tertiary">Hace una petición real a cada proveedor. Nunca expone la API key completa.</p>
+                <Button variant="primary" size="xs" onClick={() => testProviders.mutate()} disabled={testProviders.isPending} className="mt-2">
                     {testProviders.isPending ? "Probando…" : "Probar conexiones ahora"}
                 </Button>
                 {testProviders.data && (
@@ -132,11 +157,7 @@ export const SettingsPage = () => {
                         {JSON.stringify(testProviders.data, null, 2)}
                     </pre>
                 )}
-                {testProviders.error && (
-                    <p className="mt-2 text-xs text-error-primary">
-                        Error: {(testProviders.error as Error).message}
-                    </p>
-                )}
+                {testProviders.error && <p className="mt-2 text-xs text-error-primary">Error: {(testProviders.error as Error).message}</p>}
             </section>
 
             {/* Versión */}
@@ -153,19 +174,11 @@ export const SettingsPage = () => {
 const VersionFooter = () => {
     const sha = (import.meta.env.VITE_GIT_SHA as string | undefined) ?? "local";
     const shortSha = sha.slice(0, 7);
-    const url = sha === "local"
-        ? "#"
-        : `https://github.com/davidlopezg/restauranteia-live/commit/${sha}`;
+    const url = sha === "local" ? "#" : `https://github.com/davidlopezg/restauranteia-live/commit/${sha}`;
     return (
         <footer className="mt-8 border-t border-secondary pt-3 text-center text-[11px] text-tertiary">
             Versión:{" "}
-            <a
-                href={url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-mono text-secondary hover:text-brand-primary hover:underline"
-                title={sha}
-            >
+            <a href={url} target="_blank" rel="noopener noreferrer" className="font-mono text-secondary hover:text-brand-primary hover:underline" title={sha}>
                 {shortSha}
             </a>
             <span className="ml-2">· admin-web-frontend</span>
@@ -187,6 +200,10 @@ interface ProviderCardProps {
     onSubmit: (body: SettingsUpdate) => void | Promise<unknown>;
     isSaving: boolean;
     keyPrefix: string;
+    /** Clave de la API key en app_settings (para poder borrarla). */
+    apiKeyName: string;
+    onClear?: () => void;
+    isClearing?: boolean;
 }
 
 const ProviderCard = ({
@@ -203,6 +220,9 @@ const ProviderCard = ({
     onSubmit,
     isSaving,
     keyPrefix,
+    apiKeyName,
+    onClear,
+    isClearing,
 }: ProviderCardProps) => {
     const [key, setKey] = useState("");
     const [url, setUrl] = useState(baseUrlValue ?? baseUrlDefault);
@@ -212,14 +232,29 @@ const ProviderCard = ({
     return (
         <section className="rounded-lg border border-secondary bg-primary p-4">
             <h2 className="text-sm font-semibold text-primary">{title}</h2>
-            <div className="mt-2">
-                <span className={`rounded-full px-3 py-0.5 text-xs font-medium ${statusConfigured ? "bg-success-secondary text-success-primary" : "bg-error-secondary text-error-primary"}`}>
-                    {statusConfigured ? `✅ Configurada — modelo: ${statusModel ?? "?"}` : "❌ No configurada"}
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+                <span
+                    className={`rounded-full px-3 py-0.5 text-xs font-medium ${statusConfigured ? "bg-success-secondary text-success-primary" : "bg-error-secondary text-error-primary"}`}
+                >
+                    {statusConfigured ? `✅ Key guardada — modelo: ${statusModel ?? "?"}` : "❌ Sin API key guardada"}
                 </span>
-                {keySource && <span className="ml-2 text-xs text-tertiary">Origen: {keySource}</span>}
+                {statusConfigured && keySource && (
+                    <span className="text-xs text-tertiary">{keySource === "bd" ? "guardada en la base de datos" : `origen: ${keySource}`}</span>
+                )}
+                {statusConfigured && onClear && (
+                    <button
+                        type="button"
+                        onClick={onClear}
+                        disabled={isClearing}
+                        title={`Borra ${apiKeyName} de app_settings`}
+                        className="rounded-md border border-secondary px-2 py-0.5 text-xs text-tertiary hover:text-error-primary disabled:opacity-50"
+                    >
+                        {isClearing ? "Borrando…" : "Borrar key"}
+                    </button>
+                )}
             </div>
             <form
-                onSubmit={ev => {
+                onSubmit={(ev) => {
                     ev.preventDefault();
                     const body: SettingsUpdate = {};
                     if (key.trim() && !/^[•\s]+$/.test(key)) {
@@ -242,7 +277,9 @@ const ProviderCard = ({
                     // escrita se pierde y el usuario cree que "no se guarda".
                     Promise.resolve(onSubmit(body)).then(
                         () => setKey(""),
-                        () => { /* el error se muestra en el banner de arriba */ },
+                        () => {
+                            /* el error se muestra en el banner de arriba */
+                        },
                     );
                 }}
                 className="mt-3 space-y-2"
@@ -252,17 +289,23 @@ const ProviderCard = ({
                     <input
                         type="password"
                         value={key}
-                        onChange={e => setKey(e.target.value)}
-                        placeholder={statusConfigured ? "(ya configurada — escribe solo si quieres cambiarla)" : "sk-..."}
+                        onChange={(e) => setKey(e.target.value)}
+                        placeholder={statusConfigured ? "(ya guardada — escribe solo si quieres cambiarla)" : "sk-..."}
                         className="w-full rounded-md border border-secondary bg-primary px-3 py-1.5 text-sm"
                     />
+                    {statusConfigured && (
+                        <p className="mt-1 text-[11px] text-tertiary">
+                            Hay una key guardada en la base de datos. No se muestra (es un secreto); para cambiarla escribí una nueva y guardá, o usá “Borrar
+                            key”. Para comprobar que la key funciona, usá “Probar conexiones ahora”.
+                        </p>
+                    )}
                 </div>
                 <div>
                     <label className="block text-xs text-tertiary">Base URL</label>
                     <input
                         type="text"
                         value={url}
-                        onChange={e => setUrl(e.target.value)}
+                        onChange={(e) => setUrl(e.target.value)}
                         className="w-full rounded-md border border-secondary bg-primary px-3 py-1.5 text-sm"
                     />
                 </div>
@@ -271,7 +314,7 @@ const ProviderCard = ({
                     <input
                         type="text"
                         value={model}
-                        onChange={e => setModel(e.target.value)}
+                        onChange={(e) => setModel(e.target.value)}
                         className="w-full rounded-md border border-secondary bg-primary px-3 py-1.5 text-sm"
                     />
                 </div>
@@ -280,7 +323,7 @@ const ProviderCard = ({
                         <label className="block text-xs text-tertiary">Prompt para generar ficha</label>
                         <textarea
                             value={prompt}
-                            onChange={e => setPrompt(e.target.value)}
+                            onChange={(e) => setPrompt(e.target.value)}
                             rows={4}
                             className="w-full rounded-md border border-secondary bg-primary px-3 py-1.5 font-mono text-xs"
                         />
@@ -315,14 +358,7 @@ interface PlantillasCardProps {
     isSaving: boolean;
 }
 
-const PlantillasCard = ({
-    promptEmplatadoValue,
-    plantillaFichaValue,
-    imageModelValue,
-    imageModelDefault,
-    onSubmit,
-    isSaving,
-}: PlantillasCardProps) => {
+const PlantillasCard = ({ promptEmplatadoValue, plantillaFichaValue, imageModelValue, imageModelDefault, onSubmit, isSaving }: PlantillasCardProps) => {
     const [promptEmplatado, setPromptEmplatado] = useState(promptEmplatadoValue ?? "");
     const [plantillaFicha, setPlantillaFicha] = useState(plantillaFichaValue ?? "");
     const [imageModel, setImageModel] = useState(imageModelValue ?? imageModelDefault);
@@ -334,17 +370,13 @@ const PlantillasCard = ({
 
     return (
         <section className="rounded-lg border border-secondary bg-primary p-4">
-            <h2 className="text-sm font-semibold text-primary">
-                🎨 Plantillas IA — Emplatado + Ficha técnica
-            </h2>
+            <h2 className="text-sm font-semibold text-primary">🎨 Plantillas IA — Emplatado + Ficha técnica</h2>
             <p className="mt-1 text-xs text-tertiary">
-                Variables disponibles en los prompts: <code className="font-mono">{"{{titulo}}"}</code>,{" "}
-                <code className="font-mono">{"{{ingredientes}}"}</code>,{" "}
-                <code className="font-mono">{"{{mise_en_place}}"}</code>,{" "}
-                <code className="font-mono">{"{{servicio}}"}</code>.
+                Variables disponibles en los prompts: <code className="font-mono">{"{{titulo}}"}</code>, <code className="font-mono">{"{{ingredientes}}"}</code>
+                , <code className="font-mono">{"{{mise_en_place}}"}</code>, <code className="font-mono">{"{{servicio}}"}</code>.
             </p>
             <form
-                onSubmit={ev => {
+                onSubmit={(ev) => {
                     ev.preventDefault();
                     if (!dirty) return;
                     const body: SettingsUpdate = {};
@@ -369,30 +401,28 @@ const PlantillasCard = ({
                     <input
                         type="text"
                         value={imageModel}
-                        onChange={e => setImageModel(e.target.value)}
+                        onChange={(e) => setImageModel(e.target.value)}
                         placeholder={imageModelDefault}
-                        className="w-full rounded-md border border-secondary bg-primary px-3 py-1.5 text-sm font-mono"
+                        className="w-full rounded-md border border-secondary bg-primary px-3 py-1.5 font-mono text-sm"
                     />
                 </div>
                 <div>
-                    <label className="block text-xs text-tertiary">
-                        Prompt para generar propuestas de emplatado
-                    </label>
+                    <label className="block text-xs text-tertiary">Prompt para generar propuestas de emplatado</label>
                     <textarea
                         value={promptEmplatado}
-                        onChange={e => setPromptEmplatado(e.target.value)}
+                        onChange={(e) => setPromptEmplatado(e.target.value)}
                         rows={5}
-                        placeholder={'Ej: Genera una imagen cenital fotorrealista de un plato de alta cocina con estos ingredientes:\n{{ingredientes}}\nEstilo minimalista, fondo oscuro…'}
+                        placeholder={
+                            "Ej: Genera una imagen cenital fotorrealista de un plato de alta cocina con estos ingredientes:\n{{ingredientes}}\nEstilo minimalista, fondo oscuro…"
+                        }
                         className="w-full rounded-md border border-secondary bg-primary px-3 py-1.5 font-mono text-xs"
                     />
                 </div>
                 <div>
-                    <label className="block text-xs text-tertiary">
-                        Plantilla HTML/CSS para ficha técnica (deja vacío para usar la por defecto)
-                    </label>
+                    <label className="block text-xs text-tertiary">Plantilla HTML/CSS para ficha técnica (deja vacío para usar la por defecto)</label>
                     <textarea
                         value={plantillaFicha}
-                        onChange={e => setPlantillaFicha(e.target.value)}
+                        onChange={(e) => setPlantillaFicha(e.target.value)}
                         rows={6}
                         placeholder="<!DOCTYPE html>… variables: {{titulo}}, {{ingredientes}}, {{mise_en_place}}, {{servicio}}, {{imagen_emplatado_url}}…"
                         className="w-full rounded-md border border-secondary bg-primary px-3 py-1.5 font-mono text-xs"

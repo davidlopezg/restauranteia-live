@@ -29,25 +29,49 @@ jobs:
             - name: Install Supabase CLI
               run: npm install -g supabase
 
+            - name: Verificar credenciales de Supabase
+              env:
+                  SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+                  SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+              run: |
+                  if [ -z "$SUPABASE_ACCESS_TOKEN" ]; then
+                      echo "::error::Falta el secret SUPABASE_ACCESS_TOKEN"
+                      exit 1
+                  fi
+                  if [ -z "$SUPABASE_PROJECT_REF" ]; then
+                      echo "::error::Falta el secret SUPABASE_PROJECT_REF (es el ref del proyecto, p.ej. abcdefghijklmnopqrst)"
+                      exit 1
+                  fi
+                  supabase login --token "$SUPABASE_ACCESS_TOKEN"
+                  # Si el token está caducado/revocado el CLI falla con 401.
+                  if ! supabase projects list --output json > /dev/null 2>&1; then
+                      echo "::error::El secret SUPABASE_ACCESS_TOKEN es inválido o expirado. Genera uno nuevo en https://supabase.com/dashboard/account/tokens y actualiza el secret del repo."
+                      exit 1
+                  fi
+
             - name: Deploy Edge Functions
               env:
                   SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
                   SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
               run: |
-                  supabase login --token "$SUPABASE_ACCESS_TOKEN"
+                  FALLOS=""
                   for fn in ia-status settings test-providers ia-ideas ia-chat ia-idea-cientifica ia-ayuda-semanal plating-generar ware-generar generar-ficha ia-emplatado-imagen ia-emplatado-seleccionar; do
                       echo "Deploying $fn..."
                       # `--yes` es obligatorio: en CI no hay TTY y el CLI pide confirmación.
                       # `settings` ESCRIBE las API keys → exigimos JWT del usuario (verify_jwt).
                       # El resto se despliega con --no-verify-jwt como hasta ahora.
                       if [ "$fn" = "settings" ]; then
-                          supabase functions deploy "$fn" --project-ref "$SUPABASE_PROJECT_REF" --yes
+                          supabase functions deploy "$fn" --project-ref "$SUPABASE_PROJECT_REF" --yes || FALLOS="$FALLOS $fn"
                       else
-                          # Si falla el deploy, el job falla (antes se silenciaba con `|| echo`
-                          # y las Edge Functions nunca se despliegan).
-                          supabase functions deploy "$fn" --project-ref "$SUPABASE_PROJECT_REF" --no-verify-jwt --yes
+                          supabase functions deploy "$fn" --project-ref "$SUPABASE_PROJECT_REF" --no-verify-jwt --yes || FALLOS="$FALLOS $fn"
                       fi
                   done
+                  # Se despliegan TODAS aunque una falle; al final se falla el job si
+                  # alguna no se pudo desplegar (antes no se desplegaba ninguna).
+                  if [ -n "$FALLOS" ]; then
+                      echo "::error::No se pudieron desplegar:$FALLOS"
+                      exit 1
+                  fi
 
     build-frontend:
         runs-on: ubuntu-latest

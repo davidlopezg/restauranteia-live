@@ -11,10 +11,10 @@
  * - generarFichaTecnica(): POST /api/catalogos/{id}/ficha-tecnica/generar
  *                      (solo FastAPI legacy — WeasyPrint no funciona en Deno)
  */
-
 import { env } from "@/config/env";
-import { httpClient } from "@/services/http-client";
 import { getSupabase } from "@/lib/supabase";
+import { invokeEdgeFunction } from "@/services/edge-functions";
+import { httpClient } from "@/services/http-client";
 
 // === Tipos ===
 
@@ -65,9 +65,7 @@ export interface FichaTecnicaResponse {
 async function invoke<T>(name: string, body: Record<string, unknown> = {}): Promise<T> {
     const supabase = getSupabase();
     if (!supabase) throw new Error("Supabase no configurado");
-    const { data, error } = await supabase.functions.invoke<T>(name, { body });
-    if (error) throw new Error(error.message);
-    return data as T;
+    return invokeEdgeFunction<T>(name, body);
 }
 
 // === API ===
@@ -112,10 +110,7 @@ export const catalogosEmplatadoService = {
                 url,
             });
         }
-        return httpClient.post<EmplatadoPersistResponse>(
-            `/api/catalogos/${catalogoId}/emplatado/seleccionar`,
-            { url },
-        );
+        return httpClient.post<EmplatadoPersistResponse>(`/api/catalogos/${catalogoId}/emplatado/seleccionar`, { url });
     },
 
     /**
@@ -124,9 +119,6 @@ export const catalogosEmplatadoService = {
     generarFichaTecnica: async (catalogoId: string): Promise<FichaTecnicaResponse> => {
         // WeasyPrint no funciona en Deno, asi que SIEMPRE va por FastAPI legacy.
         // El frontend debe poder hablar con el backend (mismo origen o proxy).
-        return httpClient.post<FichaTecnicaResponse>(
-            `/api/catalogos/${catalogoId}/ficha-tecnica/generar`,
-            {},
-        );
+        return httpClient.post<FichaTecnicaResponse>(`/api/catalogos/${catalogoId}/ficha-tecnica/generar`, {});
     },
 };
